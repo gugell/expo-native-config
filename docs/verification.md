@@ -18,9 +18,10 @@ This records local verification on 2026-09-16. It is evidence for a preview cand
 - Full Share Extension host: CocoaPods installation and unsigned Debug build of the `ShareExtension` workspace/scheme for generic iOS Simulator passed.
 - Local Swift sample package compiled independently.
 - `pnpm android:check`: Android Gradle sample debug APK compiled for arm64-v8a, Java 17 / Android SDK 36 / Gradle 9.3.1. The initial build executed 160 tasks in 3m 6s.
+- `pnpm release:dry-run`: version/changelog/tag preparation passed with a clean working tree retained.
 - Two packaged skills have valid parsed YAML metadata; references and unfinished placeholders checked.
 - Independent review findings in initialization options, native target names and source path confinement were fixed with regression coverage.
 
 ## Boundaries
 
-The plan displays intended operations, not a native state diff. Release rehearsal is recorded below after the initial repository commit. Interactive share-sheet/widget behavior, physical-device signing, App Store submission, Windows/Linux CI execution, and registry publication have not been verified locally. The repository includes CI jobs; those jobs do not have a remote run until the repository is created and pushed.
+The plan displays intended operations, not a native state diff. Release-it offline dry run passed against the initial Git commit, calculating the next version and changelog without changing files, publishing, or contacting a remote. Interactive share-sheet/widget behavior, physical-device signing, App Store submission, Windows/Linux CI execution, and registry publication have not been verified locally. The repository includes CI jobs; those jobs do not have a remote run until the repository is created and pushed.
