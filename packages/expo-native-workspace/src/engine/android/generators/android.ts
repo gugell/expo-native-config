@@ -1,3 +1,4 @@
+import { propertiesSigningOps } from '../signing';
 import { ERR, resolveSecret, withMeta } from '../../core';
 import type { Generator, OpMeta } from '../../core';
 
@@ -30,7 +31,7 @@ function gradleProperty(key: string, value: string | number | boolean): AndroidG
 
 export const androidGenerator: Generator = {
   name: 'android',
-  generate({ manifest }) {
+  generate({ manifest, projectRoot }) {
     const slice = (manifest as { android?: AndroidSlice }).android;
     if (!slice || typeof slice !== 'object') {
       return { ops: [] };
@@ -169,7 +170,9 @@ export const androidGenerator: Generator = {
       );
     }
 
-    if (slice.signing) {
+    if (slice.signing && 'propertiesFile' in slice.signing) {
+      ops.push(...propertiesSigningOps(slice.signing, projectRoot));
+    } else if (slice.signing) {
       const s = slice.signing;
       if (!s.storeFile?.trim() || !s.keyAlias?.trim()) {
         throw new Error(`${ERR} android.signing requires "storeFile" and "keyAlias".`);

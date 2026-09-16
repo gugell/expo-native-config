@@ -3,7 +3,10 @@ import type { WorkspaceConfig } from '../schema';
 import { collectWorkspacePlan, fileExecutor, normalizeWorkspaceConfig } from './core';
 import type { WorkspaceAppConfig, WorkspacePlan } from './core';
 import { androidExecutor, androidGenerator } from './android';
+import { androidLintGenerator } from './android/generators/lint';
 import { podsGenerator } from './ios-pods';
+import { podSettingsGenerator } from './ios-pods/generators/settings';
+import { queriesGenerator, queriesExecutor } from './android/queries';
 import { targetsGenerator } from './ios-targets';
 import { spmGenerator } from './ios-spm';
 import {
@@ -15,14 +18,17 @@ import {
 
 const generators = [
   podsGenerator,
+  podSettingsGenerator,
   targetsGenerator,
   spmGenerator,
   xcodeEnvGenerator,
   schemesGenerator,
   fixEmbedCycleGenerator,
   androidGenerator,
+  androidLintGenerator,
+  queriesGenerator,
 ];
-const executors = [fileExecutor, androidExecutor, pbxExecutor];
+const executors = [fileExecutor, androidExecutor, queriesExecutor, pbxExecutor];
 
 export function collect(
   workspaceConfig: WorkspaceConfig,

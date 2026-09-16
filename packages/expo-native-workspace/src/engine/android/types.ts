@@ -6,7 +6,7 @@ import type { AndroidFeature } from './features';
 export type { AndroidDependency, GradleConfiguration } from './dependencies';
 export type { AndroidFeature, AndroidUsesFeature } from './features';
 
-export interface AndroidSigningConfig {
+export interface AndroidEnvironmentSigningConfig {
   /** Keystore path relative to android/app (e.g. "release.keystore"). */
   storeFile: string;
   /** Literal, `env:VAR`, or `{ env: "VAR" }`. Prefer env refs. */
@@ -15,7 +15,16 @@ export interface AndroidSigningConfig {
   keyPassword?: SecretInput;
 }
 
+export interface AndroidPropertiesSigningConfig {
+  /** Properties file relative to the Expo app root; keystore resolves beside this file. */
+  propertiesFile: string;
+  /** Allow missing credentials for debug builds. Release signing still fails closed. */
+  optional?: boolean;
+}
+export type AndroidSigningConfig = AndroidEnvironmentSigningConfig | AndroidPropertiesSigningConfig;
+
 export interface AndroidSlice {
+  lint?: { checkReleaseBuilds?: boolean; abortOnError?: boolean };
   minSdkVersion?: number;
   compileSdkVersion?: number;
   targetSdkVersion?: number;
@@ -35,7 +44,7 @@ export interface AndroidSlice {
   features?: AndroidFeature[];
   /** Attributes set on the AndroidManifest `<application>` element. */
   applicationAttributes?: Record<string, string>;
-  /** Release signing config applied to app/build.gradle (credentials go to gradle.properties). */
+  /** Release signing via environment references or an external properties file. */
   signing?: AndroidSigningConfig;
 }
 

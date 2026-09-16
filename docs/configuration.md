@@ -39,6 +39,19 @@ Remote requirements support exact version, next major/minor, version range, bran
 
 `ios.pods` accepts `{ pod: 'WorkspaceGreeting', path: '../native/WorkspaceGreeting' }` for local pods or version/git declarations for remote pods. An extension can use its own `pods` array. A linked library is not automatically a JavaScript-accessible native module.
 
+## Podfile build settings
+
+```ts
+const ios = {
+  minimumPodDeploymentTarget: '16.4',
+  podfileGlobals: { RNFirebaseAsStaticFramework: true },
+};
+```
+
+`ios.minimumPodDeploymentTarget` raises missing or lower `IPHONEOS_DEPLOYMENT_TARGET` values in CocoaPods targets during `post_install`. Equal and higher versions remain unchanged; inherited expressions remain unchanged. Set the host app deployment target separately, for example through Expo build properties. The floor does not lower a dependency's minimum OS requirement.
+
+`ios.podfileGlobals` writes typed Ruby globals at the start of the Podfile. Keys omit `$` and use letters, digits, and underscores, beginning with a letter or underscore. Values are booleans, finite numbers, or literal strings; strings are escaped rather than evaluated. `RNFirebaseAsStaticFramework: true` sets the React Native Firebase flag; configure static framework linkage separately in the app's Expo build properties. Globals do not remove pods injected by other plugins.
+
 ## Xcode schemes
 
 ```ts
@@ -66,10 +79,57 @@ export default defineWorkspace({
 
 `androidLibrary(module, configuration)` defaults to `implementation`. `androidFeature(name, required)` defaults to required. Optional hardware avoids unnecessarily excluding devices. Declaring a permission does not grant runtime access; request dangerous permissions at runtime.
 
-Android settings also cover SDK versions, build tools, NDK, Kotlin, and signing. Prefer Expo's defaults unless a dependency requires a change. Signing credentials should use environment references and must not be committed. Sample apps deliberately use ordinary debug signing defaults.
+Android settings also cover SDK versions, build tools, NDK, Kotlin, and signing. Prefer Expo's defaults unless a dependency requires a change. Signing credentials must stay in environment references or private credential files and must not be committed. Sample apps deliberately use ordinary debug signing defaults.
+
+## Android package visibility
+
+```ts
+const queries = {
+  intents: [
+    { action: 'android.intent.action.VIEW', scheme: 'geo' },
+    { action: 'android.intent.action.VIEW', scheme: 'https' },
+  ],
+  packages: ['com.google.android.apps.maps', 'com.waze'],
+};
+// Set android.queries = queries inside defineWorkspace(...).
+```
+
+Each intent produces a separate `<intent>` query containing one action and scheme. Existing queries are merged into one `<queries>` root; duplicate entries are removed and provider queries are preserved. Package visibility enables discovery; it does not install applications or grant permissions. Removing a declaration requires clean prebuild to remove stale generated entries.
 
 ## Scope and unsupported inputs
 
 The public schema rejects unknown fields, including arbitrary patch declarations. Prefer a typed capability and a focused regression test when adding first-party support. Config files themselves are executable trusted project code, not safely sandboxed data.
 
-Signing uses `{ storeFile, keyAlias, storePassword: { env: 'STORE_PASSWORD' }, keyPassword: { env: 'KEY_PASSWORD' } }`. Both environment references are required when signing is configured. Resolve credentials only in the authorized build environment.
+## Android release signing
+
+Choose one signing source; do not combine these shapes. Existing environment signing remains supported:
+
+```ts
+signing: {
+  storeFile: 'release.keystore',
+  keyAlias: 'release',
+  storePassword: { env: 'STORE_PASSWORD' },
+  keyPassword: { env: 'KEY_PASSWORD' },
+}
+```
+
+Here `storeFile` resolves from `android/app`. Both environment references are required. This mode resolves passwords during prebuild into generated Gradle properties; protect generated build files as credentials and never commit them.
+
+To use an existing private Java properties file without copying credentials or a keystore into generated Android output:
+
+```ts
+signing: {
+  propertiesFile: 'codesign/codesign.properties',
+  optional: true,
+}
+```
+
+`propertiesFile` resolves from the Expo app root. It must provide `storeFile`, `storePassword`, `keyAlias`, and `keyPassword`. Its relative `storeFile` resolves beside the properties file: `storeFile=keystore.jks` refers to `codesign/keystore.jks` in this example. Absolute keystore paths are also accepted. Gradle reads the original files at build time; config validation, planning, and prebuild do not read their contents. Keep both files out of version control and supply them only to authorized build environments.
+
+`optional` defaults to `false`, so a missing file normally fails Gradle configuration. With `optional: true`, a developer without release credentials can still build debug variants. Release validation and packaging require a complete, non-debug signing configuration and an existing keystore; a missing optional file never permits fallback to Expo's debug signing configuration. This checks availability, not whether a keystore or password is valid; Android's signing task performs those checks.
+
+EAS may inject complete release credentials after prebuild; the release guard checks the effective signing configuration at task execution. If EAS owns signing entirely, omit this local signing declaration when `process.env.EAS_BUILD === 'true'` and use EAS credential configuration. Do not assume local ignored files are uploaded to EAS. When migrating away from a plugin that copied signing files, preserve app-owned changes and regenerate clean native output to remove previously copied credentials.
+
+### Android lint
+
+Use `android.lint: { checkReleaseBuilds: false, abortOnError: false }` only when the app intentionally suppresses release lint checks. Both booleans are optional; omitted values keep AGP defaults. These settings use AGP's `lint` DSL with an updateable generated block. For native library packaging, prefer the official `expo-build-properties` `android.packagingOptions` API.

@@ -79,12 +79,25 @@ export const AndroidFeatureSchema = z.strictObject({
   required: z.boolean().optional(),
   glEsVersion: text.optional(),
 });
+export const AndroidQueriesSchema = z.strictObject({
+  intents: z
+    .array(z.strictObject({ action: text, scheme: text.regex(/^[A-Za-z][A-Za-z0-9+.-]*$/) }))
+    .optional(),
+  packages: z.array(text.regex(/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/)).optional(),
+});
 const env = z.strictObject({ env: text.regex(/^[A-Za-z_][A-Za-z0-9_]*$/) });
 export const WorkspaceSchema = z.strictObject({
   schemaVersion: z.literal(1).default(1),
   ios: z
     .strictObject({
       deploymentTarget: version.optional(),
+      minimumPodDeploymentTarget: version.optional(),
+      podfileGlobals: z
+        .record(
+          z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
+          z.union([z.boolean(), z.string(), z.number().finite()]),
+        )
+        .optional(),
       targetsRoot: text.optional(),
       targets: z.array(TargetSchema).optional(),
       packages: z.array(z.union([RemotePackageSchema, LocalPackageSchema])).optional(),
@@ -113,11 +126,21 @@ export const WorkspaceSchema = z.strictObject({
         .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
         .optional(),
       permissions: z.array(text).optional(),
+      queries: AndroidQueriesSchema.optional(),
+      lint: z
+        .strictObject({
+          checkReleaseBuilds: z.boolean().optional(),
+          abortOnError: z.boolean().optional(),
+        })
+        .optional(),
       features: z.array(z.union([text, AndroidFeatureSchema])).optional(),
       dependencies: z.array(AndroidDependencySchema).optional(),
       applicationAttributes: settings.optional(),
       signing: z
-        .strictObject({ storeFile: text, keyAlias: text, storePassword: env, keyPassword: env })
+        .union([
+          z.strictObject({ storeFile: text, keyAlias: text, storePassword: env, keyPassword: env }),
+          z.strictObject({ propertiesFile: text, optional: z.boolean().optional() }),
+        ])
         .optional(),
     })
     .optional(),

@@ -61,6 +61,8 @@ export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
   assign(manifest, 'replaceExpoScheme', replaceExpoScheme);
   assign(manifest, 'fixExtensionEmbedCycle', fixExtensionEmbedCycle);
   assign(manifest, 'xcodeEnv', xcodeEnv);
+  assign(manifest, 'minimumPodDeploymentTarget', nestedIos?.minimumPodDeploymentTarget);
+  assign(manifest, 'podfileGlobals', nestedIos?.podfileGlobals);
   assign(manifest, 'localPods', localPods);
   assign(manifest, 'remotePods', remotePods);
   assign(manifest, 'podBuildSettings', podBuildSettings);
