@@ -133,3 +133,20 @@ EAS may inject complete release credentials after prebuild; the release guard ch
 ### Android lint
 
 Use `android.lint: { checkReleaseBuilds: false, abortOnError: false }` only when the app intentionally suppresses release lint checks. Both booleans are optional; omitted values keep AGP defaults. These settings use AGP's `lint` DSL with an updateable generated block. For native library packaging, prefer the official `expo-build-properties` `android.packagingOptions` API.
+
+### CocoaPods target rules
+
+`ios.podBuildSettings` accepts `{ target, settings, configurations? }` rules, where `settings` maps Xcode build-setting names to string values and `configurations` optionally scopes a rule to `Debug` or `Release`. `ios.removePodBuildPhases` accepts `{ target, phase }` rules. A target matcher is an exact name or an object with `equals`, `startsWith`, and/or `regex` (Ruby regular expression syntax); provided predicates all apply. Prefer a narrow exact name or prefix so unrelated vendor targets remain untouched.
+
+```ts
+podBuildSettings: [{
+  target: { startsWith: 'NativeMedia' },
+  settings: { SWIFT_VERSION: '5.9' },
+}],
+removePodBuildPhases: [{
+  target: { startsWith: 'NativeMedia' },
+  phase: 'ExtractAppIntentsMetadata',
+}],
+```
+
+Scheme names may contain spaces, for example `Example App Debug`; names must remain safe filenames. Existing CI scheme names can therefore be preserved during migration.

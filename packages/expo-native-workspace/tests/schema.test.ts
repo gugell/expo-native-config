@@ -47,3 +47,35 @@ test('schema preserves typed structured Android dependencies', () => {
     'androidx.collection:collection-ktx:1.4.5',
   );
 });
+
+test('pod settings and build-phase rules require scoped matchers and valid configurations', () => {
+  assert.ok(
+    WorkspaceSchema.safeParse({
+      ios: {
+        podBuildSettings: [
+          {
+            target: { startsWith: 'NativeMedia' },
+            settings: { SWIFT_VERSION: '5.9' },
+            configurations: ['Debug'],
+          },
+        ],
+        removePodBuildPhases: [{ target: 'NativeMedia', phase: 'ExtractAppIntentsMetadata' }],
+      },
+    }).success,
+  );
+  for (const rule of [
+    { target: {}, settings: { KEY: 'value' } },
+    { target: 'NativeMedia', settings: {} },
+    { target: 'NativeMedia', settings: { KEY: 'value' }, configurations: ['Profile'] },
+  ])
+    assert.equal(WorkspaceSchema.safeParse({ ios: { podBuildSettings: [rule] } }).success, false);
+});
+
+test('scheme names support spaces while rejecting path traversal and unsafe filenames', () => {
+  const scheme = (name: string) =>
+    WorkspaceSchema.safeParse({ ios: { schemes: [{ name, configuration: 'Debug' }] } });
+  assert.ok(scheme('Example App Debug').success);
+  for (const name of ['../Other', '/tmp/Other', 'Other\\Name', '..', 'Bad\nName', 'Bad:Name']) {
+    assert.equal(scheme(name).success, false);
+  }
+});

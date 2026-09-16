@@ -55,7 +55,7 @@ export const RemotePackageSchema = z.strictObject({
 });
 export const LocalPackageSchema = z.strictObject({ path: text, ...packageCommon });
 export const SchemeSchema = z.strictObject({
-  name: safeName,
+  name: text.regex(/^[A-Za-z0-9][A-Za-z0-9 ._-]*$/, 'Use a safe scheme filename'),
   configuration: z.enum(['Debug', 'Release']),
   archive: z.enum(['Debug', 'Release']).optional(),
   analyze: z.enum(['Debug', 'Release']).optional(),
@@ -86,6 +86,26 @@ export const AndroidQueriesSchema = z.strictObject({
   packages: z.array(text.regex(/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/)).optional(),
 });
 const env = z.strictObject({ env: text.regex(/^[A-Za-z_][A-Za-z0-9_]*$/) });
+export const PodTargetMatcherSchema = z.union([
+  text,
+  z
+    .strictObject({ equals: text.optional(), startsWith: text.optional(), regex: text.optional() })
+    .refine((value) => Object.values(value).some(Boolean), 'Provide a target matcher'),
+]);
+export const PodBuildSettingsSchema = z.strictObject({
+  target: PodTargetMatcherSchema,
+  settings: z
+    .record(text, z.string())
+    .refine((value) => Object.keys(value).length > 0, 'Provide build settings'),
+  configurations: z
+    .array(z.enum(['Debug', 'Release']))
+    .min(1)
+    .optional(),
+});
+export const PodRemoveBuildPhaseSchema = z.strictObject({
+  target: PodTargetMatcherSchema,
+  phase: text,
+});
 export const WorkspaceSchema = z.strictObject({
   schemaVersion: z.literal(1).default(1),
   ios: z
@@ -102,6 +122,8 @@ export const WorkspaceSchema = z.strictObject({
       targets: z.array(TargetSchema).optional(),
       packages: z.array(z.union([RemotePackageSchema, LocalPackageSchema])).optional(),
       pods: z.array(PodSchema).optional(),
+      podBuildSettings: z.array(PodBuildSettingsSchema).optional(),
+      removePodBuildPhases: z.array(PodRemoveBuildPhaseSchema).optional(),
       schemes: z.array(SchemeSchema).optional(),
       replaceExpoScheme: z.boolean().optional(),
       fixExtensionEmbedCycle: z.boolean().optional(),
@@ -146,6 +168,8 @@ export const WorkspaceSchema = z.strictObject({
     .optional(),
 });
 export type WorkspaceConfig = z.input<typeof WorkspaceSchema>;
+export type PodBuildSettings = z.infer<typeof PodBuildSettingsSchema>;
+export type PodRemoveBuildPhase = z.infer<typeof PodRemoveBuildPhaseSchema>;
 export type TargetSpec = z.infer<typeof TargetSchema>;
 export type SwiftPackage = z.infer<typeof RemotePackageSchema>;
 export type LocalSwiftPackage = z.infer<typeof LocalPackageSchema>;
