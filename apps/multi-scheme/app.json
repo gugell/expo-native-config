@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Multiple Schemes",
+    "slug": "multi-scheme",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "dev.exponativeworkspace.multischeme"
+    },
+    "android": {
+      "package": "dev.exponativeworkspace.multischeme"
+    },
+    "plugins": ["expo-native-workspace/plugin"],
+    "sdkVersion": "56.0.0"
+  }
+}

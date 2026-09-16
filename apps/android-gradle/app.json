@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Android Gradle",
+    "slug": "android-gradle",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "dev.exponativeworkspace.androidgradle"
+    },
+    "android": {
+      "package": "dev.exponativeworkspace.androidgradle"
+    },
+    "plugins": ["expo-native-workspace/plugin"],
+    "sdkVersion": "56.0.0"
+  }
+}

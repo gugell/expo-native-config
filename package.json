@@ -1,0 +1,32 @@
+{
+  "name": "expo-native-workspace-repo",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter expo-native-workspace build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter expo-native-workspace test",
+    "lint": "eslint packages/expo-native-workspace/src packages/expo-native-workspace/tests scripts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "pack:check": "node scripts/pack-check.mjs",
+    "examples:check": "node scripts/verify-examples.mjs",
+    "release": "node scripts/release.mjs",
+    "release:dry-run": "node scripts/release.mjs --dry-run",
+    "native:check": "node scripts/verify-native.mjs",
+    "android:check": "node scripts/verify-android.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.10.0",
+    "typescript-eslint": "^8.70.0",
+    "prettier": "^3.6.2",
+    "release-it": "20.2.1",
+    "@release-it/conventional-changelog": "^11.0.1",
+    "cross-spawn": "^7.0.6"
+  }
+}

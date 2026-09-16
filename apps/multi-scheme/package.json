@@ -1,0 +1,25 @@
+{
+  "name": "@expo-native-workspace/example-multi-scheme",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "prebuild": "expo prebuild --template expo-template-bare-minimum@56.0.35",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "validate": "expo-native-workspace validate",
+    "plan": "expo-native-workspace plan"
+  },
+  "dependencies": {
+    "expo": "catalog:",
+    "react": "catalog:",
+    "react-native": "catalog:",
+    "expo-native-workspace": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

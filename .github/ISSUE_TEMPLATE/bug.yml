@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible CLI or native generation problem.
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Versions
+      description: Package, Node, pnpm/npm, Expo SDK, OS, Xcode or Android toolchain.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Config, commands, expected result and actual result. Remove credentials and private identifiers.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Include doctor --json output and relevant build errors after removing secrets.

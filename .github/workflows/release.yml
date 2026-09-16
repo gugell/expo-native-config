@@ -1,0 +1,52 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: Version increment (use initial only for the first 0.1.0 release)
+        type: choice
+        default: patch
+        options: [patch, minor, major, initial]
+permissions:
+  contents: read
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - name: Ensure npm supports trusted publishing
+        run: npm install --global npm@11
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm pack:check
+      - name: Configure release author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Release with npm trusted publishing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_INCREMENT: ${{ inputs.increment }}
+        shell: bash
+        run: |
+          if [ "$RELEASE_INCREMENT" = initial ]; then
+            pnpm release --no-increment --ci --npm.skipChecks
+          else
+            pnpm release "$RELEASE_INCREMENT" --ci --npm.skipChecks
+          fi

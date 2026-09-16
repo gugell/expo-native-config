@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Home Screen Widget",
+    "slug": "widget",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "dev.exponativeworkspace.widget"
+    },
+    "android": {
+      "package": "dev.exponativeworkspace.widget"
+    },
+    "plugins": ["expo-native-workspace/plugin"],
+    "sdkVersion": "56.0.0"
+  }
+}

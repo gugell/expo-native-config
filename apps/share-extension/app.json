@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Share Extension",
+    "slug": "share-extension",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "dev.exponativeworkspace.shareextension"
+    },
+    "android": {
+      "package": "dev.exponativeworkspace.shareextension"
+    },
+    "plugins": ["expo-native-workspace/plugin"],
+    "sdkVersion": "56.0.0"
+  }
+}

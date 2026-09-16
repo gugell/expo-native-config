@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Native Dependencies",
+    "slug": "native-dependencies",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "dev.exponativeworkspace.nativedependencies"
+    },
+    "android": {
+      "package": "dev.exponativeworkspace.nativedependencies"
+    },
+    "plugins": ["expo-native-workspace/plugin"],
+    "sdkVersion": "56.0.0"
+  }
+}

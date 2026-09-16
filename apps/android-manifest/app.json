@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Android Manifest",
+    "slug": "android-manifest",
+    "version": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "dev.exponativeworkspace.androidmanifest"
+    },
+    "android": {
+      "package": "dev.exponativeworkspace.androidmanifest"
+    },
+    "plugins": ["expo-native-workspace/plugin"],
+    "sdkVersion": "56.0.0"
+  }
+}

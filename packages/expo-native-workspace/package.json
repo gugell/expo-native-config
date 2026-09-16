@@ -1,0 +1,85 @@
+{
+  "name": "expo-native-workspace",
+  "version": "0.1.0",
+  "description": "Typed native projects for Expo: validate, plan, and generate extensions, native dependencies, schemes, and Android configuration.",
+  "license": "MIT",
+  "author": "gugell",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gugell/expo-native-workspace.git",
+    "directory": "packages/expo-native-workspace"
+  },
+  "homepage": "https://github.com/gugell/expo-native-workspace#readme",
+  "bugs": "https://github.com/gugell/expo-native-workspace/issues",
+  "keywords": [
+    "expo",
+    "config-plugin",
+    "cng",
+    "prebuild",
+    "cli",
+    "widget",
+    "share-extension",
+    "android"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "bin": {
+    "expo-native-workspace": "./bin/expo-native-workspace.cjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/types/plugin.d.ts",
+      "default": "./app.plugin.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "app.plugin.cjs",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "skills",
+    "CHANGELOG.md",
+    "bin"
+  ],
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test tests/*.test.ts",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@bacons/xcode": "1.0.0-alpha.32",
+    "@expo/config": "^56.0.0",
+    "@expo/config-plugins": "^56.0.0",
+    "@expo/plist": "0.7.0",
+    "commander": "^13.1.0",
+    "jiti": "^1.21.7",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "expo": ">=56.0.0 <57.0.0"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "tsx": "^4.23.0",
+    "esbuild": "^0.25.0"
+  }
+}

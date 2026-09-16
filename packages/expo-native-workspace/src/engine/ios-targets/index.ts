@@ -1,0 +1,12 @@
+export { targetsGenerator } from './generators/targets';
+export { normalizeTargets, cleanTargetsRoot, DEFAULT_TARGETS_ROOT } from './validate';
+export { resolveTargetBundleId, getMainBundleId, sanitizeBundleIdentifier } from './bundleId';
+export { resolveEntitlements, buildEntitlements } from './entitlements';
+export { getTargetInfoPlist, buildInfoPlist } from './infoPlist';
+export { addEASAppExtension } from './easCredentials';
+export type { AppExtensionCredential } from './easCredentials';
+export { TARGET_REGISTRY, productTypeForType, needsEmbeddedSwift } from './registry';
+export { applyTargetsPbx } from './generateTarget';
+export type { TargetPlan, ProjectTargetSettings } from './generateTarget';
+export { TARGETS_LOADER_MARKER, buildTargetsPodfileLoader } from './podsLoader';
+export type { TargetType, TargetSpec, IosTargetsManifest } from './types';

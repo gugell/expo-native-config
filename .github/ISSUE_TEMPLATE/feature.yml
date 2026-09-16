@@ -1,0 +1,15 @@
+name: Native capability request
+description: Describe native intent that cannot currently be expressed.
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Desired native result
+      description: Show the native setting or target and explain the app use case.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Reproduction or proposed config
+      description: Include platform/SDK versions and a minimal sample when possible.
