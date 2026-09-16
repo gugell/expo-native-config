@@ -62,11 +62,12 @@ function podBuildSettingsLines(rules: PodBuildSettingsRule[]): string {
     '    target.build_configurations.each do |config|',
   ];
   for (const rule of rules) {
-    lines.push(`      if ${nameMatcherToRuby(rule.target)}`);
+    let condition = `(${nameMatcherToRuby(rule.target)})`;
     if (rule.configurations?.length) {
       const names = rule.configurations.map((value) => rubyLiteral(value)).join(', ');
-      lines.push(`        next unless [${names}].include?(config.name)`);
+      condition += ` && [${names}].include?(config.name)`;
     }
+    lines.push(`      if ${condition}`);
     for (const [key, value] of Object.entries(rule.settings)) {
       lines.push(`        config.build_settings[${rubyLiteral(key)}] = ${rubyLiteral(value)}`);
     }

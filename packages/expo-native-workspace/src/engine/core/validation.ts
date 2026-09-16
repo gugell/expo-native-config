@@ -37,7 +37,7 @@ export function nameMatcherToRuby(matcher: string | NameMatcher): string {
     conditions.push(`target.name.start_with?(${rubyLiteral(matcher.startsWith.trim())})`);
   }
   if (matcher.regex) {
-    conditions.push(`target.name =~ /${matcher.regex}/`);
+    conditions.push(`target.name =~ Regexp.new(${rubyLiteral(matcher.regex)})`);
   }
   return conditions.join(' && ');
 }
