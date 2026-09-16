@@ -1,6 +1,6 @@
 # Development rules
 
-These rules adapt the useful schema-first and package-boundary principles from the local Yayando project. Nx, GraphQL, and web styling rules are deliberately outside this repository's scope.
+Use schema-first configuration and explicit package boundaries. Nx, GraphQL, and web styling rules are deliberately outside this repository's scope.
 
 - Define runtime schemas before implementing configuration or external-data behavior. Use Zod and infer public types from the schema. Validate unknown input at boundaries; avoid `any` and unchecked casts.
 - Keep the public surface small: package-root helpers, the documented plugin subpath, and the CLI. Sample apps must not deep-import engine code.
