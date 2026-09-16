@@ -14,3 +14,5 @@ Test observable outcomes, including duplicate prevention for repeated native app
 Keep sample source outside disposable native output. Preserve unrelated work and app-owned files. Prefer typed capabilities over raw patches; document any escape-hatch limitations. Diagnostics and fixtures must not leak signing credentials.
 
 Before release work, inspect current release-it configuration and release scripts. A dry run is not a publication. Verify actual remote metadata, registry ownership, packaged files and explicit release authorization before external mutations. Leave unpublished status intact until registry publication is confirmed.
+
+For Android properties-file signing, keep credential loading in Gradle and generated output limited to file references. Cover absent optional credentials allowing debug builds, release tasks failing closed, independent EAS release configuration, path resolution beside the properties file, and repeated application. Never read production credentials to write fixtures or test signing configuration.
