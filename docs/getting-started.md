@@ -12,7 +12,13 @@ pnpm --filter expo-native-workspace pack --pack-destination /tmp
 
 Install the generated tarball into an existing Expo app using its package manager. A tarball test matters: workspace linking can conceal missing package files and undeclared dependencies. `pnpm pack:check` exercises a fresh consumer automatically.
 
-From the app directory:
+From the app directory, install the tarball first (replace the filename with the version you packed):
+
+```sh
+pnpm add /tmp/expo-native-workspace-0.1.0.tgz
+```
+
+Choose a starter for this existing Expo app:
 
 ```sh
 pnpm exec expo-native-workspace init --template minimal --yes
@@ -21,21 +27,38 @@ pnpm exec expo-native-workspace plan
 pnpm exec expo-native-workspace doctor
 ```
 
-Available templates are `minimal`, `share-extension`, `widget`, and `android`. Inspect all generated files before committing. Add the plugin to `app.json`, or the equivalent dynamic Expo configuration, alongside existing plugins:
+`minimal` creates only a config, `share-extension` adds a Swift share controller, `widget` adds a static WidgetKit starter, and `android` demonstrates camera permission plus optional hardware. These are starting points that can be combined in the same config, not the full feature list. See [template selection and generated files](templates.md) before choosing; init refuses to overwrite an existing config.
+
+Register the plugin once at the end of the existing Expo `plugins` array. For example, an app that already uses `expo-router` keeps that entry:
 
 ```json
 {
   "expo": {
-    "plugins": ["expo-native-workspace/plugin"]
+    "plugins": ["expo-router", "expo-native-workspace/plugin"]
   }
 }
 ```
 
-Keep existing name, slug, bundle identifier, package name and other Expo fields. The plugin reads `workspace.config.ts` from the app root. Treat config files as executable code: only load trusted projects.
+Do not add `expo-router` just for this package; the example illustrates preserving an existing plugin. Keep existing name, slug, bundle identifier, package name and other Expo fields. For share/widget targets, ensure `expo.ios.bundleIdentifier` is set (for example `com.example.app`).
+
+With a dynamic `app.config.ts`, preserve the input and append the plugin instead:
+
+```ts
+import type { ConfigContext, ExpoConfig } from 'expo/config';
+
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
+  name: config.name ?? 'Example App',
+  slug: config.slug ?? 'example-app',
+  plugins: [...(config.plugins ?? []), 'expo-native-workspace/plugin'],
+});
+```
+
+Use either static or dynamic registration; do not register it in both. If your existing dynamic config already builds a plugin array, append there. The plugin reads `workspace.config.ts` from the app root. Treat config files as executable code: only load trusted projects.
 
 ## Add native capabilities
 
-Author configuration with the public helpers and source-control extension sources. Start from the complete [sample apps](../apps). A declared target alone does not supply its application behavior.
+Author configuration with the public helpers and source-control extension sources. Start from the complete [sample apps](../apps), or adapt a [configuration recipe](recipes.md). The [manifest reference](configuration.md) explains every section, path base, helper, and validation boundary. A declared target alone does not supply its application behavior.
 
 ```sh
 pnpm exec expo-native-workspace plan

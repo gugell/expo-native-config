@@ -2,6 +2,118 @@
 
 The app-root `workspace.config.ts` default-exports `defineWorkspace({ schemaVersion: 1, ... })`. The published TypeScript declarations and runtime schemas are the authoritative field definitions. Invalid inputs should be fixed before prebuild. Import only from `expo-native-workspace`, never internal engine paths.
 
+## Which manifest belongs where?
+
+“Workspace manifest” means `workspace.config.ts`: the package's declarative input. It is separate from Expo's `app.json` / `app.config.ts` and the generated `android/app/src/main/AndroidManifest.xml`.
+
+| File                            | Owns                                                  | Example                                          |
+| ------------------------------- | ----------------------------------------------------- | ------------------------------------------------ |
+| `app.json` or `app.config.ts`   | Expo identity, host entitlements, plugin registration | `expo.ios.bundleIdentifier`, `expo.plugins`      |
+| `workspace.config.ts`           | Native targets and dependency/build declarations      | `ios.targets`, `android.queries`                 |
+| `targets/<name>/`               | App-owned native implementation                       | Swift code, custom `Info.plist`                  |
+| Generated `ios/` and `android/` | Output of Expo prebuild and the plugin                | Xcode targets, Podfile, Gradle, Android manifest |
+
+A workspace file has **no `expo` wrapper**. Both platform sections are optional. This complete example needs no extension source files:
+
+```ts
+import { defineWorkspace } from 'expo-native-workspace';
+
+export default defineWorkspace({
+  schemaVersion: 1,
+  ios: {
+    minimumPodDeploymentTarget: '16.4',
+    schemes: [{ name: 'Example Debug', configuration: 'Debug', archive: 'Release' }],
+  },
+  android: {
+    permissions: ['android.permission.CAMERA'],
+    features: [{ name: 'android.hardware.camera', required: false }],
+  },
+});
+```
+
+`defineWorkspace` supplies TypeScript authoring support; loading through the CLI or plugin performs runtime validation. Helpers produce ordinary declaration objects: `shareExtension({ name: 'Share' })` is equivalent to `{ name: 'Share', type: 'share' }`. They do not create Swift files. JSON configurations use the object forms without imports or a default export.
+
+## File discovery and paths
+
+From the Expo app root, discovery checks `workspace.config.ts`, `.js`, `.cjs`, `.mjs`, then `.json`, in that order, and loads the first existing file. Keep one active config. The legacy `workspace.manifest.js` filename is not auto-discovered. TypeScript/JavaScript configurations execute trusted project code; JSON is useful for data-only declarations.
+
+| Input                                 | Resolution base                                | Example                       |
+| ------------------------------------- | ---------------------------------------------- | ----------------------------- |
+| CLI `--project`                       | Current working directory                      | `--project apps/mobile`       |
+| CLI `--config`, plugin `configPath`   | Expo app root                                  | `config/native.json`          |
+| `ios.targetsRoot`                     | Expo app root                                  | `native/targets`              |
+| Target `source`                       | Expo app root, confined inside it              | `native/targets/Share`        |
+| Omitted target `source`               | `targetsRoot/<name>`, default `targets/<name>` | `targets/Share`               |
+| Local Swift package / CocoaPod `path` | Generated `ios/`                               | `../native/WorkspaceMath`     |
+| Signing `propertiesFile`              | Expo app root                                  | `codesign/release.properties` |
+| Environment signing `storeFile`       | Generated `android/app/`                       | `release.keystore`            |
+| `storeFile` inside private properties | Directory containing that properties file      | `release.jks`                 |
+
+Moving the config into a subdirectory does not change these bases. A custom filename must be selected in **both** the CLI and Expo plugin:
+
+```sh
+pnpm exec expo-native-workspace validate --config config/native.json
+pnpm exec expo-native-workspace plan --config config/native.json
+```
+
+Example `app.json` (merge these fields with your existing app):
+
+```json
+{
+  "expo": {
+    "name": "Example App",
+    "slug": "example-app",
+    "plugins": [["expo-native-workspace/plugin", { "configPath": "config/native.json" }]]
+  }
+}
+```
+
+Example `config/native.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "android": {
+    "gradleProperties": { "org.gradle.parallel": true },
+    "queries": { "packages": ["com.example.companion"] }
+  }
+}
+```
+
+## Field map
+
+All fields are optional unless marked required. Unknown fields are rejected rather than silently ignored. `schemaVersion` accepts only `1` and defaults to it. An otherwise empty config declares no explicit platform capabilities; the engine may still include its default maintenance operations in a plan.
+
+| iOS field                                  | Shape / purpose                                                         |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| `deploymentTarget`                         | Dotted version string; default for additional targets, not the host app |
+| `minimumPodDeploymentTarget`               | Dotted version string; floor for CocoaPods build settings               |
+| `targetsRoot`, `targets`                   | Default source directory and array of native targets                    |
+| `packages`, `pods`                         | Swift packages and host CocoaPods dependencies                          |
+| `podfileGlobals`                           | Ruby identifier keys (without `$`), boolean/number/string values        |
+| `podBuildSettings`, `removePodBuildPhases` | Scoped CocoaPods target rules                                           |
+| `schemes`                                  | Named Debug/Release schemes                                             |
+| `replaceExpoScheme`                        | Boolean; opt into replacing the default Expo scheme                     |
+| `fixExtensionEmbedCycle`                   | Boolean; control extension embed-cycle correction                       |
+| `xcode.env.exports`                        | String map exported into generated Xcode environment configuration      |
+| `xcode.env.lines`                          | Array of shell lines for the Xcode environment; executable shell code   |
+
+| Android field                                      | Shape / purpose                                                            |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| `minSdkVersion`                                    | Integer, at least 24                                                       |
+| `compileSdkVersion`, `targetSdkVersion`            | Positive integers; supplied values must respect min ≤ target ≤ compile     |
+| `buildToolsVersion`, `ndkVersion`, `kotlinVersion` | Dotted version strings                                                     |
+| `gradleProperties`                                 | String/number/boolean map                                                  |
+| `permissions`                                      | Array of manifest permission strings                                       |
+| `features`                                         | Feature names or `{ name, required?, glEsVersion? }`                       |
+| `queries`                                          | `{ intents?: [{ action, scheme }], packages?: string[] }`                  |
+| `dependencies`                                     | `{ module, configuration? }[]`, Maven `group:artifact:version` coordinates |
+| `applicationAttributes`                            | String map of Android manifest application attributes                      |
+| `lint`                                             | Optional `checkReleaseBuilds` and `abortOnError` booleans                  |
+| `signing`                                          | One of the two signing shapes described below                              |
+
+See [recipes](recipes.md) for complete configurations and [templates](templates.md) for starter file contents.
+
 ## iOS targets
 
 ```ts
@@ -19,6 +131,20 @@ export default defineWorkspace({
 
 Each target has a unique `name`, target `type` supplied by the helper, optional `source`, `bundleIdentifier`, `deploymentTarget`, `frameworks`, `entitlements`, `buildSettings`, and `pods`. A leading dot in the bundle identifier appends to the host app identifier. Source paths resolve from the app root; the default is `targets/<name>`. Keep Info.plist and native sources in that directory when custom behavior is needed. `ios.deploymentTarget` supplies a default for extension targets only; it does not configure the host app deployment target.
 
+| Target field       | Meaning                                                                      |
+| ------------------ | ---------------------------------------------------------------------------- |
+| `name` (required)  | Unique target name, starting with a letter; then letters, digits, `_` or `-` |
+| `type` (required)  | `share`, `widget`, or `clip`; helpers supply it                              |
+| `bundleIdentifier` | Explicit ID or suffix such as `.share`; resolved IDs must be unique          |
+| `source`           | Existing source directory inside the app root                                |
+| `deploymentTarget` | Target override, then `ios.deploymentTarget`, then generator default `18.0`  |
+| `frameworks`       | Additional system framework names                                            |
+| `entitlements`     | Plist-shaped entitlement values                                              |
+| `buildSettings`    | String map of Xcode build settings                                           |
+| `pods`             | Dependencies for this target, using the Pod shape below                      |
+
+The host must define `expo.ios.bundleIdentifier` when targets are declared. `appClip({ name: 'Preview', source: './targets/Preview', bundleIdentifier: '.clip' })` declares an App Clip; you supply its native app sources and app-specific setup. There is currently no App Clip init preset.
+
 Entitlements are plist-shaped values. App Groups are needed only when sharing a container or preferences with the host app. Register the group with Apple and set matching `com.apple.security.application-groups` entries on both the host Expo config and extension declaration. Do not add a fictitious group just to make a sample look complete.
 
 ## Swift packages and CocoaPods
@@ -35,9 +161,27 @@ const remotePackage = swiftPackage({
 const localPackage = { path: '../native/WorkspaceMath', products: ['WorkspaceMath'] };
 ```
 
-Remote requirements support exact version, next major/minor, version range, branch, and revision forms. Prefer reviewed versions or revisions for reproducibility. An optional `target` names one or several Xcode targets. `podTarget` attaches products to CocoaPods targets through generated Podfile integration. Local paths resolve from generated `ios/`, not the config directory.
+Every remote declaration needs `url`, `products` (at least one product), and exactly one requirement shape:
+
+```ts
+// Alternative values for a remote package's requirement field:
+const requirements = [
+  { kind: 'exactVersion', version: '1.1.4' },
+  { kind: 'upToNextMajorVersion', minimumVersion: '1.1.4' },
+  { kind: 'upToNextMinorVersion', minimumVersion: '1.1.4' },
+  { kind: 'versionRange', minimumVersion: '1.1.0', maximumVersion: '2.0.0' },
+  { kind: 'branch', branch: 'main' },
+  { kind: 'revision', revision: '<reviewed-commit-sha>' },
+];
+```
+
+A local declaration uses `path` and `products` instead of `url` and `requirement`. Prefer reviewed versions or revisions for reproducibility. An optional `target` names one or several Xcode targets. `podTarget` attaches products to CocoaPods targets through generated Podfile integration. Local paths resolve from generated `ios/`, not the config directory.
 
 `ios.pods` accepts `{ pod: 'WorkspaceGreeting', path: '../native/WorkspaceGreeting' }` for local pods or version/git declarations for remote pods. An extension can use its own `pods` array. A linked library is not automatically a JavaScript-accessible native module.
+
+A Pod declaration requires `pod`. Additional fields are `path` for a local pod, or `version` / `git` with optional `branch`, `tag`, or `commit` for a remote pod; `configurations` accepts `Debug` and/or `Release`, and `modularHeaders` is boolean. Use the source form appropriate to the dependency; do not combine a local path with remote selection options. Host pods go in `ios.pods`; extension pods go in `ios.targets[].pods`, not a `target` property on a Pod declaration.
+
+A Swift package's `target` can be one target name or an array; omitting it selects the host. Use declared native target names or the sanitized Expo app name. `podTarget` can likewise be one name or an array of CocoaPods target names.
 
 ## Podfile build settings
 
@@ -77,7 +221,7 @@ export default defineWorkspace({
 });
 ```
 
-`androidLibrary(module, configuration)` defaults to `implementation`. `androidFeature(name, required)` defaults to required. Optional hardware avoids unnecessarily excluding devices. Declaring a permission does not grant runtime access; request dangerous permissions at runtime.
+`androidLibrary(module, configuration)` defaults to `implementation`. Supported configurations are `implementation`, `api`, `compileOnly`, `runtimeOnly`, `debugImplementation`, and `releaseImplementation`. `androidFeature(name, required)` defaults to required. Optional hardware avoids unnecessarily excluding devices. Declaring a permission does not grant runtime access; request dangerous permissions at runtime.
 
 Android settings also cover SDK versions, build tools, NDK, Kotlin, and signing. Prefer Expo's defaults unless a dependency requires a change. Signing credentials must stay in environment references or private credential files and must not be committed. Sample apps deliberately use ordinary debug signing defaults.
 
@@ -150,3 +294,20 @@ removePodBuildPhases: [{
 ```
 
 Scheme names may contain spaces, for example `Example App Debug`; names must remain safe filenames. Existing CI scheme names can therefore be preserved during migration.
+
+## Validation examples
+
+These are invalid workspace fragments:
+
+```ts
+// Unknown root field: Expo settings belong in app.json/app.config.ts.
+const wrongRoot = { expo: { ios: { bundleIdentifier: 'com.example.app' } } };
+// Unsupported target kind: use share, widget, or clip.
+const wrongTarget = { name: 'Watch', type: 'watch' };
+// Unsupported custom build configuration: create/use Debug or Release schemes.
+const wrongScheme = { name: 'Staging', configuration: 'Staging' };
+// SDK ordering must be coherent.
+const wrongAndroid = { minSdkVersion: 35, targetSdkVersion: 34 };
+```
+
+Schema validation also checks field shapes and unknown keys. Semantic validation checks source directories, target names and bundle identifier collisions, App Group consistency, and package target references. It cannot prove that Swift code compiles, a Maven artifact exists, or signing credentials work. Run `validate`, inspect `plan`, then prebuild and compile the relevant native app.

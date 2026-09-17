@@ -39,6 +39,8 @@ export default defineWorkspace({
 
 Run `expo-native-workspace validate`, `plan`, and `doctor` before `expo prebuild`. A plan describes intended operations; it does not compare every byte of the existing native project or prove that a native build succeeds.
 
+The example expects `targets/WorkspaceShare/` to contain native sources. To generate a source-bearing starter instead, use `init --template share-extension --yes` in an app without an existing workspace config. See [all four starter presets](docs/templates.md) for exact files and remaining implementation work. Add Android settings, packages, or schemes to the same manifest as needed; templates do not restrict its capabilities.
+
 ## Samples
 
 | App                                             | Demonstrates                                           |
@@ -53,6 +55,7 @@ Run `expo-native-workspace validate`, `plan`, and `doctor` before `expo prebuild
 ## Documentation
 
 - [Getting started](docs/getting-started.md) and [configuration reference](docs/configuration.md)
+- [Templates: what they generate and why](docs/templates.md) and [complete configuration recipes](docs/recipes.md)
 - [Architecture](docs/architecture.md) and [development rules](docs/development-rules.md)
 - [Compatibility and verification limits](docs/compatibility.md) and [local verification record](docs/verification.md)
 - [Troubleshooting](docs/troubleshooting.md)
