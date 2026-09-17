@@ -30,3 +30,30 @@ Use one signing source: environment references (`storeFile`, `keyAlias`, `storeP
 Optional missing properties allow debug builds; release tasks must receive complete, non-debug signing credentials. EAS can supply the effective release signing configuration, or the app can omit local signing when `EAS_BUILD` is `true` and let EAS own credentials. Do not assume ignored local credential files are uploaded. Preserve app-owned changes before clean regeneration when replacing a plugin that previously copied credentials into native output.
 
 For CocoaPods-specific workarounds, use scoped `ios.podBuildSettings` and `ios.removePodBuildPhases` rules rather than editing the generated Podfile. Targets accept an exact name or `equals`/`startsWith`/`regex` predicates. Preserve existing CI scheme names, including spaces. Keep app identifiers, vendor-specific values and source paths in the consuming application's configuration, never in the CLI implementation.
+
+## Manifest and starter examples
+
+`workspace.config.ts` is distinct from Expo's `app.json` and generated AndroidManifest.xml. It has optional `schemaVersion: 1`, `ios`, and `android` sections, with no `expo` wrapper. Unknown fields fail validation. `defineWorkspace` provides authoring types; CLI/plugin loading performs runtime validation.
+
+Choose one init preset only when no workspace config exists: `minimal` writes a config, `android` writes camera permission/optional hardware declarations, `share-extension` adds a placeholder Swift share controller, and `widget` adds a static WidgetKit source file. These are composable starting points, not feature restrictions. They do not install dependencies, register plugins, implement content persistence, or configure shared storage. Do not rerun init to add another capability; edit the existing config and supply source files.
+
+Complete example after `init --template share-extension --yes`:
+
+```ts
+import { defineWorkspace, shareExtension } from 'expo-native-workspace';
+
+export default defineWorkspace({
+  schemaVersion: 1,
+  ios: {
+    targets: [shareExtension({ name: 'ShareExtension', bundleIdentifier: '.share' })],
+    schemes: [{ name: 'Example Debug', configuration: 'Debug', archive: 'Release' }],
+  },
+  android: {
+    queries: { intents: [{ action: 'android.intent.action.VIEW', scheme: 'geo' }] },
+  },
+});
+```
+
+The source defaults to `targets/ShareExtension`; host `expo.ios.bundleIdentifier` is required. Local Swift packages and pods use paths relative to generated `ios/`, for example `{ path: '../native/WorkspaceMath', products: ['WorkspaceMath'] }` in `ios.packages`. Moving the workspace config does not change path bases.
+
+Discovery checks `workspace.config.ts`, `.js`, `.cjs`, `.mjs`, and `.json` in order. For a custom path, pair CLI `--config config/native.json` with Expo plugin registration `['expo-native-workspace/plugin', { configPath: 'config/native.json' }]`. Keep other plugins and append this registration once. JSON uses ordinary objects, such as `{ name: 'Share', type: 'share' }`, instead of helper calls.
