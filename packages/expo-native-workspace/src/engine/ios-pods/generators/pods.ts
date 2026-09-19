@@ -1,5 +1,5 @@
 import { nameMatcherToRuby, rubyLiteral, withMeta } from '../../core';
-import type { Generator, MergeBlockOp, Op } from '../../core';
+import type { Generator, MergeBlockOp, Op, RemoveBlockOp } from '../../core';
 
 import {
   normalizeLocalPods,
@@ -93,6 +93,11 @@ function podRemoveBuildPhasesLines(rules: PodRemoveBuildPhaseRule[]): string {
     .join('\n');
 }
 
+/** Drops a previously merged block so deleting a declaration takes effect without a clean prebuild. */
+function removeBlock(tag: string, label: string): RemoveBlockOp {
+  return { kind: 'removeBlock', path: 'Podfile', tag, label };
+}
+
 function mergeBlock(tag: string, newSrc: string, anchor: RegExp, label: string): MergeBlockOp {
   return {
     kind: 'mergeBlock',
@@ -136,6 +141,18 @@ export const podsGenerator: Generator = {
           },
         ),
       );
+    } else {
+      ops.push(
+        withMeta(removeBlock(LOCAL_PODS_TAG, 'localPods'), {
+          id: 'pod:local',
+          platform: 'ios',
+          semanticKind: 'ios.pod.add',
+          source: 'ios.pods',
+          status: 'remove',
+          files: ['ios/Podfile'],
+          phase: 'cleanup',
+        }),
+      );
     }
     if (remotePods.length > 0) {
       ops.push(
@@ -156,6 +173,18 @@ export const podsGenerator: Generator = {
             desired: remotePods,
           },
         ),
+      );
+    } else {
+      ops.push(
+        withMeta(removeBlock(REMOTE_PODS_TAG, 'remotePods'), {
+          id: 'pod:remote',
+          platform: 'ios',
+          semanticKind: 'ios.pod.add',
+          source: 'ios.pods',
+          status: 'remove',
+          files: ['ios/Podfile'],
+          phase: 'cleanup',
+        }),
       );
     }
     if (podBuildSettings.length > 0) {
@@ -178,6 +207,18 @@ export const podsGenerator: Generator = {
           },
         ),
       );
+    } else {
+      ops.push(
+        withMeta(removeBlock(POD_BUILD_SETTINGS_TAG, 'podBuildSettings'), {
+          id: 'pod:buildSettings',
+          platform: 'ios',
+          semanticKind: 'ios.pod.buildSetting.set',
+          source: 'ios.podBuildSettings',
+          status: 'remove',
+          files: ['ios/Podfile'],
+          phase: 'cleanup',
+        }),
+      );
     }
     if (removePodBuildPhases.length > 0) {
       ops.push(
@@ -198,6 +239,18 @@ export const podsGenerator: Generator = {
             desired: removePodBuildPhases,
           },
         ),
+      );
+    } else {
+      ops.push(
+        withMeta(removeBlock(POD_REMOVE_BUILD_PHASES_TAG, 'removePodBuildPhases'), {
+          id: 'pod:removeBuildPhases',
+          platform: 'ios',
+          semanticKind: 'ios.pod.buildPhase.remove',
+          source: 'ios.removePodBuildPhases',
+          status: 'remove',
+          files: ['ios/Podfile'],
+          phase: 'cleanup',
+        }),
       );
     }
     return { ops };
