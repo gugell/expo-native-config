@@ -21,6 +21,37 @@ const examples = [
     'android',
     ['android.permission.CAMERA', 'android.hardware.camera', 'android:supportsRtl="true"'],
   ],
+  [
+    'native-workarounds',
+    'android',
+    [
+      "include ':workspace-native-lib'",
+      "implementation project(':workspace-native-lib')",
+      "abiFilters 'arm64-v8a'",
+      'reactNativeArchitectures=arm64-v8a',
+      'expoAutolinking.exclude',
+      'dev.exponativeworkspace.SAMPLE_KEY',
+      'tools:node="remove"',
+      'android:windowSoftInputMode="adjustResize"',
+      'workspace_sample_value',
+      'WorkspaceGreeting',
+      "classpath 'com.google.gms:google-services:4.4.2'",
+      "force 'com.google.android.material:material:1.12.0'",
+    ],
+  ],
+  [
+    'native-workarounds-ios',
+    'ios',
+    [
+      'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES',
+      'ExtractAppIntentsMetadata',
+      "use_expo_modules!(exclude: ['@expo-native-workspace/absent-module'])",
+      '$WorkspaceSampleStaticFramework = true',
+      'LD_EXPORT_SYMBOLS = NO',
+      'Workspace Upload Symbols',
+      'expo-native-workspace: AppDelegate injection ran',
+    ],
+  ],
 ];
 function run(args, cwd) {
   const result = spawn.sync('pnpm', args, {
@@ -37,7 +68,8 @@ function nativeText(directory) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return nativeText(path);
     if (
-      /\.(pbxproj|xcscheme|plist|xml|gradle|properties)$/.test(entry.name) ||
+      // .kt/.swift are here so entry-point injection is asserted too.
+      /\.(pbxproj|xcscheme|plist|xml|gradle|properties|kt|java|swift)$/.test(entry.name) ||
       entry.name === 'Podfile'
     ) {
       return [entry.name, readFileSync(path, 'utf8')];
@@ -46,7 +78,8 @@ function nativeText(directory) {
   });
 }
 for (const [name, platform, markers] of examples) {
-  const cwd = join(root, 'apps', name);
+  // One app can appear twice, once per platform; the directory drops the suffix.
+  const cwd = join(root, 'apps', name.replace(/-ios$/, ''));
   run(['exec', 'expo-native-workspace', 'validate'], cwd);
   run(['exec', 'expo-native-workspace', 'plan'], cwd);
   if (prebuild) {
