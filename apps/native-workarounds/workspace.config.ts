@@ -1,5 +1,6 @@
 import {
   Abi,
+  AndroidApplication,
   AndroidComponent,
   AndroidDependency,
   AndroidModule,
@@ -139,10 +140,10 @@ export default defineWorkspace({
         ].join('\n'),
       },
     ],
-    applicationAttributes: {
-      'android:networkSecurityConfig': '@xml/workspace_network_security_config',
+    applicationAttributes: AndroidApplication.attributes({
+      networkSecurityConfig: '@xml/workspace_network_security_config',
       // Large media assets exhaust the default heap before they exhaust memory.
-      'android:largeHeap': 'true',
-    },
+      largeHeap: true,
+    }),
   },
 });

@@ -1,8 +1,10 @@
-import { defineWorkspace } from 'expo-native-config';
+import { defineWorkspace, Package, Pod } from 'expo-native-config';
+
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
-    packages: [{ path: '../native/WorkspaceMath', products: ['WorkspaceMath'] }],
-    pods: [{ pod: 'WorkspaceGreeting', path: '../native/WorkspaceGreeting' }],
+    // Both paths resolve from the generated ios/ directory, not from this file.
+    packages: [Package.local('../native/WorkspaceMath', ['WorkspaceMath'])],
+    pods: [Pod.local('WorkspaceGreeting', '../native/WorkspaceGreeting')],
   },
 });

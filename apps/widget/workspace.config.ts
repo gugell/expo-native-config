@@ -1,9 +1,10 @@
-import { defineWorkspace, widgetExtension } from 'expo-native-config';
+import { defineWorkspace, Target } from 'expo-native-config';
+
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
     targets: [
-      widgetExtension({
+      Target.widget({
         name: 'WorkspaceWidget',
         source: './targets/WorkspaceWidget',
         bundleIdentifier: '.widget',
