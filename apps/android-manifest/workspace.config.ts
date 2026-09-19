@@ -1,4 +1,4 @@
-import { androidFeature, defineWorkspace } from 'expo-native-workspace';
+import { androidFeature, defineWorkspace } from 'expo-native-config';
 export default defineWorkspace({
   schemaVersion: 1,
   android: {

@@ -1,6 +1,6 @@
 # Architecture
 
-The repository has one publishable package, `packages/expo-native-workspace`, and six private sample apps. pnpm manages workspace dependencies and a shared catalog; samples consume the same public entry points as external users.
+The repository has one publishable package, `packages/expo-native-config`, and six private sample apps. pnpm manages workspace dependencies and a shared catalog; samples consume the same public entry points as external users.
 
 Configuration loading, schema validation, normalization, planning, and execution form separate boundaries. Runtime Zod schemas define the public data model before behavior is implemented. TypeScript types derive from these schemas where practical. The CLI and config plugin share the same validated configuration and planning behavior.
 
@@ -14,7 +14,7 @@ flowchart LR
   F --> G[Native project mods]
 ```
 
-Internal engine modules divide iOS targets, Swift packages, CocoaPods, Xcode, Android, and file operations. They are implementation boundaries within one npm package, not independently published workspace packages. Consumers import helpers from the package root and the Expo plugin from `expo-native-workspace/plugin`.
+Internal engine modules divide iOS targets, Swift packages, CocoaPods, Xcode, Android, and file operations. They are implementation boundaries within one npm package, not independently published workspace packages. Consumers import helpers from the package root and the Expo plugin from `expo-native-config/plugin`.
 
 Generators describe operations; executors apply them through Expo config-plugin mods. Operation IDs let users inspect an intended change with `explain`. Plans are semantic descriptions of desired work, not complete diffs against generated native projects. Config loading can execute JavaScript and TypeScript and therefore is not a sandbox.
 

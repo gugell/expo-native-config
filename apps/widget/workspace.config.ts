@@ -1,4 +1,4 @@
-import { defineWorkspace, widgetExtension } from 'expo-native-workspace';
+import { defineWorkspace, widgetExtension } from 'expo-native-config';
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {

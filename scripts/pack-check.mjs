@@ -14,9 +14,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const packageRoot = join(root, 'packages/expo-native-workspace');
+const packageRoot = join(root, 'packages/expo-native-config');
 const release = process.argv.includes('--release');
-const temporary = mkdtempSync(join(tmpdir(), 'expo-native-workspace-pack-'));
+const temporary = mkdtempSync(join(tmpdir(), 'expo-native-config-pack-'));
 const destination = release ? join(root, 'artifacts/release') : join(temporary, 'tarballs');
 mkdirSync(destination, { recursive: true });
 function run(command, args, cwd) {
@@ -27,9 +27,9 @@ function run(command, args, cwd) {
 try {
   const version = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8')).version;
   run('pnpm', ['pack', '--pack-destination', destination], packageRoot);
-  let tarball = join(destination, `expo-native-workspace-${version}.tgz`);
+  let tarball = join(destination, `expo-native-config-${version}.tgz`);
   if (release) {
-    const stable = join(destination, 'expo-native-workspace.tgz');
+    const stable = join(destination, 'expo-native-config.tgz');
     rmSync(stable, { force: true });
     renameSync(tarball, stable);
     tarball = stable;
@@ -46,7 +46,7 @@ try {
     ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false', tarball],
     consumer,
   );
-  const installed = join(consumer, 'node_modules/expo-native-workspace');
+  const installed = join(consumer, 'node_modules/expo-native-config');
   const manifest = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8'));
   assert.equal(manifest.version, version);
   assert.equal(manifest.private, undefined);
@@ -73,7 +73,7 @@ try {
       '-e',
       `
     const assert = require('node:assert/strict');
-    const api = require('expo-native-workspace');
+    const api = require('expo-native-config');
     for (const helper of ['defineWorkspace', 'shareExtension', 'widgetExtension', 'appClip', 'swiftPackage', 'localSwiftPackage', 'scheme', 'androidLibrary', 'androidFeature']) {
       assert.equal(typeof api[helper], 'function', helper);
     }
@@ -85,8 +85,8 @@ try {
     assert.deepEqual(api.XcodeBuildSettings.of({ ldExportSymbols: false }), { LD_EXPORT_SYMBOLS: 'NO' });
     assert.equal(api.androidLibrary('example:library:1.0.0').configuration, 'implementation');
     assert.equal(api.WorkspaceSchema.safeParse(api.defineWorkspace({ schemaVersion: 1 })).success, true);
-    assert.equal(typeof require('expo-native-workspace/plugin'), 'function');
-    assert.equal(typeof require('./node_modules/expo-native-workspace/app.plugin.cjs'), 'function');
+    assert.equal(typeof require('expo-native-config/plugin'), 'function');
+    assert.equal(typeof require('./node_modules/expo-native-config/app.plugin.cjs'), 'function');
   `,
     ],
     consumer,
@@ -94,7 +94,7 @@ try {
   const bin = join(
     consumer,
     'node_modules/.bin',
-    process.platform === 'win32' ? 'expo-native-workspace.cmd' : 'expo-native-workspace',
+    process.platform === 'win32' ? 'expo-native-config.cmd' : 'expo-native-config',
   );
   const versionResult = spawn.sync(bin, ['--version'], { cwd: consumer, encoding: 'utf8' });
   assert.equal(versionResult.status, 0, versionResult.stderr);
@@ -108,7 +108,7 @@ try {
   ]) {
     run(bin, args, consumer);
   }
-  console.log(`Packed npm consumer verified: expo-native-workspace@${version}`);
+  console.log(`Packed npm consumer verified: expo-native-config@${version}`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

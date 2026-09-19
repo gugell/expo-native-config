@@ -1,6 +1,6 @@
 # Releasing
 
-The npm package is `expo-native-workspace`; all sample apps and the repository root remain private. Publishing requires a real repository remote, npm package ownership, and release credentials or configured trusted publishing. This repository does not create those external resources.
+The npm package is `expo-native-config`; all sample apps and the repository root remain private. Publishing requires a real repository remote, npm package ownership, and release credentials or configured trusted publishing. This repository does not create those external resources.
 
 ## Before publication
 

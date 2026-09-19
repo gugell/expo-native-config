@@ -1,15 +1,15 @@
 {
-  "name": "expo-native-workspace-repo",
+  "name": "expo-native-config-repo",
   "private": true,
   "packageManager": "pnpm@10.34.5",
   "engines": {
     "node": ">=24.0.0"
   },
   "scripts": {
-    "build": "pnpm --filter expo-native-workspace build",
+    "build": "pnpm --filter expo-native-config build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter expo-native-workspace test",
-    "lint": "eslint packages/expo-native-workspace/src packages/expo-native-workspace/tests scripts",
+    "test": "pnpm --filter expo-native-config test",
+    "lint": "eslint packages/expo-native-config/src packages/expo-native-config/tests scripts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
@@ -51,7 +51,7 @@
       "@release-it/bumper": {
         "out": [
           {
-            "file": "packages/expo-native-workspace/package.json",
+            "file": "packages/expo-native-config/package.json",
             "path": "version"
           }
         ]
@@ -82,7 +82,7 @@
             }
           ]
         },
-        "infile": "packages/expo-native-workspace/CHANGELOG.md"
+        "infile": "packages/expo-native-config/CHANGELOG.md"
       }
     }
   }

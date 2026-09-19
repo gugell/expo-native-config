@@ -7,10 +7,10 @@ From the repository root:
 ```sh
 pnpm install
 pnpm build
-pnpm --filter @expo-native-workspace/example-share-extension validate
-pnpm --filter @expo-native-workspace/example-share-extension plan
-pnpm --filter @expo-native-workspace/example-share-extension prebuild --platform ios --no-install
-pnpm --filter @expo-native-workspace/example-share-extension ios
+pnpm --filter @expo-native-config/example-share-extension validate
+pnpm --filter @expo-native-config/example-share-extension plan
+pnpm --filter @expo-native-config/example-share-extension prebuild --platform ios --no-install
+pnpm --filter @expo-native-config/example-share-extension ios
 ```
 
 The final command requires macOS, Xcode and CocoaPods. Native compilation and interactive behavior require separate verification; a successful plan or prebuild does not prove them. Generated `ios/` and `android/` folders are disposable only after preserving manual edits.
@@ -25,7 +25,7 @@ For a headless unsigned host build after installing pods, run from this app dire
 xcodebuild -workspace ios/ShareExtension.xcworkspace -scheme ShareExtension \
   -configuration Debug -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' \
-  -derivedDataPath /tmp/expo-native-workspace-host-build \
+  -derivedDataPath /tmp/expo-native-config-host-build \
   CODE_SIGNING_ALLOWED=NO build
 ```
 

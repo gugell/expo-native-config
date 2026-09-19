@@ -4,12 +4,12 @@
     "slug": "android-manifest",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "dev.exponativeworkspace.androidmanifest"
+      "bundleIdentifier": "dev.exponativeconfig.androidmanifest"
     },
     "android": {
-      "package": "dev.exponativeworkspace.androidmanifest"
+      "package": "dev.exponativeconfig.androidmanifest"
     },
-    "plugins": ["expo-native-workspace/plugin"],
+    "plugins": ["expo-native-config/plugin"],
     "sdkVersion": "56.0.0"
   }
 }

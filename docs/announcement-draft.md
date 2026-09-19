@@ -4,9 +4,9 @@ Publish only after the registry release and installation smoke check succeed. Re
 
 ## Draft
 
-Expo Native Workspace keeps application-level native configuration in one typed file.
+Expo Native Config keeps application-level native configuration in one typed file.
 
-Declare share extensions, widgets, Swift packages, CocoaPods, Xcode schemes and Android settings in `workspace.config.ts`. Run `expo-native-workspace plan` to inspect the intended operations, then let Expo prebuild generate the native project.
+Declare share extensions, widgets, Swift packages, CocoaPods, Xcode schemes and Android settings in `workspace.config.ts`. Run `expo-native-config plan` to inspect the intended operations, then let Expo prebuild generate the native project.
 
 The first preview includes six complete sample apps, strict config validation, JSON diagnostics, a doctor command and agent skills. It targets Expo SDK 56. Removing declared native configuration requires a clean prebuild; the plan does not compare generated native state.
 

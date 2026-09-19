@@ -5,7 +5,7 @@ Use schema-first configuration and explicit package boundaries. Nx, GraphQL, and
 - Define runtime schemas before implementing configuration or external-data behavior. Use Zod and infer public types from the schema. Validate unknown input at boundaries; avoid `any` and unchecked casts.
 - Keep the public surface small: package-root helpers, the documented plugin subpath, and the CLI. Sample apps must not deep-import engine code.
 - Keep generators inspectable and execution separate. A config field is complete only when parsing, planning, native application, diagnostics, and relevant documentation agree.
-- Use pnpm and the committed lockfile. Add shared dependency versions to the workspace catalog. Only `packages/expo-native-workspace` is published; apps are private.
+- Use pnpm and the committed lockfile. Add shared dependency versions to the workspace catalog. Only `packages/expo-native-config` is published; apps are private.
 - Test observable outcomes: validation errors, native project structure, repeated application, and tarball consumption. Do not equate a passing unit test with a successful native build.
 - Preserve app-owned source files and avoid silent clobbering. Keep credentials out of samples, snapshots, diagnostics, and release artifacts.
 - Keep each meaningful change reviewable with its tests and documentation. Use conventional commits and stage explicit paths when sharing a checkout.

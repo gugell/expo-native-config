@@ -2,11 +2,11 @@
 
 ## The CLI cannot load the config
 
-Run it from the Expo app root and confirm `workspace.config.ts` has a default export with `schemaVersion: 1`. Build the package before using workspace-linked examples. Import public helpers from `expo-native-workspace`. Config files execute code: inspect import and environment failures as well as schema errors.
+Run it from the Expo app root and confirm `workspace.config.ts` has a default export with `schemaVersion: 1`. Build the package before using workspace-linked examples. Import public helpers from `expo-native-config`. Config files execute code: inspect import and environment failures as well as schema errors.
 
 ## A plan looks correct but native changes are absent
 
-Check that `expo-native-workspace/plugin` is registered in Expo's resolved config, then rerun prebuild for the relevant platform. Planning alone does not apply anything. A previously installed development build does not update merely because Metro restarts.
+Check that `expo-native-config/plugin` is registered in Expo's resolved config, then rerun prebuild for the relevant platform. Planning alone does not apply anything. A previously installed development build does not update merely because Metro restarts.
 
 ## An extension does not build or appear
 

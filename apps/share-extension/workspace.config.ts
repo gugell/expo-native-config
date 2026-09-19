@@ -1,4 +1,4 @@
-import { defineWorkspace, RunScript, Target, XcodeBuildSettings } from 'expo-native-workspace';
+import { defineWorkspace, RunScript, Target, XcodeBuildSettings } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -18,7 +18,7 @@ export default defineWorkspace({
     // Podfile configuration: the template reads it, no Ruby is rewritten.
     podfileProperties: { 'expo.jsEngine': 'hermes' },
     runScripts: [
-      RunScript.shell('Workspace Sample Script', 'echo "expo-native-workspace sample build phase"'),
+      RunScript.shell('Workspace Sample Script', 'echo "expo-native-config sample build phase"'),
     ],
   },
 });

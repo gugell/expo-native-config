@@ -24,7 +24,7 @@ const project = path.join(root, 'apps/android-gradle/android');
 const wrapper = path.join(project, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
 if (!existsSync(wrapper)) {
   console.error(
-    'Android sample is not generated. Run pnpm --filter @expo-native-workspace/example-android-gradle prebuild --platform android --no-install first.',
+    'Android sample is not generated. Run pnpm --filter @expo-native-config/example-android-gradle prebuild --platform android --no-install first.',
   );
   process.exit(1);
 }

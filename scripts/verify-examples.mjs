@@ -30,7 +30,7 @@ const examples = [
       "abiFilters 'arm64-v8a'",
       'reactNativeArchitectures=arm64-v8a',
       'expoAutolinking.exclude',
-      'dev.exponativeworkspace.SAMPLE_KEY',
+      'dev.exponativeconfig.SAMPLE_KEY',
       'tools:node="remove"',
       'android:windowSoftInputMode="adjustResize"',
       'workspace_sample_value',
@@ -45,11 +45,11 @@ const examples = [
     [
       'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES',
       'ExtractAppIntentsMetadata',
-      "use_expo_modules!(exclude: ['@expo-native-workspace/absent-module'])",
+      "use_expo_modules!(exclude: ['@expo-native-config/absent-module'])",
       '$WorkspaceSampleStaticFramework = true',
       'LD_EXPORT_SYMBOLS = NO',
       'Workspace Upload Symbols',
-      'expo-native-workspace: AppDelegate injection ran',
+      'expo-native-config: AppDelegate injection ran',
     ],
   ],
 ];
@@ -80,8 +80,8 @@ function nativeText(directory) {
 for (const [name, platform, markers] of examples) {
   // One app can appear twice, once per platform; the directory drops the suffix.
   const cwd = join(root, 'apps', name.replace(/-ios$/, ''));
-  run(['exec', 'expo-native-workspace', 'validate'], cwd);
-  run(['exec', 'expo-native-workspace', 'plan'], cwd);
+  run(['exec', 'expo-native-config', 'validate'], cwd);
+  run(['exec', 'expo-native-config', 'plan'], cwd);
   if (prebuild) {
     run(
       [

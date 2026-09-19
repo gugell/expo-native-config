@@ -6,7 +6,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    namespace 'dev.exponativeworkspace.workarounds.lib'
+    namespace 'dev.exponativeconfig.workarounds.lib'
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
