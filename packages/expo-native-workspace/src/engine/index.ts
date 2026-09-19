@@ -4,7 +4,16 @@ import { collectWorkspacePlan, fileExecutor, normalizeWorkspaceConfig } from './
 import type { WorkspaceAppConfig, WorkspacePlan } from './core';
 import { androidExecutor, androidGenerator } from './android';
 import { androidLintGenerator } from './android/generators/lint';
-import { podsGenerator } from './ios-pods';
+import { gradleExtrasGenerator } from './android/generators/gradleExtras';
+import { manifestExtrasGenerator } from './android/generators/manifestExtras';
+import { androidResourcesGenerator } from './android/generators/resources';
+import {
+  podsGenerator,
+  podfileExtrasGenerator,
+  podfilePropertiesGenerator,
+  podfilePropertiesExecutor,
+} from './ios-pods';
+import { sourceExecutor, sourceGenerator } from './source';
 import { podSettingsGenerator } from './ios-pods/generators/settings';
 import { queriesGenerator, queriesExecutor } from './android/queries';
 import { targetsGenerator } from './ios-targets';
@@ -14,21 +23,36 @@ import {
   schemesGenerator,
   xcodeEnvGenerator,
   fixEmbedCycleGenerator,
+  mainTargetGenerator,
 } from './ios-xcode';
 
 const generators = [
   podsGenerator,
   podSettingsGenerator,
+  podfileExtrasGenerator,
+  podfilePropertiesGenerator,
   targetsGenerator,
   spmGenerator,
   xcodeEnvGenerator,
   schemesGenerator,
   fixEmbedCycleGenerator,
+  mainTargetGenerator,
   androidGenerator,
   androidLintGenerator,
+  gradleExtrasGenerator,
+  manifestExtrasGenerator,
+  androidResourcesGenerator,
   queriesGenerator,
+  sourceGenerator,
 ];
-const executors = [fileExecutor, androidExecutor, queriesExecutor, pbxExecutor];
+const executors = [
+  fileExecutor,
+  androidExecutor,
+  queriesExecutor,
+  podfilePropertiesExecutor,
+  sourceExecutor,
+  pbxExecutor,
+];
 
 export function collect(
   workspaceConfig: WorkspaceConfig,
@@ -52,4 +76,4 @@ export const apply: ConfigPlugin<WorkspacePlan> = (config, plan) => {
   return next;
 };
 export type { WorkspaceAppConfig, WorkspacePlan, Op, PlanOperation } from './core';
-export { toPlanOperation, redactDeep } from './core';
+export { toPlanOperation, redactDeep, configPlugins } from './core';
