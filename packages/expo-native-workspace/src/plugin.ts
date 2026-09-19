@@ -1,12 +1,14 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
-import { apply } from './engine';
+import { apply, configPlugins } from './engine';
 import type { WorkspaceAppConfig } from './engine';
 import { createSession } from './session';
+
+const { name, version } = require('../package.json') as { name: string; version: string };
 
 export interface PluginOptions {
   configPath?: string;
 }
-const plugin: ConfigPlugin<PluginOptions | void> = (config, options) => {
+const withWorkspace: ConfigPlugin<PluginOptions | void> = (config, options) => {
   const projectRoot = config._internal?.projectRoot ?? process.cwd();
   const session = createSession(
     projectRoot,
@@ -24,4 +26,11 @@ const plugin: ConfigPlugin<PluginOptions | void> = (config, options) => {
   }
   return apply(config, session.plan);
 };
+
+/**
+ * Guarded with `createRunOncePlugin`: a config that registers the plugin twice
+ * (directly and through another plugin) would otherwise plan and apply every
+ * operation twice.
+ */
+const plugin = configPlugins.createRunOncePlugin(withWorkspace, name, version);
 export default plugin;
