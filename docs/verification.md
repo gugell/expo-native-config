@@ -59,6 +59,16 @@ Verified after a clean prebuild: `android.strings.startup_value` reached `androi
 
 Not verified: that the listeners actually log at runtime, which needs a device or emulator, and the iOS subscriber's compilation, which needs CocoaPods.
 
+## Release rehearsal on the real path — 2026-09-19
+
+Three failures in `scripts/release.sh` reached the user because every earlier check had been a `--dry-run`, and the dry run is the only path where the flag arrays are populated. The path is now exercised for real, in a throwaway clone with `--no-npm.publish --no-git.push --no-github.release`:
+
+`--no-increment` produced the `chore: release v0.1.0` commit, the `v0.1.0` tag and the generated changelog, leaving the package at 0.1.0 as intended. `pnpm check` then passed **in the same clone, on the release commit** — the sequence CI runs on main after a release lands, and the one that caught the changelog formatting problem.
+
+`pnpm release:check` covers the same three invocations against a stubbed pnpm on every `pnpm check`, asserting the arguments that reach release-it rather than only the exit code. Verified by running the previous script against it and watching it fail.
+
+Still not verified: an actual npm publish, which needs registry credentials, and the GitHub release, which needs the repository to accept one.
+
 ## Boundaries
 
 The plan displays intended operations, not a native state diff. Release-it offline dry run passed against the initial Git commit, calculating the next version and changelog without changing files, publishing, or contacting a remote. Interactive share-sheet/widget behavior, physical-device signing, App Store submission, Windows/Linux CI execution, and registry publication have not been verified locally. The repository includes CI jobs; those jobs do not have a remote run until the repository is created and pushed.
