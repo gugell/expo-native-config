@@ -57,7 +57,8 @@
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test tests/*.test.ts",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "release": "release-it"
   },
   "dependencies": {
     "@bacons/xcode": "1.0.0-alpha.32",
@@ -81,5 +82,24 @@
     "typescript": "catalog:",
     "tsx": "^4.23.0",
     "esbuild": "^0.25.0"
+  },
+  "release-it": {
+    "npm": {
+      "publish": true,
+      "publishPath": "../../artifacts/release/expo-native-workspace.tgz",
+      "publishPackageManager": "npm",
+      "publishArgs": [
+        "--access",
+        "public"
+      ]
+    },
+    "git": false,
+    "github": {
+      "release": false
+    },
+    "hooks": {
+      "before:init": "pnpm --dir ../.. check",
+      "after:bump": "node ../../scripts/pack-check.mjs --release"
+    }
   }
 }
