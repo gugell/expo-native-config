@@ -5,6 +5,7 @@ import { IOSConfig } from '@expo/config-plugins';
 import { getConfig } from '@expo/config';
 import jiti from 'jiti';
 import { resolveTargetBundleId } from './engine/ios-targets/bundleId';
+import { collectGuidance } from './guidance';
 import { WorkspaceSchema, type WorkspaceConfig } from './schema';
 import { collect, type WorkspaceAppConfig, type WorkspacePlan } from './engine';
 export interface Diagnostic {
@@ -112,7 +113,9 @@ export function createSession(
       },
     ]);
   }
-  const diagnostics: Diagnostic[] = [];
+  // Where a change belongs, as opposed to whether it parses. Collected before
+  // the semantic checks so a config gets every complaint at once.
+  const diagnostics: Diagnostic[] = collectGuidance(config);
   const add = (code: string, message: string, source?: string) =>
     diagnostics.push({ severity: 'error', code, message, source });
   const targets = config.ios?.targets ?? [];
