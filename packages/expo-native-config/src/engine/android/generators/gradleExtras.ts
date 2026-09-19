@@ -399,28 +399,51 @@ export const gradleExtrasGenerator: Generator = {
     const exclude = slice.autolinkingExclude ?? [];
     if (exclude.length > 0) {
       const marker = '// expo-native-config-autolinking-exclude';
-      tag(
-        {
-          kind: 'androidGradleReplace',
-          file: 'settings',
-          find: String.raw`expoAutolinking\.useExpoModules\(\)`,
-          replacement: `expoAutolinking.exclude = [${exclude
-            .map(quote)
-            .join(', ')}] ${marker}\nexpoAutolinking.useExpoModules()`,
-          all: false,
-          skipIfContains: marker,
-          label: 'android:autolinkingExclude',
-        } satisfies AndroidGradleReplaceOp,
-        {
-          id: 'android.autolinkingExclude',
-          platform: 'android',
-          semanticKind: 'android.autolinking.exclude',
-          source: 'android.autolinkingExclude',
-          status: 'update',
-          files: ['android/settings.gradle'],
-          desired: exclude,
-        },
-      );
+      const list = exclude.map(quote).join(', ');
+      // Autolinking is configured two different ways depending on the SDK:
+      // `expoAutolinking.exclude = […]` before `expoAutolinking.useExpoModules()`
+      // on newer templates, and an options map passed to a bare
+      // `useExpoModules()` on older ones. Both rules carry the same marker, so
+      // whichever applies first makes the other skip.
+      const rules: Array<[string, string, string, boolean]> = [
+        [
+          'modern',
+          String.raw`expoAutolinking\.useExpoModules\(\)`,
+          `expoAutolinking.exclude = [${list}] ${marker}\nexpoAutolinking.useExpoModules()`,
+          false,
+        ],
+        [
+          // `required`, so a template with neither shape fails loudly instead of
+          // silently shipping the module the config asked to exclude.
+          'legacy',
+          String.raw`(?<!expoAutolinking\.)useExpoModules\(\)`,
+          `useExpoModules([exclude: [${list}]]) ${marker}`,
+          true,
+        ],
+      ];
+      for (const [variant, find, replacement, required] of rules) {
+        tag(
+          {
+            kind: 'androidGradleReplace',
+            file: 'settings',
+            find,
+            replacement,
+            all: false,
+            skipIfContains: marker,
+            required,
+            label: `android:autolinkingExclude:${variant}`,
+          } satisfies AndroidGradleReplaceOp,
+          {
+            id: `android.autolinkingExclude.${variant}`,
+            platform: 'android',
+            semanticKind: 'android.autolinking.exclude',
+            source: 'android.autolinkingExclude',
+            status: 'update',
+            files: ['android/settings.gradle'],
+            desired: exclude,
+          },
+        );
+      }
     }
 
     // --- res files ---------------------------------------------------------

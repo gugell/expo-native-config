@@ -16,8 +16,6 @@ import type {
 import { podfileExtrasGenerator } from '../src/engine/ios-pods/generators/podfileExtras';
 import { podsGenerator } from '../src/engine/ios-pods/generators/pods';
 import { mainTargetGenerator } from '../src/engine/ios-xcode/generators/mainTarget';
-import { injectBlock } from '../src/engine/source/inject';
-import { sourceGenerator } from '../src/engine/source/generator';
 import { fileExecutor } from '../src/engine/core/fileExecutor';
 import type { CopyFileOp, RemoveBlockOp, ReplaceInFileOp } from '../src/engine/core';
 import { WorkspaceSchema } from '../src/schema';
@@ -231,29 +229,6 @@ test('iOS resources are copied beside the project and then referenced once', () 
   );
 });
 
-test('entry-point injection replaces its own block instead of stacking copies', () => {
-  const [op] = ops(sourceGenerator, {
-    appDelegate: { imports: ['import UAEPass'], didFinishLaunching: ['setup()'] },
-  });
-  assert.equal(op.kind, 'iosAppDelegate');
-  assert.equal(op.meta.risk, 'escape-hatch');
-
-  const source = ['import Expo', 'import React', '', 'class AppDelegate {', '}', ''].join('\n');
-  const inject = (src: string): string =>
-    injectBlock(src, {
-      tag: 'test-imports',
-      lines: ['import UAEPass'],
-      afterLast: /^(?:@[A-Za-z]+\s+)?import .+$/m,
-      comment: '//',
-      label: 'test',
-    });
-  const once = inject(source);
-  assert.equal(once.match(/import UAEPass/g)?.length, 1);
-  assert.equal(inject(once), once);
-  // inserted after the LAST import, not the first
-  assert.ok(once.indexOf('import UAEPass') > once.indexOf('import React'));
-});
-
 test('copyFile refuses to run when the declared source is missing', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'workspace-copy-'));
   const op: CopyFileOp = {
@@ -294,7 +269,6 @@ test('the public schema accepts the new surface and still rejects unknown fields
       mavenRepositories: [{ url: 'https://example.com/repo', includeGroups: ['com.example'] }],
       modules: [{ name: 'watermelondb-jsi', path: 'node_modules/x/native/android-jsi' }],
       strings: { expo_custom_value: 'x' },
-      mainApplication: { onCreate: ['setup()'] },
     },
   });
   assert.equal(valid.success, true, JSON.stringify(valid.error?.issues));

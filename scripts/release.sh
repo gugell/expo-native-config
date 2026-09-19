@@ -64,13 +64,34 @@ if [ "$dry_run" = false ]; then
   ensure_github_token
 fi
 
+# Resolve ONE version for both passes. Without this each package takes
+# release-it's own default — a patch bump — while the root computes its version
+# from the conventional commits, and the two disagree: packages publish 0.1.1
+# while the tag says 0.2.0. Positional arguments (patch, minor, 1.2.3) are
+# consumed here and replaced by the concrete version; flags still pass through.
+flags=()
+for argument in "$@"; do
+  case "$argument" in
+  -*) flags+=("$argument") ;;
+  esac
+done
+
+version="$(pnpm exec release-it --release-version "$@" 2>/dev/null | tail -1)"
+if [ -z "$version" ]; then
+  echo "error: could not determine the next version. Pass one explicitly, e.g. 'patch' or '1.2.3'." >&2
+  exit 1
+fi
+echo "Releasing version $version"
+
 for package in packages/*; do
-  [ -d "$package" ] || continue
+  # A directory with no manifest is not a package — a leftover build directory
+  # must not be treated as one and published.
+  [ -f "$package/package.json" ] || continue
   echo "Publishing '$(basename "$package")' to npm"
-  (cd "$package" && pnpm exec release-it "$@" "${offline[@]}")
+  (cd "$package" && pnpm exec release-it "$version" "${flags[@]}" "${offline[@]}")
 done
 
 echo "Creating the version bump commit, tag and GitHub release"
-pnpm exec release-it "$@" "${offline[@]}"
+pnpm exec release-it "$version" "${flags[@]}" "${offline[@]}"
 
 echo "Released expo-native-config."

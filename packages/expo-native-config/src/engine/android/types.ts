@@ -77,11 +77,6 @@ export interface AndroidStyleSpec {
   targetApi?: string;
 }
 
-export interface AndroidSourceInjection {
-  imports?: string[];
-  onCreate?: string[];
-}
-
 export interface AndroidSlice {
   lint?: { checkReleaseBuilds?: boolean; abortOnError?: boolean };
   minSdkVersion?: number;
@@ -131,8 +126,6 @@ export interface AndroidSlice {
   modules?: AndroidModuleSpec[];
   /** Expo module names excluded from Android autolinking. */
   autolinkingExclude?: string[];
-  /** Lines injected into the generated MainApplication. */
-  mainApplication?: AndroidSourceInjection;
   /** `strings.xml` values; the documented channel for pre-JS native startup config. */
   strings?: Record<string, string>;
   /** `colors.xml` values. */

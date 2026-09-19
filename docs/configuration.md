@@ -139,7 +139,6 @@ All fields are optional unless marked required. Unknown fields are rejected rath
 | `resources`                                | App-root files copied beside the project and bundled with the app       |
 | `podfileProperties`                        | `Podfile.properties.json` keys; the Expo-sanctioned Podfile channel     |
 | `autolinkingExclude`                       | Expo modules excluded from `use_expo_modules!`                          |
-| `appDelegate`                              | `imports` / `didFinishLaunching` lines injected into the AppDelegate    |
 | `podfile`                                  | Escape hatch: raw `postInstall`, `lines`, regex `replace`               |
 
 | Android field                                      | Shape / purpose                                                            |
@@ -165,7 +164,6 @@ All fields are optional unless marked required. Unknown fields are rejected rath
 | `autolinkingExclude`                               | Expo modules excluded from Android autolinking                             |
 | `strings`, `colors`, `styles`                      | Typed resource values through Expo's introspectable mods                   |
 | `resources`                                        | Raw files under `app/src/main/res` (for resources with no typed mod)       |
-| `mainApplication`                                  | `imports` / `onCreate` lines injected into MainApplication                 |
 | `gradle`                                           | Escape hatch: regex `replace` rules per Gradle file                        |
 | `lint`                                             | Optional `checkReleaseBuilds` and `abortOnError` booleans                  |
 | `signing`                                          | One of the two signing shapes described below                              |
@@ -353,23 +351,14 @@ const android = {
 
 A dependency entry is a Maven coordinate (`module`, with optional `exclude`), a local Gradle module (`project`), or a BOM (`platform`). `modules` writes the `include` / `projectDir` pair into `settings.gradle`; `dependencies` still has to reference the module for it to be linked. `abiFilters` sets both `ndk.abiFilters` and `reactNativeArchitectures`, because React Native compiles per architecture from its own property and would otherwise still ship every ABI.
 
-## Entry-point injection
+## Work that must run at startup
 
-`ios.appDelegate` and `android.mainApplication` insert lines into the generated AppDelegate and MainApplication inside a replaceable tagged block.
+This package does not edit `AppDelegate` or `MainApplication`, and has no field that will. Expo provides supported hooks for exactly this, and they survive template changes that string surgery does not:
 
-```ts
-const config = {
-  ios: { appDelegate: { didFinishLaunching: ['RCTI18nUtil.sharedInstance().forceRTL(true)'] } },
-  android: {
-    mainApplication: {
-      imports: ['import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage'],
-      onCreate: ['packages.add(WatermelonDBJSIPackage())'],
-    },
-  },
-};
-```
+- **iOS** — an `ExpoAppDelegateSubscriber` in an Expo module receives the AppDelegate lifecycle without anyone editing the AppDelegate.
+- **Android** — `ReactActivityLifecycleListener` and the application lifecycle listeners in `expo-modules-core` do the same, and `strings.xml` carries the values they read. That is why `android.strings` goes through Expo's own mod: a listener can read a string resource before the JS engine starts.
 
-These are escape hatches: the lines are your own native code, in the generated file's language, and nothing validates that they compile. Expo's own recommendation is to prefer `ReactActivityLifecycleListeners` plus `android.strings` for Android startup configuration, and to reach for injection only when no module-level hook exists.
+Create a local Expo module (`npx create-expo-module --local`), implement the listener or subscriber there, and declare its configuration with `android.strings`. A library that needs registering usually ships its own config plugin — register that in `expo.plugins` rather than reproducing what it does.
 
 ## Escape hatches
 

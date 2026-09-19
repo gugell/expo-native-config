@@ -13,7 +13,6 @@ import {
   podfilePropertiesGenerator,
   podfilePropertiesExecutor,
 } from './ios-pods';
-import { sourceExecutor, sourceGenerator } from './source';
 import { podSettingsGenerator } from './ios-pods/generators/settings';
 import { queriesGenerator, queriesExecutor } from './android/queries';
 import { targetsGenerator } from './ios-targets';
@@ -43,14 +42,12 @@ const generators = [
   manifestExtrasGenerator,
   androidResourcesGenerator,
   queriesGenerator,
-  sourceGenerator,
 ];
 const executors = [
   fileExecutor,
   androidExecutor,
   queriesExecutor,
   podfilePropertiesExecutor,
-  sourceExecutor,
   pbxExecutor,
 ];
 

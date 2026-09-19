@@ -187,7 +187,7 @@ test('doctor blocks an older Expo SDK but only warns about a newer one', () => {
   );
 
   // Older than the minimum: a real error.
-  withExpoVersion(root, '54.0.0');
+  withExpoVersion(root, '49.0.0');
   const older = JSON.parse(run('doctor', '--project', root, '--json').stdout) as {
     valid: boolean;
     diagnostics: Array<{ severity: string; code: string; message: string }>;
@@ -199,8 +199,8 @@ test('doctor blocks an older Expo SDK but only warns about a newer one', () => {
     ),
   );
 
-  // Both verified SDKs produce no version diagnostic at all.
-  for (const version of ['56.0.21', '57.0.24']) {
+  // Every supported SDK produces no version diagnostic at all.
+  for (const version of ['50.0.17', '52.0.49', '55.0.31', '56.0.21', '57.0.24']) {
     withExpoVersion(root, version);
     const supported = JSON.parse(run('doctor', '--project', root, '--json').stdout) as {
       diagnostics: Array<{ code: string }>;
