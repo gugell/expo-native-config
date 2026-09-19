@@ -8,15 +8,36 @@ export type GradleConfiguration =
   | 'debugImplementation'
   | 'releaseImplementation';
 
+export interface AndroidDependencyExclude {
+  group: string;
+  module?: string;
+}
+
 export interface AndroidLibraryDependency {
   /** Gradle configuration. Defaults to `implementation`. */
   configuration?: GradleConfiguration;
   /** Maven coordinate, e.g. `androidx.work:work-runtime:2.9.0`. */
   module: string;
+  /** Transitive dependencies to drop from this entry. */
+  exclude?: AndroidDependencyExclude[];
 }
 
-/** Raw Gradle line or a structured coordinate. */
-export type AndroidDependency = string | AndroidLibraryDependency;
+/** A local Gradle module, e.g. one included from settings.gradle. */
+export interface AndroidProjectDependency {
+  configuration?: GradleConfiguration;
+  /** Gradle project name without the leading colon. */
+  project: string;
+}
+
+/** A BOM, rendered as `implementation platform('…')`. */
+export interface AndroidPlatformDependency {
+  configuration?: GradleConfiguration;
+  platform: string;
+}
+
+/** Raw Gradle line or a structured entry. */
+export type AndroidDependency =
+  string | AndroidLibraryDependency | AndroidProjectDependency | AndroidPlatformDependency;
 
 const CONFIGURATIONS = new Set<string>([
   'implementation',
@@ -25,6 +46,8 @@ const CONFIGURATIONS = new Set<string>([
   'runtimeOnly',
   'debugImplementation',
   'releaseImplementation',
+  'androidTestImplementation',
+  'testImplementation',
 ]);
 
 export function androidLibrary(
@@ -32,6 +55,14 @@ export function androidLibrary(
   configuration: GradleConfiguration = 'implementation',
 ): AndroidLibraryDependency {
   return { module, configuration };
+}
+
+function resolveConfiguration(dep: { configuration?: string }, label: string): string {
+  const configuration = dep.configuration ?? 'implementation';
+  if (!CONFIGURATIONS.has(configuration)) {
+    throw new Error(`${ERR} ${label}.configuration "${configuration}" is not supported.`);
+  }
+  return configuration;
 }
 
 export function renderAndroidDependency(dep: AndroidDependency, label: string): string {
@@ -42,14 +73,28 @@ export function renderAndroidDependency(dep: AndroidDependency, label: string): 
     }
     return line;
   }
-  if (!dep || typeof dep !== 'object' || !dep.module?.trim()) {
-    throw new Error(`${ERR} ${label} requires a non-empty "module".`);
+  if (!dep || typeof dep !== 'object') {
+    throw new Error(`${ERR} ${label} must be an object or a Gradle line.`);
   }
-  const configuration = dep.configuration ?? 'implementation';
-  if (!CONFIGURATIONS.has(configuration)) {
-    throw new Error(`${ERR} ${label}.configuration "${configuration}" is not supported.`);
+  if ('project' in dep && dep.project?.trim()) {
+    return `${resolveConfiguration(dep, label)} project(':${dep.project.trim()}')`;
   }
-  return `${configuration} '${dep.module.trim()}'`;
+  if ('platform' in dep && dep.platform?.trim()) {
+    return `${resolveConfiguration(dep, label)} platform('${dep.platform.trim()}')`;
+  }
+  if (!('module' in dep) || !dep.module?.trim()) {
+    throw new Error(`${ERR} ${label} requires "module", "project" or "platform".`);
+  }
+  const configuration = resolveConfiguration(dep, label);
+  const line = `${configuration} '${dep.module.trim()}'`;
+  if (!dep.exclude?.length) {
+    return line;
+  }
+  const excludes = dep.exclude.map(
+    (entry) =>
+      `        exclude group: '${entry.group}'${entry.module ? `, module: '${entry.module}'` : ''}`,
+  );
+  return [`${line} {`, ...excludes, '    }'].join('\n');
 }
 
 export function renderAndroidDependencies(deps: AndroidDependency[] | undefined): {
@@ -69,7 +114,12 @@ export function renderAndroidDependencies(deps: AndroidDependency[] | undefined)
         ? parseGradleCoordinate(line)
         : {
             configuration: dep.configuration ?? 'implementation',
-            module: dep.module.trim(),
+            module:
+              'module' in dep
+                ? dep.module.trim()
+                : 'project' in dep
+                  ? `project(':${dep.project.trim()}')`
+                  : `platform('${dep.platform.trim()}')`,
           },
     );
   });
@@ -78,7 +128,7 @@ export function renderAndroidDependencies(deps: AndroidDependency[] | undefined)
 
 function parseGradleCoordinate(line: string): AndroidLibraryDependency {
   const match = line.match(
-    /^(implementation|api|compileOnly|runtimeOnly|debugImplementation|releaseImplementation)\s+['"]([^'"]+)['"]$/,
+    /^(implementation|api|compileOnly|runtimeOnly|debugImplementation|releaseImplementation|androidTestImplementation|testImplementation)\s+['"]([^'"]+)['"]$/,
   );
   if (match) {
     return { configuration: match[1] as GradleConfiguration, module: match[2] };
