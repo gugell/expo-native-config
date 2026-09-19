@@ -78,6 +78,11 @@ try {
       assert.equal(typeof api[helper], 'function', helper);
     }
     assert.equal(api.shareExtension({ name: 'SmokeShare' }).type, 'share');
+    for (const namespace of ['Target', 'Pod', 'Package', 'Scheme', 'RunScript', 'AndroidDependency', 'AndroidComponent', 'MavenRepository', 'XcodeBuildSettings', 'Abi']) {
+      assert.equal(typeof api[namespace], 'object', 'missing namespace ' + namespace);
+    }
+    assert.equal(api.Target.notificationService({ name: 'SmokeNotify' }).type, 'notification-service');
+    assert.deepEqual(api.XcodeBuildSettings.of({ ldExportSymbols: false }), { LD_EXPORT_SYMBOLS: 'NO' });
     assert.equal(api.androidLibrary('example:library:1.0.0').configuration, 'implementation');
     assert.equal(api.WorkspaceSchema.safeParse(api.defineWorkspace({ schemaVersion: 1 })).success, true);
     assert.equal(typeof require('expo-native-workspace/plugin'), 'function');
