@@ -27,6 +27,33 @@ export const TARGET_REGISTRY: Record<TargetType, TargetRegistryEntry> = {
     needsEmbeddedSwift: true,
     appGroupsByDefault: true,
   },
+  'notification-service': {
+    extensionPointIdentifier: 'com.apple.usernotifications.service',
+    frameworks: ['UserNotifications'],
+    needsEmbeddedSwift: true,
+    appGroupsByDefault: true,
+  },
+  'notification-content': {
+    extensionPointIdentifier: 'com.apple.usernotifications.content-extension',
+    frameworks: ['UserNotifications', 'UserNotificationsUI'],
+    needsEmbeddedSwift: true,
+    appGroupsByDefault: true,
+  },
+  intent: {
+    extensionPointIdentifier: 'com.apple.intents-service',
+    frameworks: ['Intents'],
+    needsEmbeddedSwift: true,
+    appGroupsByDefault: true,
+  },
+  action: {
+    extensionPointIdentifier: 'com.apple.services',
+    needsEmbeddedSwift: true,
+    appGroupsByDefault: true,
+  },
+  safari: {
+    extensionPointIdentifier: 'com.apple.Safari.web-extension',
+    needsEmbeddedSwift: true,
+  },
 };
 
 export function productTypeForType(type: TargetType): string {
