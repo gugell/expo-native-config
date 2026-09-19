@@ -70,8 +70,10 @@ fi
 # while the tag says 0.2.0. Positional arguments (patch, minor, 1.2.3) are
 # consumed here and replaced by the concrete version; flags still pass through.
 flags=()
+no_increment=false
 for argument in "$@"; do
   case "$argument" in
+  --no-increment) no_increment=true; flags+=("$argument") ;;
   -*) flags+=("$argument") ;;
   esac
 done
@@ -99,15 +101,24 @@ if [ -z "$version" ]; then
 fi
 echo "Releasing version $version"
 
+# With --no-increment the intent is to publish the version already in the
+# manifest. Passing it positionally as well makes release-it treat it as an
+# explicit bump, and `npm version 0.1.0` on a package already at 0.1.0 fails
+# with "Version not changed". The flag alone says everything.
+positional=("$version")
+if [ "$no_increment" = true ]; then
+  positional=()
+fi
+
 for package in packages/*; do
   # A directory with no manifest is not a package — a leftover build directory
   # must not be treated as one and published.
   [ -f "$package/package.json" ] || continue
   echo "Publishing '$(basename "$package")' to npm"
-  (cd "$package" && pnpm exec release-it "$version" ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"})
+  (cd "$package" && pnpm exec release-it ${positional[@]+"${positional[@]}"} ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"})
 done
 
 echo "Creating the version bump commit, tag and GitHub release"
-pnpm exec release-it "$version" ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"}
+pnpm exec release-it ${positional[@]+"${positional[@]}"} ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"}
 
 echo "Released expo-native-config."
