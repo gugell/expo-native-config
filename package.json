@@ -15,18 +15,75 @@
     "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "pack:check": "node scripts/pack-check.mjs",
     "examples:check": "node scripts/verify-examples.mjs",
-    "release": "node scripts/release.mjs",
-    "release:dry-run": "node scripts/release.mjs --dry-run",
+    "release": "./scripts/release.sh",
+    "release:dry-run": "./scripts/release.sh --dry-run",
     "native:check": "node scripts/verify-native.mjs",
     "android:check": "node scripts/verify-android.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
+    "@release-it/bumper": "^7.0.5",
+    "@release-it/conventional-changelog": "^11.0.1",
+    "cross-spawn": "^7.0.6",
     "eslint": "^10.10.0",
-    "typescript-eslint": "^8.70.0",
     "prettier": "^3.6.2",
     "release-it": "20.2.1",
-    "@release-it/conventional-changelog": "^11.0.1",
-    "cross-spawn": "^7.0.6"
+    "typescript-eslint": "^8.70.0"
+  },
+  "version": "0.1.0",
+  "release-it": {
+    "npm": {
+      "publish": false
+    },
+    "git": {
+      "requireBranch": "main",
+      "requireUpstream": true,
+      "requireCleanWorkingDir": false,
+      "commitMessage": "chore: release v${version}",
+      "tagName": "v${version}",
+      "addUntrackedFiles": true
+    },
+    "github": {
+      "release": true,
+      "releaseName": "v${version}"
+    },
+    "plugins": {
+      "@release-it/bumper": {
+        "out": [
+          {
+            "file": "packages/expo-native-workspace/package.json",
+            "path": "version"
+          }
+        ]
+      },
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "chore(deps)",
+              "section": "Dependencies"
+            }
+          ]
+        },
+        "infile": "packages/expo-native-workspace/CHANGELOG.md"
+      }
+    }
   }
 }
