@@ -226,7 +226,7 @@ importers:
         specifier: ^13.1.0
         version: 13.1.0
       expo:
-        specifier: '>=56.0.0 <58.0.0'
+        specifier: '>=50.0.0 <58.0.0'
         version: 56.0.21(@babel/core@7.29.7)(@expo/dom-webview@56.0.6)(react-native@0.87.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)(typescript@5.9.3)
       jiti:
         specifier: ^1.21.7
