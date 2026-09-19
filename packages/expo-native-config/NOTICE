@@ -1,0 +1,1 @@
+Selected native generation code is derived from gugell/expo-workspaces (MIT), commit 831267ef2e22e660570f171656ca7f83d5816d2c. See LICENSE. CLI, configuration validation and distribution are restructured for expo-native-config.

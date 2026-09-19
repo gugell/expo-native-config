@@ -4,7 +4,7 @@ import {
   AndroidDependency,
   BuildConfigField,
   defineWorkspace,
-} from 'expo-native-workspace';
+} from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -14,9 +14,9 @@ export default defineWorkspace({
     // arm64 only keeps this sample's APK small; production builds usually keep
     // all four ABIs (Abi.all) so the Play Store can split per device.
     abiFilters: [Abi.arm64],
-    manifestPlaceholders: { workspaceRedirectScheme: 'dev.exponativeworkspace.androidgradle' },
+    manifestPlaceholders: { workspaceRedirectScheme: 'dev.exponativeconfig.androidgradle' },
     buildConfigFields: [BuildConfigField.string('WORKSPACE_TAG', 'android-gradle')],
-    metaData: { 'dev.exponativeworkspace.SAMPLE_KEY': 'workspace-demo' },
+    metaData: { 'dev.exponativeconfig.SAMPLE_KEY': 'workspace-demo' },
     // A dependency merges this receiver into every manifest; `remove` is the
     // supported way to drop it rather than editing the generated XML.
     components: [
@@ -25,7 +25,7 @@ export default defineWorkspace({
     strings: { workspace_sample_value: 'hello from workspace.config.ts' },
     mainApplication: {
       imports: ['import android.util.Log'],
-      onCreate: ['Log.i("workspace", "injected by expo-native-workspace")'],
+      onCreate: ['Log.i("workspace", "injected by expo-native-config")'],
     },
   },
 });

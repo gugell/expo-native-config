@@ -4,12 +4,12 @@
     "slug": "android-gradle",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "dev.exponativeworkspace.androidgradle"
+      "bundleIdentifier": "dev.exponativeconfig.androidgradle"
     },
     "android": {
-      "package": "dev.exponativeworkspace.androidgradle"
+      "package": "dev.exponativeconfig.androidgradle"
     },
-    "plugins": ["expo-native-workspace/plugin"],
+    "plugins": ["expo-native-config/plugin"],
     "sdkVersion": "56.0.0"
   }
 }

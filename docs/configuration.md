@@ -1,6 +1,6 @@
 # Configuration reference
 
-The app-root `workspace.config.ts` default-exports `defineWorkspace({ schemaVersion: 1, ... })`. The published TypeScript declarations and runtime schemas are the authoritative field definitions. Invalid inputs should be fixed before prebuild. Import only from `expo-native-workspace`, never internal engine paths.
+The app-root `workspace.config.ts` default-exports `defineWorkspace({ schemaVersion: 1, ... })`. The published TypeScript declarations and runtime schemas are the authoritative field definitions. Invalid inputs should be fixed before prebuild. Import only from `expo-native-config`, never internal engine paths.
 
 ## Which manifest belongs where?
 
@@ -16,7 +16,7 @@ The app-root `workspace.config.ts` default-exports `defineWorkspace({ schemaVers
 A workspace file has **no `expo` wrapper**. Both platform sections are optional. This complete example needs no extension source files:
 
 ```ts
-import { defineWorkspace } from 'expo-native-workspace';
+import { defineWorkspace } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -38,7 +38,7 @@ export default defineWorkspace({
 Every declaration can be written as a literal. Values with more than one shape also have a constructor, so the discriminant and the defaults are supplied for you:
 
 ```ts
-import { AndroidComponent, Target, XcodeBuildSettings } from 'expo-native-workspace';
+import { AndroidComponent, Target, XcodeBuildSettings } from 'expo-native-config';
 
 Target.share({ name: 'Share' }); // { name: 'Share', type: 'share' }
 AndroidComponent.remove('receiver', 'androidx.profileinstaller.ProfileInstallReceiver');
@@ -89,8 +89,8 @@ From the Expo app root, discovery checks `workspace.config.ts`, `.js`, `.cjs`, `
 Moving the config into a subdirectory does not change these bases. A custom filename must be selected in **both** the CLI and Expo plugin:
 
 ```sh
-pnpm exec expo-native-workspace validate --config config/native.json
-pnpm exec expo-native-workspace plan --config config/native.json
+pnpm exec expo-native-config validate --config config/native.json
+pnpm exec expo-native-config plan --config config/native.json
 ```
 
 Example `app.json` (merge these fields with your existing app):
@@ -100,7 +100,7 @@ Example `app.json` (merge these fields with your existing app):
   "expo": {
     "name": "Example App",
     "slug": "example-app",
-    "plugins": [["expo-native-workspace/plugin", { "configPath": "config/native.json" }]]
+    "plugins": [["expo-native-config/plugin", { "configPath": "config/native.json" }]]
   }
 }
 ```
@@ -175,7 +175,7 @@ See [recipes](recipes.md) for complete configurations and [templates](templates.
 ## iOS targets
 
 ```ts
-import { defineWorkspace, shareExtension, widgetExtension } from 'expo-native-workspace';
+import { defineWorkspace, shareExtension, widgetExtension } from 'expo-native-config';
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
@@ -210,7 +210,7 @@ Entitlements are plist-shaped values. App Groups are needed only when sharing a 
 `ios.packages` accepts remote and local package declarations:
 
 ```ts
-import { swiftPackage } from 'expo-native-workspace';
+import { swiftPackage } from 'expo-native-config';
 const remotePackage = swiftPackage({
   url: 'https://github.com/apple/swift-collections',
   requirement: { kind: 'exactVersion', version: '1.1.4' },
@@ -257,7 +257,7 @@ const ios = {
 ## Xcode schemes
 
 ```ts
-import { scheme } from 'expo-native-workspace';
+import { scheme } from 'expo-native-config';
 const development = scheme({ name: 'Development', configuration: 'Debug', archive: 'Release' });
 ```
 
@@ -266,7 +266,7 @@ Put schemes in `ios.schemes`. Optional `analyze` and `includeUnitTestTarget` con
 ## Android
 
 ```ts
-import { androidFeature, androidLibrary, defineWorkspace } from 'expo-native-workspace';
+import { androidFeature, androidLibrary, defineWorkspace } from 'expo-native-config';
 export default defineWorkspace({
   schemaVersion: 1,
   android: {

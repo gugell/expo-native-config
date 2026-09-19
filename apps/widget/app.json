@@ -4,12 +4,12 @@
     "slug": "widget",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "dev.exponativeworkspace.widget"
+      "bundleIdentifier": "dev.exponativeconfig.widget"
     },
     "android": {
-      "package": "dev.exponativeworkspace.widget"
+      "package": "dev.exponativeconfig.widget"
     },
-    "plugins": ["expo-native-workspace/plugin"],
+    "plugins": ["expo-native-config/plugin"],
     "sdkVersion": "56.0.0"
   }
 }

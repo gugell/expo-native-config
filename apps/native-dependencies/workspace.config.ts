@@ -1,4 +1,4 @@
-import { defineWorkspace } from 'expo-native-workspace';
+import { defineWorkspace } from 'expo-native-config';
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {

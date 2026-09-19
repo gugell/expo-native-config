@@ -1,4 +1,4 @@
-# Expo Native Workspace implementation plan
+# Expo Native Config implementation plan
 
 Goal: a separate, installable, preview-ready Expo native configuration CLI, preserving the source repository.
 

@@ -1,4 +1,4 @@
-# Expo Native Workspace
+# Expo Native Config
 
 Declare native project changes in `workspace.config.ts`, review a plan, and apply them through Expo prebuild.
 
@@ -43,15 +43,15 @@ Repository development requires Node.js 24.11.1 or newer and pnpm 10.34.5. The p
 ```sh
 pnpm install
 pnpm build
-pnpm --filter @expo-native-workspace/example-share-extension validate
-pnpm --filter @expo-native-workspace/example-share-extension plan
-pnpm --filter @expo-native-workspace/example-share-extension prebuild --platform ios --no-install
+pnpm --filter @expo-native-config/example-share-extension validate
+pnpm --filter @expo-native-config/example-share-extension plan
+pnpm --filter @expo-native-config/example-share-extension prebuild --platform ios --no-install
 ```
 
-For an existing Expo app, pack the package with `pnpm --filter expo-native-workspace pack --pack-destination /tmp`, install the resulting `.tgz` using that app's package manager, and run `expo-native-workspace init --template minimal --yes` through the package manager. Register `expo-native-workspace/plugin` in your Expo config's `plugins` array. See [getting started](docs/getting-started.md).
+For an existing Expo app, pack the package with `pnpm --filter expo-native-config pack --pack-destination /tmp`, install the resulting `.tgz` using that app's package manager, and run `expo-native-config init --template minimal --yes` through the package manager. Register `expo-native-config/plugin` in your Expo config's `plugins` array. See [getting started](docs/getting-started.md).
 
 ```ts
-import { defineWorkspace, Target } from 'expo-native-workspace';
+import { defineWorkspace, Target } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -69,7 +69,7 @@ export default defineWorkspace({
 
 Declarations can be written as plain objects or built with constructors — `Target.share(…)`, `AndroidDependency.project(…)`, `XcodeBuildSettings.of({ ldExportSymbols: false })` — which supply the discriminants, the Xcode and `android:` key names, and the defaults, so the config carries fewer magic strings. Both styles validate identically; JSON configs use the object form.
 
-Run `expo-native-workspace validate`, `plan`, and `doctor` before `expo prebuild`. A plan describes intended operations; it does not compare every byte of the existing native project or prove that a native build succeeds.
+Run `expo-native-config validate`, `plan`, and `doctor` before `expo prebuild`. A plan describes intended operations; it does not compare every byte of the existing native project or prove that a native build succeeds.
 
 The example expects `targets/WorkspaceShare/` to contain native sources. To generate a source-bearing starter instead, use `init --template share-extension --yes` in an app without an existing workspace config. See [all four starter presets](docs/templates.md) for exact files and remaining implementation work. Add Android settings, packages, or schemes to the same manifest as needed; templates do not restrict its capabilities.
 

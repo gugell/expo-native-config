@@ -55,7 +55,7 @@ withMainApplication(config, (mod) => {
 modules: [AndroidModule.at('workspace-native-lib', 'native/workspace-native-lib')],
 dependencies: [AndroidDependency.project('workspace-native-lib')],
 mainApplication: {
-  imports: ['import dev.exponativeworkspace.workarounds.lib.WorkspaceGreeting'],
+  imports: ['import dev.exponativeconfig.workarounds.lib.WorkspaceGreeting'],
   onCreate: ['Log.i(WorkspaceGreeting.TAG, WorkspaceGreeting.greeting())'],
 },
 ```
@@ -115,9 +115,9 @@ From the repository root:
 ```sh
 pnpm install
 pnpm build
-pnpm --filter @expo-native-workspace/example-native-workarounds validate
-pnpm --filter @expo-native-workspace/example-native-workarounds plan
-pnpm --filter @expo-native-workspace/example-native-workarounds prebuild --no-install
+pnpm --filter @expo-native-config/example-native-workarounds validate
+pnpm --filter @expo-native-config/example-native-workarounds plan
+pnpm --filter @expo-native-config/example-native-workarounds prebuild --no-install
 ```
 
 `plan` is worth reading before the prebuild: it lists each operation, its source field, and warns about the three escape hatches this sample deliberately uses.

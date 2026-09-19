@@ -28,13 +28,13 @@ Merge this host configuration into `app.json`. The group is an example identifie
         "com.apple.security.application-groups": ["group.com.example.app"]
       }
     },
-    "plugins": ["expo-native-workspace/plugin"]
+    "plugins": ["expo-native-config/plugin"]
   }
 }
 ```
 
 ```ts
-import { defineWorkspace, shareExtension, widgetExtension } from 'expo-native-workspace';
+import { defineWorkspace, shareExtension, widgetExtension } from 'expo-native-config';
 
 const entitlements = {
   'com.apple.security.application-groups': ['group.com.example.app'],
@@ -68,7 +68,7 @@ mobile/
 ```
 
 ```ts
-import { defineWorkspace, localSwiftPackage } from 'expo-native-workspace';
+import { defineWorkspace, localSwiftPackage } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -84,7 +84,7 @@ These paths start at generated `ios/`, so `../native` points to the app's source
 ## Schemes, Xcode environment, and scoped pod settings
 
 ```ts
-import { defineWorkspace, scheme } from 'expo-native-workspace';
+import { defineWorkspace, scheme } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -110,7 +110,7 @@ This creates named schemes using existing Debug/Release configurations. It does 
 ## Android package visibility and optional camera hardware
 
 ```ts
-import { defineWorkspace, androidFeature, androidLibrary } from 'expo-native-workspace';
+import { defineWorkspace, androidFeature, androidLibrary } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -136,7 +136,7 @@ Use the companion application's actual package name. Queries enable discovery, p
 ## Local signing with EAS-managed credentials in cloud builds
 
 ```ts
-import { defineWorkspace } from 'expo-native-workspace';
+import { defineWorkspace } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -156,15 +156,15 @@ Keep `codesign/release.properties` and its keystore out of version control. The 
 These commands select the Expo app explicitly:
 
 ```sh
-pnpm --dir apps/mobile exec expo-native-workspace validate
-pnpm --dir apps/mobile exec expo-native-workspace plan --json
-pnpm --dir apps/mobile exec expo-native-workspace doctor --ci
+pnpm --dir apps/mobile exec expo-native-config validate
+pnpm --dir apps/mobile exec expo-native-config plan --json
+pnpm --dir apps/mobile exec expo-native-config doctor --ci
 ```
 
 For a CLI available in the root workspace, the equivalent project selection is:
 
 ```sh
-pnpm exec expo-native-workspace plan --project apps/mobile --verbose
+pnpm exec expo-native-config plan --project apps/mobile --verbose
 ```
 
 Copy a real operation ID from that plan into `explain --id <operation-id>`. After reviewing the plan, run prebuild from the app directory, then compile and exercise the changed feature. See [verification](verification.md) for the checks actually performed on this repository.
@@ -174,7 +174,7 @@ Copy a real operation ID from that plan into `explain --id <operation-id>`. Afte
 A rich-push provider needs its own extension target. Create `targets/Notify/NotificationService.swift` with a `UNNotificationServiceExtension` subclass first.
 
 ```ts
-import { defineWorkspace, notificationServiceExtension } from 'expo-native-workspace';
+import { defineWorkspace, notificationServiceExtension } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,
@@ -201,7 +201,7 @@ Some third-party plugins write `:path => '../node_modules/<package>'` into the P
 
 ```ts
 import path from 'node:path';
-import { defineWorkspace } from 'expo-native-workspace';
+import { defineWorkspace } from 'expo-native-config';
 
 const vendorPod = path.dirname(require.resolve('clevertap-react-native/package.json'));
 

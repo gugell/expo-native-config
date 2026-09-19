@@ -2,8 +2,8 @@
 
 The package includes two self-contained skills:
 
-- `skills/expo-native-workspace/SKILL.md` helps agents configure consuming Expo apps.
-- `skills/expo-native-workspace-maintainer/SKILL.md` helps agents change this package without confusing planning with execution.
+- `skills/expo-native-config/SKILL.md` helps agents configure consuming Expo apps.
+- `skills/expo-native-config-maintainer/SKILL.md` helps agents change this package without confusing planning with execution.
 
 To install one, copy its whole folder from the installed package's `skills/` directory into your agent's configured skill directory. For Codex, this is normally `~/.codex/skills/`. Inspect the content first and preserve an existing skill rather than silently overwriting it. No installer or remote skill service is required.
 

@@ -4,12 +4,12 @@
     "slug": "multi-scheme",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "dev.exponativeworkspace.multischeme"
+      "bundleIdentifier": "dev.exponativeconfig.multischeme"
     },
     "android": {
-      "package": "dev.exponativeworkspace.multischeme"
+      "package": "dev.exponativeconfig.multischeme"
     },
-    "plugins": ["expo-native-workspace/plugin"],
+    "plugins": ["expo-native-config/plugin"],
     "sdkVersion": "56.0.0"
   }
 }

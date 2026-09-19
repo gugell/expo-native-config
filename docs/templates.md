@@ -14,13 +14,13 @@ The current four presets cover an empty starting point, two source-bearing iOS c
 Choose **one** command, from the app directory:
 
 ```sh
-pnpm exec expo-native-workspace init --template minimal --yes
+pnpm exec expo-native-config init --template minimal --yes
 ```
 
 Or, in an app that does not already have a workspace config:
 
 ```sh
-pnpm exec expo-native-workspace init --template share-extension --yes
+pnpm exec expo-native-config init --template share-extension --yes
 ```
 
 The other choices are `--template widget` and `--template android`. `--yes` accepts file creation without an interactive prompt. Init refuses existing supported config filenames and existing destination source files. It is not a merge command: do not run all four commands in the same app.
@@ -78,7 +78,7 @@ The share Swift starter subclasses `SLComposeServiceViewController`. Its Post ac
 Start once, then edit the same config. For example, after the share initializer, adding the Android section does not require another init command:
 
 ```ts
-import { defineWorkspace, shareExtension } from 'expo-native-workspace';
+import { defineWorkspace, shareExtension } from 'expo-native-config';
 
 export default defineWorkspace({
   schemaVersion: 1,

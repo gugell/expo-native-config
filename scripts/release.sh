@@ -73,4 +73,4 @@ done
 echo "Creating the version bump commit, tag and GitHub release"
 pnpm exec release-it "$@" "${offline[@]}"
 
-echo "Released expo-native-workspace."
+echo "Released expo-native-config."

@@ -9,7 +9,7 @@ if (process.platform !== 'darwin') {
   console.error('native:check requires macOS and Xcode with an iOS Simulator SDK.');
   process.exit(1);
 }
-const output = mkdtempSync(join(tmpdir(), 'expo-native-workspace-native-'));
+const output = mkdtempSync(join(tmpdir(), 'expo-native-config-native-'));
 console.log(`Native build logs and products: ${output}`);
 for (const [app, project, target] of [
   ['share-extension', 'ShareExtension', 'WorkspaceShare'],

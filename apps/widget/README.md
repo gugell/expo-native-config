@@ -7,10 +7,10 @@ From the repository root:
 ```sh
 pnpm install
 pnpm build
-pnpm --filter @expo-native-workspace/example-widget validate
-pnpm --filter @expo-native-workspace/example-widget plan
-pnpm --filter @expo-native-workspace/example-widget prebuild --platform ios --no-install
-pnpm --filter @expo-native-workspace/example-widget ios
+pnpm --filter @expo-native-config/example-widget validate
+pnpm --filter @expo-native-config/example-widget plan
+pnpm --filter @expo-native-config/example-widget prebuild --platform ios --no-install
+pnpm --filter @expo-native-config/example-widget ios
 ```
 
 The final command requires macOS, Xcode and CocoaPods. Native compilation and interactive behavior require separate verification; a successful plan or prebuild does not prove them. Generated `ios/` and `android/` folders are disposable only after preserving manual edits.

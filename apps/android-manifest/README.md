@@ -7,10 +7,10 @@ From the repository root:
 ```sh
 pnpm install
 pnpm build
-pnpm --filter @expo-native-workspace/example-android-manifest validate
-pnpm --filter @expo-native-workspace/example-android-manifest plan
-pnpm --filter @expo-native-workspace/example-android-manifest prebuild --platform android --no-install
-pnpm --filter @expo-native-workspace/example-android-manifest android
+pnpm --filter @expo-native-config/example-android-manifest validate
+pnpm --filter @expo-native-config/example-android-manifest plan
+pnpm --filter @expo-native-config/example-android-manifest prebuild --platform android --no-install
+pnpm --filter @expo-native-config/example-android-manifest android
 ```
 
 The final command requires a JDK, Android SDK and emulator or connected device. Native compilation and interactive behavior require separate verification; a successful plan or prebuild does not prove them. Generated `ios/` and `android/` folders are disposable only after preserving manual edits.

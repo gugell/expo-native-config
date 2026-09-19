@@ -10,7 +10,7 @@ import {
   ReplaceRule,
   RunScript,
   XcodeBuildSettings,
-} from 'expo-native-workspace';
+} from 'expo-native-config';
 
 /**
  * The workarounds an Expo app reaches for once a dependency misbehaves —
@@ -42,19 +42,19 @@ export default defineWorkspace({
     ],
     // A package whose config plugin is autolinked but whose native dependency is
     // disabled breaks pod install and Gradle configuration on both platforms.
-    autolinkingExclude: ['@expo-native-workspace/absent-module'],
+    autolinkingExclude: ['@expo-native-config/absent-module'],
     // Build settings on the host app target, not on an extension.
     buildSettings: XcodeBuildSettings.of({ ldExportSymbols: false }),
     // The shape of a crash-reporter dSYM upload phase, without the vendor.
     runScripts: [
       RunScript.onInstall(
         'Workspace Upload Symbols',
-        'echo "expo-native-workspace: upload dSYMs here (archive builds only)"',
+        'echo "expo-native-config: upload dSYMs here (archive builds only)"',
       ),
     ],
     podfile: {
       // Raw post_install lines, for the case no typed field covers.
-      postInstall: ["Pod::UI.puts 'expo-native-workspace: post_install hook ran'"],
+      postInstall: ["Pod::UI.puts 'expo-native-config: post_install hook ran'"],
       // The monorepo fix: a vendor plugin writes `../node_modules/<pkg>`, which
       // resolves to nothing once a workspace hoists that package. Nothing
       // matches in this sample — no such plugin is installed — so `required` is
@@ -74,7 +74,7 @@ export default defineWorkspace({
     // Lines that must run before React Native starts; injected into a tagged
     // block so a repeated prebuild replaces them instead of stacking copies.
     appDelegate: {
-      didFinishLaunching: ['NSLog("expo-native-workspace: AppDelegate injection ran")'],
+      didFinishLaunching: ['NSLog("expo-native-config: AppDelegate injection ran")'],
     },
   },
   android: {
@@ -96,11 +96,11 @@ export default defineWorkspace({
     // A local Gradle module plus the dependency that actually links it.
     modules: [AndroidModule.at('workspace-native-lib', 'native/workspace-native-lib')],
     dependencies: [AndroidDependency.project('workspace-native-lib')],
-    autolinkingExclude: ['@expo-native-workspace/absent-module'],
-    manifestPlaceholders: { workspaceRedirectScheme: 'dev.exponativeworkspace.workarounds' },
+    autolinkingExclude: ['@expo-native-config/absent-module'],
+    manifestPlaceholders: { workspaceRedirectScheme: 'dev.exponativeconfig.workarounds' },
     buildConfigFields: [BuildConfigField.string('WORKSPACE_CHANNEL', 'preview')],
     // An SDK key belongs in <meta-data>, which `applicationAttributes` cannot express.
-    metaData: { 'dev.exponativeworkspace.SAMPLE_KEY': 'workspace-demo' },
+    metaData: { 'dev.exponativeconfig.SAMPLE_KEY': 'workspace-demo' },
     components: [
       // Attributes merged onto the activity Expo generates.
       AndroidComponent.activity('.MainActivity', {
@@ -154,7 +154,7 @@ export default defineWorkspace({
     mainApplication: {
       imports: [
         'import android.util.Log',
-        'import dev.exponativeworkspace.workarounds.lib.WorkspaceGreeting',
+        'import dev.exponativeconfig.workarounds.lib.WorkspaceGreeting',
       ],
       onCreate: ['Log.i(WorkspaceGreeting.TAG, WorkspaceGreeting.greeting())'],
     },

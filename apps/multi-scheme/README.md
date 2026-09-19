@@ -7,10 +7,10 @@ From the repository root:
 ```sh
 pnpm install
 pnpm build
-pnpm --filter @expo-native-workspace/example-multi-scheme validate
-pnpm --filter @expo-native-workspace/example-multi-scheme plan
-pnpm --filter @expo-native-workspace/example-multi-scheme prebuild --platform ios --no-install
-pnpm --filter @expo-native-workspace/example-multi-scheme ios
+pnpm --filter @expo-native-config/example-multi-scheme validate
+pnpm --filter @expo-native-config/example-multi-scheme plan
+pnpm --filter @expo-native-config/example-multi-scheme prebuild --platform ios --no-install
+pnpm --filter @expo-native-config/example-multi-scheme ios
 ```
 
 The final command requires macOS, Xcode and CocoaPods. Native compilation and interactive behavior require separate verification; a successful plan or prebuild does not prove them. Generated `ios/` and `android/` folders are disposable only after preserving manual edits.
