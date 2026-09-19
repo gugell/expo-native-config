@@ -32,6 +32,8 @@ Work down this list and stop at the first level that can express the change:
 
 This package never edits `AppDelegate` or `MainApplication`. Startup work belongs in the hooks Expo provides — an `ExpoAppDelegateSubscriber` on iOS, a `ReactActivityLifecycleListener` or application lifecycle listener on Android — implemented in a local Expo module (`npx create-expo-module --local`) and configured through `android.strings`, which is the documented channel for values native code reads before the JS engine starts. Do not propose editing a generated entry point.
 
+`validate`, `plan` and `doctor` also report where a change belongs: a `replace` rule aimed at AppDelegate, MainApplication or MainActivity is an **error**, and settings owned by `expo-build-properties` or the Expo config are warnings naming their owner. Read those before proposing a workaround — they name the supported field.
+
 Deleting a declaration removes its generated block on the next prebuild. Entries merged into structured files (a `gradle.properties` key, a manifest permission) and escape-hatch replacements are not reversible that way and need a clean prebuild.
 
 Debug the whole plugin stack with `EXPO_DEBUG=1 npx expo prebuild` (prints which mods ran, in order), `npx expo config --type prebuild` (resolved config, mods unevaluated) and `npx expo config --type introspect` (evaluates safe mods without writing).

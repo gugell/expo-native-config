@@ -360,6 +360,20 @@ This package does not edit `AppDelegate` or `MainApplication`, and has no field 
 
 Create a local Expo module (`npx create-expo-module --local`), implement the listener or subscriber there, and declare its configuration with `android.strings`. A library that needs registering usually ships its own config plugin — register that in `expo.plugins` rather than reproducing what it does.
 
+## Being told where a change belongs
+
+Validation answers whether a config parses. A second pass answers whether the change belongs here at all, and reports it through `validate`, `plan` and `doctor`:
+
+| Situation                                                                                | What you get                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A `replace` rule whose pattern names `AppDelegate`, `MainApplication` or `MainActivity`  | **Error.** This package does not edit entry points, and a regular expression aimed at one is the same edit in disguise. The message names the supported hook. |
+| `ios.podfile` setting `use_frameworks!`                                                  | Warning: `expo-build-properties` owns `ios.useFrameworks`, and whichever plugin runs last wins.                                                               |
+| `android.resources` writing `values/strings.xml`, `colors.xml` or `styles.xml`           | Warning: use `android.strings` / `colors` / `styles`, which merge through Expo's own mod instead of replacing the file.                                       |
+| `ios.buildSettings` setting a deployment target, bundle identifier or version            | Warning, naming the Expo config field or plugin that owns it.                                                                                                 |
+| `android.gradleProperties` setting a key `expo-build-properties` or the Expo config owns | Warning, same.                                                                                                                                                |
+
+A config that uses the supported field for each change produces none of these.
+
 ## Escape hatches
 
 `ios.podfile` (`postInstall`, `lines`, `replace`) and `android.gradle` (`app`, `project`, `settings` replace rules) edit generated Ruby and Groovy directly. Expo's plugin guidance is explicit that regular-expression rewrites of generated code are a last resort: they break silently when the template changes between SDK versions. They exist because real apps need them — repointing a vendor plugin's hardcoded `node_modules` path in a monorepo has no static equivalent — and every such operation is reported with `risk: "escape-hatch"`, listed by `plan --verbose`, and warned about by `doctor`.
