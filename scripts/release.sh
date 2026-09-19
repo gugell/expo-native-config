@@ -76,9 +76,20 @@ for argument in "$@"; do
   esac
 done
 
-version="$(pnpm exec release-it --release-version "$@" 2>/dev/null | tail -1)"
-if [ -z "$version" ]; then
+# The offline flags belong here too: computing the version still runs
+# release-it's git checks, and a dry run on a branch other than main would
+# otherwise fail the `requireBranch` check before printing anything.
+version_log="$(mktemp)"
+if ! version="$(pnpm exec release-it --release-version "$@" "${offline[@]}" 2>"$version_log")"; then
   echo "error: could not determine the next version. Pass one explicitly, e.g. 'patch' or '1.2.3'." >&2
+  cat "$version_log" >&2
+  rm -f "$version_log"
+  exit 1
+fi
+rm -f "$version_log"
+version="$(printf '%s\n' "$version" | tail -1)"
+if [ -z "$version" ]; then
+  echo "error: release-it did not report a version." >&2
   exit 1
 fi
 echo "Releasing version $version"
