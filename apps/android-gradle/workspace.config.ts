@@ -23,9 +23,5 @@ export default defineWorkspace({
       AndroidComponent.remove('receiver', 'androidx.profileinstaller.ProfileInstallReceiver'),
     ],
     strings: { workspace_sample_value: 'hello from workspace.config.ts' },
-    mainApplication: {
-      imports: ['import android.util.Log'],
-      onCreate: ['Log.i("workspace", "injected by expo-native-config")'],
-    },
   },
 });

@@ -71,11 +71,6 @@ export default defineWorkspace({
         },
       ],
     },
-    // Lines that must run before React Native starts; injected into a tagged
-    // block so a repeated prebuild replaces them instead of stacking copies.
-    appDelegate: {
-      didFinishLaunching: ['NSLog("expo-native-config: AppDelegate injection ran")'],
-    },
   },
   android: {
     // Preview-class builds ship one ABI; this also sets React Native's own
@@ -148,15 +143,6 @@ export default defineWorkspace({
       'android:networkSecurityConfig': '@xml/workspace_network_security_config',
       // Large media assets exhaust the default heap before they exhaust memory.
       'android:largeHeap': 'true',
-    },
-    // Registering a JSI package or forcing a layout direction has to happen in
-    // MainApplication; the lines are your Kotlin, in a replaceable block.
-    mainApplication: {
-      imports: [
-        'import android.util.Log',
-        'import dev.exponativeconfig.workarounds.lib.WorkspaceGreeting',
-      ],
-      onCreate: ['Log.i(WorkspaceGreeting.TAG, WorkspaceGreeting.greeting())'],
     },
   },
 });

@@ -1,8 +1,8 @@
 # Compatibility and verification
 
-The sample dependency catalog targets Expo SDK 56 (`~56.0.21`), React `19.2.3`, and React Native `0.85.3`. SDK 57 is also supported: the peer range is `>=56.0.0 <58.0.0`, and the whole declared surface was exercised against a `create-expo-app` SDK 57 project (see the verification record). The published CLI requires Node.js 22.14 or newer. Repository development and releases use Node.js 24.11.1 or newer. The repository pins pnpm 10.34.5.
+The sample dependency catalog targets Expo SDK 56 (`~56.0.21`), React `19.2.3`, and React Native `0.85.3`. The supported range is wider than the samples: the peer range is `>=50.0.0 <58.0.0`, and the whole declared surface was exercised against `create-expo-app` projects on SDK 50, 51, 52, 53, 54, 55 and 57 (see the verification record). The published CLI requires Node.js 22.14 or newer. Repository development and releases use Node.js 24.11.1 or newer. The repository pins pnpm 10.34.5.
 
-`doctor` treats these two as the supported range: an older SDK is an error, and an SDK newer than 57 is a warning rather than a failure, so the CLI stays usable on the day a new SDK ships. That warning means "not verified here", so inspect the generated native projects after prebuild.
+`doctor` treats that as the supported range: an SDK older than 50 is an error, and an SDK newer than 57 is a warning rather than a failure, so the CLI stays usable on the day a new SDK ships. That warning means "not verified here", so inspect the generated native projects after prebuild.
 
 These are the intended baseline, not a blanket compatibility guarantee. Do not infer support for older Expo SDKs, arbitrary Xcode/Gradle versions, or every plugin combination from package peer dependency ranges.
 

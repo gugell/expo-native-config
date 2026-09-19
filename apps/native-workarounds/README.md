@@ -45,20 +45,15 @@ withAppBuildGradle(config, (mod) => {
   );
   return mod;
 });
-withMainApplication(config, (mod) => {
-  /* string surgery on generated Kotlin, in two languages, idempotent by hand */
-});
 ```
 
 ```ts
 // after
 modules: [AndroidModule.at('workspace-native-lib', 'native/workspace-native-lib')],
 dependencies: [AndroidDependency.project('workspace-native-lib')],
-mainApplication: {
-  imports: ['import dev.exponativeconfig.workarounds.lib.WorkspaceGreeting'],
-  onCreate: ['Log.i(WorkspaceGreeting.TAG, WorkspaceGreeting.greeting())'],
-},
 ```
+
+Registering something at startup is deliberately **not** part of this: see "What this sample will not do" below.
 
 ### A receiver a dependency merges into every manifest
 
@@ -124,18 +119,16 @@ pnpm --filter @expo-native-config/example-native-workarounds prebuild --no-insta
 
 ## What to inspect afterwards
 
-| File                                              | What the config put there                                                                                             |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `ios/Podfile`                                     | pod globals, scoped `post_install` build settings, a removed build phase, a raw hook, `use_expo_modules!(exclude: …)` |
-| `ios/Podfile.properties.json`                     | `expo.jsEngine`, written through Expo's own mod rather than by rewriting Ruby                                         |
-| `ios/*.xcodeproj/project.pbxproj`                 | `LD_EXPORT_SYMBOLS` on the app target and an install-only script phase                                                |
-| `ios/NativeWorkarounds/AppDelegate.swift`         | the injected line, inside a tagged block                                                                              |
-| `android/settings.gradle`                         | the local module include and `expoAutolinking.exclude`                                                                |
-| `android/build.gradle`                            | JitPack, a scoped repository, a buildscript classpath and a forced version                                            |
-| `android/app/build.gradle`                        | `ndk.abiFilters`, a manifest placeholder, a BuildConfig field, the module dependency                                  |
-| `android/app/src/main/AndroidManifest.xml`        | `<meta-data>`, merged `.MainActivity` attributes, the removed receiver, `<supports-screens>`, `<queries>`             |
-| `android/app/src/main/res/`                       | `workspace_sample_value`, `workspace_sample_accent`, the network security config                                      |
-| `android/app/src/main/java/**/MainApplication.kt` | the injected import and `onCreate` line                                                                               |
+| File                                       | What the config put there                                                                                             |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `ios/Podfile`                              | pod globals, scoped `post_install` build settings, a removed build phase, a raw hook, `use_expo_modules!(exclude: …)` |
+| `ios/Podfile.properties.json`              | `expo.jsEngine`, written through Expo's own mod rather than by rewriting Ruby                                         |
+| `ios/*.xcodeproj/project.pbxproj`          | `LD_EXPORT_SYMBOLS` on the app target and an install-only script phase                                                |
+| `android/settings.gradle`                  | the local module include and `expoAutolinking.exclude`                                                                |
+| `android/build.gradle`                     | JitPack, a scoped repository, a buildscript classpath and a forced version                                            |
+| `android/app/build.gradle`                 | `ndk.abiFilters`, a manifest placeholder, a BuildConfig field, the module dependency                                  |
+| `android/app/src/main/AndroidManifest.xml` | `<meta-data>`, merged `.MainActivity` attributes, the removed receiver, `<supports-screens>`, `<queries>`             |
+| `android/app/src/main/res/`                | `workspace_sample_value`, `workspace_sample_accent`, the network security config                                      |
 
 ## Compiling it
 
@@ -144,10 +137,16 @@ cd android
 ./gradlew :app:assembleDebug
 ```
 
-Needs a JDK and the Android SDK. This compiles the local Gradle module and the injected Kotlin, which is what proves those two declarations produce real source rather than matching text. The iOS host app additionally needs `pod install`; the sample is not set up for signing, and interactive behavior is not verified by any of the above.
+Needs a JDK and the Android SDK. This compiles the local Gradle module and links it into the app, which is what proves the `modules` and `project(':…')` declarations produce a real, compiled dependency rather than a Gradle file that merely mentions one. The iOS host app additionally needs `pod install`; the sample is not set up for signing, and interactive behavior is not verified by any of the above.
+
+## What this sample will not do
+
+It does not edit `AppDelegate` or `MainApplication`, and neither does this package — there is no field for it. Plugins that rewrite a generated entry point break on the SDK that changes its shape, and they are the reason an upgrade turns into an afternoon.
+
+Expo already provides the hooks: an `ExpoAppDelegateSubscriber` on iOS, a `ReactActivityLifecycleListener` or application lifecycle listener on Android, implemented in a local Expo module (`npx create-expo-module --local`) and configured through `android.strings` — which is exactly why this sample declares a string resource. The local Gradle module here is the app-owned native code; the startup hook belongs with it, not in a generated file.
 
 ## The escape hatches here are deliberate
 
-Three declarations in this sample rewrite generated code: the raw `post_install` lines, the Podfile `replace` rule, and both entry-point injections. Expo's plugin guidance is explicit that regular-expression rewrites of generated files are a last resort, because they break silently when the template changes between SDK versions.
+Two declarations in this sample rewrite generated Ruby: the raw `post_install` lines and the Podfile `replace` rule. Expo's plugin guidance is explicit that regular-expression rewrites of generated files are a last resort, because they break silently when the template changes between SDK versions.
 
 They are included because real apps need them, and because seeing them flagged is the point: `plan` and `doctor` name each one so it can be re-checked after an SDK upgrade. The `replace` rule here is the monorepo path fix and intentionally matches nothing in this sample, which is why it sets `required: false`. In a real app it must be `required: true`, or the day the vendor changes that line, the build quietly loses the fix.

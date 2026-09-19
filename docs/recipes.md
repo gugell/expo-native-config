@@ -248,15 +248,13 @@ export default defineWorkspace({
       { name: 'watermelondb-jsi', path: 'node_modules/@nozbe/watermelondb/native/android-jsi' },
     ],
     dependencies: [{ project: 'watermelondb-jsi' }],
-    mainApplication: {
-      imports: ['import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage'],
-      onCreate: ['packages.add(WatermelonDBJSIPackage())'],
-    },
   },
 });
 ```
 
-`modules` writes the `include` and `projectDir` pair into `settings.gradle`; the dependency entry links it into the app module. The `mainApplication` lines are injected into a tagged block, so a repeated prebuild replaces them rather than stacking copies — but they are your own Kotlin, and nothing checks that they compile. Where the library offers a `ReactActivityLifecycleListener`, prefer that plus `android.strings` over injection.
+`modules` writes the `include` and `projectDir` pair into `settings.gradle`; the dependency entry links it into the app module, so the library is compiled into the app.
+
+Registering something at startup is a separate job, and this package deliberately does not do it by editing `MainApplication`. Use the hooks Expo provides — a `ReactActivityLifecycleListener` or application lifecycle listener in a local Expo module (`npx create-expo-module --local`), reading whatever it needs from `android.strings`.
 
 ## Trimming ABIs and keeping React Native in step
 

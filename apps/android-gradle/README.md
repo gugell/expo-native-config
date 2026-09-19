@@ -1,6 +1,6 @@
 # Android Gradle
 
-This app declares AndroidX Collection and a Gradle property, plus the Gradle and manifest surface beyond dependencies: an ABI filter, a manifest placeholder, a BuildConfig field, an `<application>` `<meta-data>` entry, a `tools:node="remove"` for a receiver a dependency merges in, and a `strings.xml` value.
+This app declares AndroidX Collection and a Gradle property, plus the Gradle and manifest surface beyond dependencies: an ABI filter, a manifest placeholder, a BuildConfig field, an `<application>` `<meta-data>` entry, a `tools:node="remove"` for a receiver a dependency merges in and a `strings.xml` value.
 
 After prebuild, inspect:
 

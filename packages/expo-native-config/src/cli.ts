@@ -14,7 +14,7 @@ interface Options {
 }
 const commands = 'init plan validate doctor explain completion';
 /** Oldest SDK this package supports, and the newest it has been verified against. */
-const MINIMUM_EXPO_SDK = 56;
+const MINIMUM_EXPO_SDK = 50;
 const LATEST_VERIFIED_EXPO_SDK = 57;
 function base(command: Command): Command {
   if (command.name() !== 'init')

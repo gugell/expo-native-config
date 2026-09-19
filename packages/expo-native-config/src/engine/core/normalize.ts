@@ -71,7 +71,6 @@ export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
   assign(manifest, 'iosBuildSettings', nestedIos?.buildSettings);
   assign(manifest, 'runScripts', nestedIos?.runScripts);
   assign(manifest, 'iosResources', nestedIos?.resources);
-  assign(manifest, 'appDelegate', nestedIos?.appDelegate);
   assign(manifest, 'iosAutolinkingExclude', nestedIos?.autolinkingExclude);
   assign(manifest, 'podfileProperties', nestedIos?.podfileProperties);
   assign(manifest, 'podfile', nestedIos?.podfile);

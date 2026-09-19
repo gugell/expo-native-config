@@ -157,14 +157,6 @@ export const RunScriptSchema = z.strictObject({
   runOnlyForDeploymentPostprocessing: z.boolean().optional(),
   alwaysOutOfDate: z.boolean().optional(),
 });
-export const AppDelegateSchema = z.strictObject({
-  imports: z.array(text).optional(),
-  didFinishLaunching: z.array(text).optional(),
-});
-export const MainApplicationSchema = z.strictObject({
-  imports: z.array(text).optional(),
-  onCreate: z.array(text).optional(),
-});
 const gradleCoordinate = text.regex(
   /^[^\s:'"\\]+:[^\s:'"\\]+:[^\s'"\\]+$/,
   'Expected group:artifact:version',
@@ -232,7 +224,6 @@ export const WorkspaceSchema = z.strictObject({
       buildSettings: settings.optional(),
       runScripts: z.array(RunScriptSchema).optional(),
       resources: z.array(text).optional(),
-      appDelegate: AppDelegateSchema.optional(),
       autolinkingExclude: z.array(text).optional(),
       podfileProperties: settings.optional(),
       podfile: PodfileEscapeHatchSchema.optional(),
@@ -287,7 +278,6 @@ export const WorkspaceSchema = z.strictObject({
       forceDependencies: z.array(gradleCoordinate).optional(),
       modules: z.array(AndroidModuleSchema).optional(),
       autolinkingExclude: z.array(text).optional(),
-      mainApplication: MainApplicationSchema.optional(),
       strings: settings.optional(),
       colors: settings.optional(),
       styles: z.array(AndroidStyleSchema).optional(),

@@ -34,7 +34,6 @@ const examples = [
       'tools:node="remove"',
       'android:windowSoftInputMode="adjustResize"',
       'workspace_sample_value',
-      'WorkspaceGreeting',
       "classpath 'com.google.gms:google-services:4.4.2'",
       "force 'com.google.android.material:material:1.12.0'",
     ],
@@ -49,7 +48,6 @@ const examples = [
       '$WorkspaceSampleStaticFramework = true',
       'LD_EXPORT_SYMBOLS = NO',
       'Workspace Upload Symbols',
-      'expo-native-config: AppDelegate injection ran',
     ],
   ],
 ];
@@ -68,7 +66,6 @@ function nativeText(directory) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return nativeText(path);
     if (
-      // .kt/.swift are here so entry-point injection is asserted too.
       /\.(pbxproj|xcscheme|plist|xml|gradle|properties|kt|java|swift)$/.test(entry.name) ||
       entry.name === 'Podfile'
     ) {
