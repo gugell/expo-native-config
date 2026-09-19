@@ -7,7 +7,9 @@ Read the app's Expo config and installed package version first. Run the installe
 
 The config is `workspace.config.ts`, default-exporting `defineWorkspace({ schemaVersion: 1, ios: { ... }, android: { ... } })`. Import helpers from `expo-native-workspace`. Register `expo-native-workspace/plugin` in the existing Expo `plugins` array while preserving other entries.
 
-Public helpers: `shareExtension(spec)`, `widgetExtension(spec)`, `swiftPackage(spec)`, `scheme(spec)`, `androidLibrary(module, configuration?)`, `androidFeature(name, required?)`. Check the installed declarations for less common fields.
+Declarations can be plain objects or constructor calls; both validate identically and mix freely. Prefer constructors, which supply discriminants and defaults: `Target.share|widget|appClip|notificationService|notificationContent|intent|action|safari(spec)`, `Pod.local|version|git`, `Package.remote|local` with `SwiftPackageRequirement.exact|upToNextMajor|range|branch|revision`, `Scheme.debug|release`, `RunScript.shell|onInstall`, `PodBuildSettings.forTarget|forTargetsStartingWith|forTargetsMatching`, `AndroidDependency.library|libraryExcluding|project|bom`, `AndroidComponent.activity|service|receiver|provider|remove`, `AndroidFeature.required|optional|openGlEs`, `AndroidModule.at`, `MavenRepository.url|scoped|private`, `BuildConfigField.string|boolean|int|raw`, `ReplaceRule.regex|literal`.
+
+Named constants replace copied strings: `Abi`, `AndroidPermission`, `AndroidHardware`, `AndroidApplication.attributes({ largeHeap: true })` (writes `android:` keys), `XcodeBuildSettings.of({ ldExportSymbols: false })` (writes Xcode names, booleans become `YES`/`NO`). The older flat helpers (`shareExtension`, `widgetExtension`, `swiftPackage`, `scheme`, `androidLibrary`, `androidFeature`) still work. Check the installed declarations for less common fields.
 
 An extension spec needs a unique `name` and real native source. `source` resolves from the app root; `.share` as a bundle identifier appends to the host ID. Share activation rules belong in the source Info.plist. Widgets need a WidgetKit entry point. Add App Groups only for shared storage, consistently on host and extension.
 
@@ -18,6 +20,20 @@ Use `ios.minimumPodDeploymentTarget` to raise missing or lower CocoaPods deploym
 For Android package visibility, use `android.queries: { intents: [{ action: 'android.intent.action.VIEW', scheme: 'geo' }], packages: ['com.waze'] }`. Each action/scheme pair gets its own intent. Existing queries and provider declarations are preserved, with duplicate entries removed. This enables discovery and does not grant permissions.
 
 `ios.schemes` uses `{ name, configuration: 'Debug' | 'Release', archive? }`. Android uses typed dependencies, permissions, features, Gradle properties and application attributes. A manifest permission does not grant runtime permission.
+
+## Choosing where a change belongs
+
+Work down this list and stop at the first level that can express the change:
+
+1. **Expo's own config** — `app.json` owns identity, host `infoPlist`, entitlements, `intentFilters`, `blockedPermissions`, `googleServicesFile`. `expo-build-properties` owns `useFrameworks`, host `deploymentTarget`, `packagingOptions`, ProGuard. Do not duplicate those here.
+2. **A typed field of this package** — host `ios.buildSettings`, `ios.runScripts`, `ios.resources`, `ios.targets`, `ios.packages`, `ios.pods`, `ios.podBuildSettings`; `android.metaData`, `components`, `supportsScreens`, `manifestPlaceholders`, `buildConfigFields`, `abiFilters`, `mavenRepositories`, `buildscriptDependencies`, `plugins`, `forceDependencies`, `modules`, `dependencies`, `autolinkingExclude`.
+3. **An introspectable value channel** — `ios.podfileProperties` (`Podfile.properties.json`) and `android.strings|colors|styles`. These go through Expo's own safe mods, so `expo config --type introspect` shows them without a prebuild. `strings.xml` is the documented way to pass values to native code that runs before the JS engine.
+4. **Entry-point injection** — `ios.appDelegate` / `android.mainApplication` insert your own native lines into a replaceable tagged block. Nothing checks that they compile; prefer a library's `ReactActivityLifecycleListener` where one exists.
+5. **Escape hatches** — `ios.podfile` (`postInstall`, `lines`, `replace`) and `android.gradle` replace rules rewrite generated Ruby/Groovy. Expo's guidance treats regex rewrites of generated code as a last resort; they break silently across SDK upgrades. Every one is planned with `risk: "escape-hatch"` and warned about by `doctor`. Set `required: true` so a rule that stops matching fails the build. Re-verify them after every SDK upgrade.
+
+Deleting a declaration removes its generated block on the next prebuild. Entries merged into structured files (a `gradle.properties` key, a manifest permission) and escape-hatch replacements are not reversible that way and need a clean prebuild.
+
+Debug the whole plugin stack with `EXPO_DEBUG=1 npx expo prebuild` (prints which mods ran, in order), `npx expo config --type prebuild` (resolved config, mods unevaluated) and `npx expo config --type introspect` (evaluates safe mods without writing).
 
 Run `validate`, `plan`, and `doctor` through the app's package manager. Use `explain --id <operation-id>` to inspect an operation. Then run Expo prebuild for the relevant platform and inspect generated output. Config loading executes trusted project code; do not load unknown configs as if they were sandboxed data.
 
@@ -40,13 +56,13 @@ Choose one init preset only when no workspace config exists: `minimal` writes a 
 Complete example after `init --template share-extension --yes`:
 
 ```ts
-import { defineWorkspace, shareExtension } from 'expo-native-workspace';
+import { defineWorkspace, Scheme, Target } from 'expo-native-workspace';
 
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
-    targets: [shareExtension({ name: 'ShareExtension', bundleIdentifier: '.share' })],
-    schemes: [{ name: 'Example Debug', configuration: 'Debug', archive: 'Release' }],
+    targets: [Target.share({ name: 'ShareExtension', bundleIdentifier: '.share' })],
+    schemes: [Scheme.debug('Example Debug', { archive: 'Release' })],
   },
   android: {
     queries: { intents: [{ action: 'android.intent.action.VIEW', scheme: 'geo' }] },
