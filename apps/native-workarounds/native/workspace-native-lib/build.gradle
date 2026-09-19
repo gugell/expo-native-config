@@ -1,0 +1,16 @@
+// A local Android library module: app-owned native source that lives outside
+// the generated android/ directory and survives a clean prebuild. This is the
+// Gradle counterpart of a local CocoaPod, and the shape a JSI package such as
+// WatermelonDB expects you to wire up by hand.
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'dev.exponativeworkspace.workarounds.lib'
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+    }
+}

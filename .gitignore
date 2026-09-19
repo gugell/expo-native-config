@@ -7,6 +7,9 @@ coverage/
 *.tgz
 apps/*/ios/
 apps/*/android/
+# Gradle output for app-owned native modules that live outside android/
+apps/*/native/**/build/
+apps/*/native/**/.gradle/
 *.tsbuildinfo
 .env*
 !.env.example
