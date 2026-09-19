@@ -2,6 +2,36 @@
 
 Declare native project changes in `workspace.config.ts`, review a plan, and apply them through Expo prebuild.
 
+## The idea
+
+Every Expo app eventually needs a native change that `app.json` cannot express, and the answer is always the same: write a config plugin that does string surgery on a generated file.
+
+```ts
+// before — src/plugins/withPodBuildSetting.ts, plus a line in app.config.ts
+const withPodBuildSetting: ConfigPlugin = (config) =>
+  withPodfile(config, (podfileConfig) => {
+    const { contents } = podfileConfig.modResults;
+    if (contents.includes(MARKER)) return podfileConfig; // idempotency, by hand
+    const postInstall = 'post_install do |installer|';
+    if (!contents.includes(postInstall)) throw new Error('no post_install hook to patch');
+    podfileConfig.modResults.contents = contents.replace(postInstall, `${postInstall}\n${PATCH}`);
+    return podfileConfig;
+  });
+```
+
+```ts
+// after — workspace.config.ts
+podBuildSettings: [
+  PodBuildSettings.forTargetsStartingWith('NativeMedia', {
+    CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: 'YES',
+  }),
+],
+```
+
+The difference is not length. The declaration is validated before prebuild runs, appears in `plan` with the field it came from, merges into a tagged block that a repeated prebuild updates instead of duplicating, and disappears from the native project when you delete it. A dozen of these plugins in one app is a normal amount; the [native-workarounds sample](apps/native-workarounds) shows that dozen as declarations, with the plugin each one replaces.
+
+Where nothing typed can express a change, the escape hatches are still there — planned with `risk: "escape-hatch"`, listed by `plan --verbose` and warned about by `doctor`, because Expo's own guidance is that rewriting generated code breaks silently across SDK upgrades.
+
 One package provides an Expo config plugin, a CLI, typed helpers, and agent skills. It supports iOS extensions (share, widget, App Clip, notification service/content, intent, action, Safari), Swift packages, CocoaPods, host-target build settings and build phases, Xcode schemes, Android Gradle structure (repositories, classpath, local modules, ABI filters, dependency resolution), Android manifest and resource entries, and — where nothing typed can express the change — explicitly flagged escape hatches.
 
 **Release status:** this is an unpublished project prepared for release. Registry availability and ownership must be verified before advertising an npm install command. Use the local workspace or a packed tarball now.
@@ -45,14 +75,15 @@ The example expects `targets/WorkspaceShare/` to contain native sources. To gene
 
 ## Samples
 
-| App                                             | Demonstrates                                           |
-| ----------------------------------------------- | ------------------------------------------------------ |
-| [share-extension](apps/share-extension)         | UIKit share sheet with text and URL activation rules   |
-| [widget](apps/widget)                           | A real SwiftUI / WidgetKit timeline widget             |
-| [native-dependencies](apps/native-dependencies) | Source-controlled Swift package and CocoaPod           |
-| [multi-scheme](apps/multi-scheme)               | Debug and Release Xcode schemes                        |
-| [android-gradle](apps/android-gradle)           | Typed Maven dependency and Gradle properties           |
-| [android-manifest](apps/android-manifest)       | Optional camera feature and runtime permission request |
+| App                                             | Demonstrates                                                    |
+| ----------------------------------------------- | --------------------------------------------------------------- |
+| [share-extension](apps/share-extension)         | UIKit share sheet with text and URL activation rules            |
+| [widget](apps/widget)                           | A real SwiftUI / WidgetKit timeline widget                      |
+| [native-dependencies](apps/native-dependencies) | Source-controlled Swift package and CocoaPod                    |
+| [multi-scheme](apps/multi-scheme)               | Debug and Release Xcode schemes                                 |
+| [android-gradle](apps/android-gradle)           | Typed Maven dependency and Gradle properties                    |
+| [android-manifest](apps/android-manifest)       | Optional camera feature and runtime permission request          |
+| [native-workarounds](apps/native-workarounds)   | The plugins apps hand-write, as declarations, with before/after |
 
 ## Documentation
 
