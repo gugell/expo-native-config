@@ -103,3 +103,17 @@ To add a widget as well, bring its source into `targets/WorkspaceWidget/` and ad
 5. Prebuild and review native output. Compile and exercise the feature on its platform; successful init/validation is not a working feature test.
 
 The six [sample apps](../apps) are separate runnable examples with their own Expo setup. They demonstrate more than the four init presets: local dependencies and schemes are useful examples even though they require no special starter source generator. See [recipes](recipes.md) for additional combinations.
+
+## Lifecycle module
+
+`init --template lifecycle-module` writes a local Expo module under `modules/startup` plus a workspace config that feeds it:
+
+| File                                                     | Purpose                                                                                                                                                          |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modules/startup/expo-module.config.json`                | Registers the iOS subscriber through `apple.appDelegateSubscribers`                                                                                              |
+| `modules/startup/android/.../StartupPackage.kt`          | A `BasePackage` returning an `ApplicationLifecycleListener`; the Gradle plugin puts it in the generated package list that `ApplicationLifecycleDispatcher` reads |
+| `modules/startup/ios/StartupAppDelegateSubscriber.swift` | Runs from `didFinishLaunchingWithOptions` without touching the AppDelegate                                                                                       |
+| `modules/startup/android/.../res/values/strings.xml`     | The default (empty) value                                                                                                                                        |
+| `workspace.config.ts`                                    | `android.strings.startup_value`, which overrides that default at prebuild                                                                                        |
+
+This is the supported alternative to editing a generated entry point, which this package does not do. Verified end to end on an SDK 57 app: after `expo prebuild` the string reaches the app's `strings.xml`, the Android project compiles, and `expo.modules.startup.StartupPackage()` appears in the generated package list. The iOS subscriber's registration is confirmed from the autolinking source; it was not compiled, which needs CocoaPods.
