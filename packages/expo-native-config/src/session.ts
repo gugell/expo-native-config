@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { IOSConfig } from '@expo/config-plugins';
 import { getConfig } from '@expo/config';
@@ -32,6 +33,16 @@ export const configNames = [
   'workspace.config.mjs',
   'workspace.config.json',
 ];
+/** Empty unless this package is missing from the project the config belongs to. */
+function installHint(projectRoot: string): string {
+  try {
+    createRequire(path.join(projectRoot, 'package.json')).resolve('expo-native-config/package.json');
+    return '';
+  } catch {
+    return ' Install expo-native-config in this project first.';
+  }
+}
+
 export function createSession(
   projectRoot: string,
   configPath?: string,
@@ -60,11 +71,16 @@ export function createSession(
       raw = loader(resolved);
     }
   } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    // A config that imports this package before the package is installed fails
+    // deep inside the module it could not load, with a message about the
+    // failure rather than the cause. `init` tells people to install afterwards,
+    // so this is a first-run path, not an exotic one.
     throw new ConfigError([
       {
         severity: 'error',
         code: 'config.load',
-        message: `Cannot load ${resolved}: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Cannot load ${resolved}: ${reason}${installHint(projectRoot)}`,
       },
     ]);
   }
