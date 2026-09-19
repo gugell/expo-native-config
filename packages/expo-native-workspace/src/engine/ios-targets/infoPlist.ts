@@ -36,6 +36,49 @@ export function getTargetInfoPlist(type: TargetType): Record<string, unknown> {
           NSAppClipRequestLocationConfirmation: false,
         },
       };
+    case 'notification-service':
+      return {
+        NSExtension: {
+          NSExtensionPointIdentifier: pointIdentifier,
+          NSExtensionPrincipalClass: '$(PRODUCT_MODULE_NAME).NotificationService',
+        },
+      };
+    case 'notification-content':
+      return {
+        NSExtension: {
+          NSExtensionAttributes: {
+            // Replace with the category your payload sends; an unmatched category
+            // simply means iOS never shows this content extension.
+            UNNotificationExtensionCategory: 'default',
+            UNNotificationExtensionInitialContentSizeRatio: 1,
+          },
+          NSExtensionMainStoryboard: 'MainInterface',
+          NSExtensionPointIdentifier: pointIdentifier,
+        },
+      };
+    case 'intent':
+      return {
+        NSExtension: {
+          NSExtensionAttributes: { IntentsSupported: [] },
+          NSExtensionPointIdentifier: pointIdentifier,
+          NSExtensionPrincipalClass: '$(PRODUCT_MODULE_NAME).IntentHandler',
+        },
+      };
+    case 'action':
+      return {
+        NSExtension: {
+          NSExtensionAttributes: { NSExtensionActivationRule: 'TRUEPREDICATE' },
+          NSExtensionPointIdentifier: pointIdentifier,
+          NSExtensionPrincipalClass: '$(PRODUCT_MODULE_NAME).ActionViewController',
+        },
+      };
+    case 'safari':
+      return {
+        NSExtension: {
+          NSExtensionPointIdentifier: pointIdentifier,
+          NSExtensionPrincipalClass: '$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler',
+        },
+      };
     default:
       return {};
   }

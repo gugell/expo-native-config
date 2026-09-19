@@ -1,5 +1,13 @@
 /** iOS native target types supported by the first-party generator (v1 registry subset). */
-export type TargetType = 'share' | 'widget' | 'clip';
+export type TargetType =
+  | 'share'
+  | 'widget'
+  | 'clip'
+  | 'notification-service'
+  | 'notification-content'
+  | 'intent'
+  | 'action'
+  | 'safari';
 
 export interface TargetSpec {
   /** Folder name under `targetsRoot` AND the Xcode target / productName seed. */
