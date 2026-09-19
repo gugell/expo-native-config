@@ -11,6 +11,10 @@ Define new runtime data with Zod before behavior, infer types where practical, a
 
 Test observable outcomes, including duplicate prevention for repeated native application and a fresh tarball consumer for package changes. Use the repository's actual pnpm scripts. Exercise the affected sample's validation and prebuild when available. Record native compilation and simulator/device checks separately; do not infer them from passing tests.
 
+Two policies decide whether a proposed field belongs at all. First, this package never edits a generated entry point: no field, and no escape hatch aimed at AppDelegate, MainApplication or MainActivity — the guidance pass makes that an error, and `init --template lifecycle-module` is the answer to the need behind it. Second, a field whose job the Expo app config or expo-build-properties already does is duplication, not convenience; `<uses-feature>` and `queries` are here because the Expo config types have no equivalent, and `android.permissions` was removed once it turned out they do.
+
+When you remove a field, add it to the moved-field map in `session.ts` so an unrecognized key names its new home instead of just failing.
+
 Keep sample source outside disposable native output. Preserve unrelated work and app-owned files. Prefer typed capabilities over raw patches; document any escape-hatch limitations. Diagnostics and fixtures must not leak signing credentials.
 
 Before release work, inspect current release-it configuration and release scripts. A dry run is not a publication. Verify actual remote metadata, registry ownership, packaged files and explicit release authorization before external mutations. Leave unpublished status intact until registry publication is confirmed.

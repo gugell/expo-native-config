@@ -21,6 +21,8 @@ For Android package visibility, use `android.queries: { intents: [{ action: 'and
 
 `ios.schemes` uses `{ name, configuration: 'Debug' | 'Release', archive? }`. Android uses typed dependencies, permissions, features, Gradle properties and application attributes. A manifest permission does not grant runtime permission.
 
+The `expo-native-changes` skill covers the same decision for an Expo app with or without this package: read it when the change might not belong here at all.
+
 ## Choosing where a change belongs
 
 Work down this list and stop at the first level that can express the change:
