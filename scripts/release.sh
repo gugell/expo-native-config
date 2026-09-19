@@ -79,8 +79,13 @@ done
 # The offline flags belong here too: computing the version still runs
 # release-it's git checks, and a dry run on a branch other than main would
 # otherwise fail the `requireBranch` check before printing anything.
+#
+# `${arr[@]+"${arr[@]}"}` rather than `"${arr[@]}"`: under `set -u`, bash 3.2 —
+# which is what macOS ships — treats expanding an EMPTY array as an unbound
+# variable. Both arrays are empty on a real release, and only the dry run
+# fills them, so the plain form fails exactly where it matters.
 version_log="$(mktemp)"
-if ! version="$(pnpm exec release-it --release-version "$@" "${offline[@]}" 2>"$version_log")"; then
+if ! version="$(pnpm exec release-it --release-version "$@" ${offline[@]+"${offline[@]}"} 2>"$version_log")"; then
   echo "error: could not determine the next version. Pass one explicitly, e.g. 'patch' or '1.2.3'." >&2
   cat "$version_log" >&2
   rm -f "$version_log"
@@ -99,10 +104,10 @@ for package in packages/*; do
   # must not be treated as one and published.
   [ -f "$package/package.json" ] || continue
   echo "Publishing '$(basename "$package")' to npm"
-  (cd "$package" && pnpm exec release-it "$version" "${flags[@]}" "${offline[@]}")
+  (cd "$package" && pnpm exec release-it "$version" ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"})
 done
 
 echo "Creating the version bump commit, tag and GitHub release"
-pnpm exec release-it "$version" "${flags[@]}" "${offline[@]}"
+pnpm exec release-it "$version" ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"}
 
 echo "Released expo-native-config."
