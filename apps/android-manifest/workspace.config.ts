@@ -2,18 +2,19 @@ import {
   AndroidApplication,
   AndroidFeature,
   AndroidHardware,
-  AndroidPermission,
   defineWorkspace,
 } from 'expo-native-config';
 
+// The camera permission lives in app.json, under expo.android.permissions:
+// Expo owns permissions, and declaring them here as well would split the
+// answer to "what does this app request?" across two files.
 export default defineWorkspace({
   schemaVersion: 1,
   android: {
-    permissions: [AndroidPermission.camera],
-    // Optional hardware: declaring it required would stop devices without a
-    // camera from installing the app at all.
+    // <uses-feature> has no equivalent in the Expo config, so it belongs here.
+    // Optional hardware: required would stop devices without a camera from
+    // installing the app at all.
     features: [AndroidFeature.optional(AndroidHardware.camera)],
-    // Named flags rather than 'android:' keys and stringly-typed booleans.
     applicationAttributes: AndroidApplication.attributes({ supportsRtl: true }),
   },
 });

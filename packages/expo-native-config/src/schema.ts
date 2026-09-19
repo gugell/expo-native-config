@@ -254,7 +254,6 @@ export const WorkspaceSchema = z.strictObject({
       gradleProperties: z
         .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
         .optional(),
-      permissions: z.array(text).optional(),
       queries: AndroidQueriesSchema.optional(),
       lint: z
         .strictObject({
