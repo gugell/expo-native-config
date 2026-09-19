@@ -55,13 +55,25 @@ export function initialize(
       ]);
   const files = new Map<string, string>();
   let body = '';
-  if (template === 'android')
+  // Starter configs use the constructors, so the first thing a user reads is
+  // the form that supplies discriminants and avoids magic strings.
+  let imports = ['defineWorkspace'];
+  if (template === 'android') {
+    imports = ['AndroidFeature', 'AndroidHardware', 'AndroidPermission', 'defineWorkspace'];
     body =
-      "  android: { permissions: ['android.permission.CAMERA'], features: [{ name: 'android.hardware.camera', required: false }] },\n";
+      '  android: {\n' +
+      '    permissions: [AndroidPermission.camera],\n' +
+      '    features: [AndroidFeature.optional(AndroidHardware.camera)],\n' +
+      '  },\n';
+  }
   if (template === 'share-extension' || template === 'widget') {
     const name = template === 'widget' ? 'WorkspaceWidget' : 'ShareExtension';
     const type = template === 'widget' ? 'widget' : 'share';
-    body = `  ios: { targets: [{ name: '${name}', type: '${type}', bundleIdentifier: '.${type}' }] },\n`;
+    imports = ['defineWorkspace', 'Target'];
+    body =
+      '  ios: {\n' +
+      `    targets: [Target.${type}({ name: '${name}', bundleIdentifier: '.${type}' })],\n` +
+      '  },\n';
     files.set(
       `targets/${name}/${template === 'widget' ? 'WorkspaceWidget' : 'ShareViewController'}.swift`,
       template === 'widget' ? widget : share,
@@ -69,7 +81,7 @@ export function initialize(
   }
   files.set(
     'workspace.config.ts',
-    `import { defineWorkspace } from 'expo-native-workspace';\n\nexport default defineWorkspace({\n  schemaVersion: 1,\n${body}});\n`,
+    `import { ${imports.join(', ')} } from 'expo-native-workspace';\n\nexport default defineWorkspace({\n  schemaVersion: 1,\n${body}});\n`,
   );
   for (const file of files.keys())
     if (fs.existsSync(path.join(projectRoot, file)))
