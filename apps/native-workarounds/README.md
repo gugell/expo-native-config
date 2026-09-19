@@ -137,13 +137,28 @@ cd android
 ./gradlew :app:assembleDebug
 ```
 
-Needs a JDK and the Android SDK. This compiles the local Gradle module and links it into the app, which is what proves the `modules` and `project(':…')` declarations produce a real, compiled dependency rather than a Gradle file that merely mentions one. The iOS host app additionally needs `pod install`; the sample is not set up for signing, and interactive behavior is not verified by any of the above.
+Needs a JDK and the Android SDK. This compiles the local Gradle module and links it into the app, and it builds `modules/startup`, which is what proves the lifecycle listener is registered rather than merely present — `expo.modules.startup.StartupPackage()` only reaches the generated package list once Gradle has run. `pnpm android:check` compiles this sample for the same reason. The iOS host app additionally needs `pod install`; the sample is not set up for signing, and interactive behavior is not verified by any of the above.
 
-## What this sample will not do
+## Startup code, done the supported way
 
 It does not edit `AppDelegate` or `MainApplication`, and neither does this package — there is no field for it. Plugins that rewrite a generated entry point break on the SDK that changes its shape, and they are the reason an upgrade turns into an afternoon.
 
-Expo already provides the hooks: an `ExpoAppDelegateSubscriber` on iOS, a `ReactActivityLifecycleListener` or application lifecycle listener on Android, implemented in a local Expo module (`npx create-expo-module --local`) and configured through `android.strings` — which is exactly why this sample declares a string resource. The local Gradle module here is the app-owned native code; the startup hook belongs with it, not in a generated file.
+`modules/startup` is the alternative, in full. It is a local Expo module — the output of `expo-native-config init --template lifecycle-module`, unmodified except that the `TODO`s are filled in:
+
+| File                                     | Hook                                                                             | When it runs                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `android/.../StartupPackage.kt`          | `ApplicationLifecycleListener.onCreate`                                          | `Application.onCreate`, before the JS engine starts |
+| `android/.../StartupPackage.kt`          | `ReactActivityLifecycleListener.onCreate`                                        | the React activity's `onCreate`                     |
+| `ios/StartupAppDelegateSubscriber.swift` | `application(_:didFinishLaunchingWithOptions:)` and `applicationDidBecomeActive` | launch, from the real AppDelegate                   |
+
+Nothing registers them by hand. Autolinking finds the module through its `expo-module.config.json`; on Android the Gradle plugin puts `StartupPackage` into the generated list that `ApplicationLifecycleDispatcher` reads, and on iOS `apple.appDelegateSubscribers` names the subscriber class.
+
+Each platform reads its configuration from the channel that platform already has, because both are available before any JavaScript runs:
+
+- **Android** — `android.strings.startup_value` in `workspace.config.ts` becomes a string resource, which the listener reads with `getString(R.string.startup_value)`.
+- **iOS** — `expo.ios.infoPlist.StartupValue` in `app.json` becomes an Info.plist entry, which the subscriber reads with `Bundle.main.object(forInfoDictionaryKey:)`.
+
+To see them fire, build and run the app and watch the log: `adb logcat -s expo-native-config` on Android, the Xcode console on iOS.
 
 ## The escape hatches here are deliberate
 

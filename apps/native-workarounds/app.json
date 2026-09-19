@@ -4,7 +4,10 @@
     "slug": "native-workarounds",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "dev.exponativeconfig.workarounds"
+      "bundleIdentifier": "dev.exponativeconfig.workarounds",
+      "infoPlist": {
+        "StartupValue": "configured by app.json"
+      }
     },
     "android": {
       "package": "dev.exponativeconfig.workarounds"

@@ -20,11 +20,16 @@ if (javaCheck.error || javaCheck.status !== 0) {
   console.error('Java is unavailable. Install JDK 17 or newer and set JAVA_HOME.');
   process.exit(1);
 }
-const project = path.join(root, 'apps/android-gradle/android');
+// Which sample to compile. Defaults to native-workarounds: it is a superset of
+// android-gradle (local Gradle module, a local Expo module with lifecycle
+// listeners, ABI filters, manifest placeholders, BuildConfig fields), so
+// compiling it proves strictly more for the same CI minute.
+const sample = process.argv[2] ?? 'native-workarounds';
+const project = path.join(root, 'apps', sample, 'android');
 const wrapper = path.join(project, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
 if (!existsSync(wrapper)) {
   console.error(
-    'Android sample is not generated. Run pnpm --filter @expo-native-config/example-android-gradle prebuild --platform android --no-install first.',
+    `Android sample is not generated. Run pnpm --filter @expo-native-config/example-${sample} prebuild --platform android --no-install first.`,
   );
   process.exit(1);
 }

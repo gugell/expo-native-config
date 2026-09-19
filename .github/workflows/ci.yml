@@ -56,5 +56,7 @@ jobs:
       - run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm --filter @expo-native-config/example-android-gradle prebuild --clean --platform android --no-install
+      # native-workarounds compiles the local Gradle module and the local Expo
+      # module whose lifecycle listeners only exist once Gradle has built them.
+      - run: pnpm --filter @expo-native-config/example-native-workarounds prebuild --clean --platform android --no-install
       - run: pnpm android:check
