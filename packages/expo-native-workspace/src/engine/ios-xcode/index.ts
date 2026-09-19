@@ -8,10 +8,12 @@ export { normalizeSchemeDefinitions } from './validate';
 export { schemesGenerator } from './generators/schemes';
 export { xcodeEnvGenerator } from './generators/xcodeEnv';
 export { fixEmbedCycleGenerator } from './generators/fixEmbedCycle';
+export { mainTargetGenerator, applyRunScripts, applyResources } from './generators/mainTarget';
 
 export type {
   SchemeDefinition,
   XcodeEnvSpec,
+  RunScriptSpec,
   IosXcodeManifest,
   XcodeBuildConfiguration,
 } from './types';
