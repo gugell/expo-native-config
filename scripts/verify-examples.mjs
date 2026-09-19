@@ -34,6 +34,8 @@ const examples = [
       'tools:node="remove"',
       'android:windowSoftInputMode="adjustResize"',
       'workspace_sample_value',
+      // The value the Android lifecycle listener reads at startup.
+      'configured by workspace.config.ts',
       "classpath 'com.google.gms:google-services:4.4.2'",
       "force 'com.google.android.material:material:1.12.0'",
     ],
@@ -48,6 +50,8 @@ const examples = [
       '$WorkspaceSampleStaticFramework = true',
       'LD_EXPORT_SYMBOLS = NO',
       'Workspace Upload Symbols',
+      // The Info.plist value the iOS AppDelegate subscriber reads.
+      'StartupValue',
     ],
   ],
 ];

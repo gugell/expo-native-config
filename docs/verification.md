@@ -51,6 +51,14 @@ The same procedure was then repeated on SDK 55, 54, 53, 52, 51 and 50, each from
 
 Native compilation was not attempted on any SDK other than the repository's own samples; this establishes that the plugin applies and the CLI works there, not that the resulting projects build.
 
+## Lifecycle listeners in a sample — 2026-09-19
+
+`apps/native-workarounds` now carries `modules/startup`, the unmodified output of `init --template lifecycle-module` with its TODOs filled in: an `ApplicationLifecycleListener`, a `ReactActivityLifecycleListener` and an `ExpoAppDelegateSubscriber`.
+
+Verified after a clean prebuild: `android.strings.startup_value` reached `android/app/src/main/res/values/strings.xml`, `expo.ios.infoPlist.StartupValue` reached the generated `Info.plist`, the sample compiled to a debug APK, and `expo.modules.startup.StartupPackage()` appears in the generated `ExpoModulesPackageList` — which only happens once Gradle has built the module. `pnpm android:check` and the CI android job now compile this sample rather than `android-gradle`, because it is a superset.
+
+Not verified: that the listeners actually log at runtime, which needs a device or emulator, and the iOS subscriber's compilation, which needs CocoaPods.
+
 ## Boundaries
 
 The plan displays intended operations, not a native state diff. Release-it offline dry run passed against the initial Git commit, calculating the next version and changelog without changing files, publishing, or contacting a remote. Interactive share-sheet/widget behavior, physical-device signing, App Store submission, Windows/Linux CI execution, and registry publication have not been verified locally. The repository includes CI jobs; those jobs do not have a remote run until the repository is created and pushed.

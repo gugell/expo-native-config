@@ -7,9 +7,13 @@ coverage/
 *.tgz
 apps/*/ios/
 apps/*/android/
-# Gradle output for app-owned native modules that live outside android/
+# Gradle output for app-owned native code that lives outside android/, whether
+# it is a plain Gradle module (native/) or a local Expo module (modules/).
+# These paths also break a Windows checkout: the dex filenames exceed MAX_PATH.
 apps/*/native/**/build/
 apps/*/native/**/.gradle/
+apps/*/modules/**/build/
+apps/*/modules/**/.gradle/
 *.tsbuildinfo
 .env*
 !.env.example

@@ -116,7 +116,12 @@ export default defineWorkspace({
     },
     // Values native code reads before the JS engine starts, and a colour the
     // generated theme can reference. Both go through Expo's own mods.
-    strings: { workspace_sample_value: 'hello from workspace.config.ts' },
+    // Read by StartupLifecycleListener in modules/startup before the JS engine
+    // starts. A string resource is the documented channel for that.
+    strings: {
+      workspace_sample_value: 'hello from workspace.config.ts',
+      startup_value: 'configured by workspace.config.ts',
+    },
     colors: { workspace_sample_accent: '#8bdad2' },
     // A resource file with no typed mod. This one permits cleartext traffic to
     // a debug proxy — the reason people hand-write this file — and is paired
