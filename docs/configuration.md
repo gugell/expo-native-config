@@ -31,7 +31,44 @@ export default defineWorkspace({
 });
 ```
 
-`defineWorkspace` supplies TypeScript authoring support; loading through the CLI or plugin performs runtime validation. Helpers produce ordinary declaration objects: `shareExtension({ name: 'Share' })` is equivalent to `{ name: 'Share', type: 'share' }`. They do not create Swift files. JSON configurations use the object forms without imports or a default export.
+`defineWorkspace` supplies TypeScript authoring support; loading through the CLI or plugin performs runtime validation. JSON configurations use the object forms without imports or a default export.
+
+## Constructors, or plain objects
+
+Every declaration can be written as a literal. Values with more than one shape also have a constructor, so the discriminant and the defaults are supplied for you:
+
+```ts
+import { AndroidComponent, Target, XcodeBuildSettings } from 'expo-native-workspace';
+
+Target.share({ name: 'Share' }); // { name: 'Share', type: 'share' }
+AndroidComponent.remove('receiver', 'androidx.profileinstaller.ProfileInstallReceiver');
+XcodeBuildSettings.of({ ldExportSymbols: false }); // { LD_EXPORT_SYMBOLS: 'NO' }
+```
+
+A name like `Target` is both the type and the namespace of constructors, so `Target` annotates a value and `Target.share(…)` builds one. Constructors return plain objects and validate identically — **both styles are supported, and they mix freely**. Use a literal when it is already obvious; use a constructor when it saves you a magic string.
+
+| Namespace                 | Constructors                                                                                             |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `Target`                  | `share`, `widget`, `appClip`, `notificationService`, `notificationContent`, `intent`, `action`, `safari` |
+| `Pod`                     | `local`, `version`, `git`                                                                                |
+| `Package`                 | `remote`, `local`                                                                                        |
+| `SwiftPackageRequirement` | `exact`, `upToNextMajor`, `upToNextMinor`, `range`, `branch`, `revision`                                 |
+| `Scheme`                  | `debug`, `release`                                                                                       |
+| `RunScript`               | `shell`, `onInstall`                                                                                     |
+| `PodBuildSettings`        | `forTarget`, `forTargetsStartingWith`, `forTargetsMatching`                                              |
+| `AndroidDependency`       | `library`, `libraryExcluding`, `project`, `bom`                                                          |
+| `AndroidComponent`        | `activity`, `service`, `receiver`, `provider`, `remove`                                                  |
+| `AndroidFeature`          | `required`, `optional`, `openGlEs`                                                                       |
+| `AndroidModule`           | `at`                                                                                                     |
+| `MavenRepository`         | `url`, `scoped`, `private`                                                                               |
+| `BuildConfigField`        | `string`, `boolean`, `int`, `raw`                                                                        |
+| `ReplaceRule`             | `regex`, `literal`                                                                                       |
+
+Named constants cover the strings that are otherwise copied from a search result: `Abi` (`arm64`, `armv7`, `x86`, `x64`, `all`), `AndroidPermission`, `AndroidHardware`, `AndroidApplication.attributes({ largeHeap: true })` (which writes the `android:` keys), and `XcodeBuildSettings.of({ … })` (which writes Xcode's names and turns booleans into `YES`/`NO` — the usual reason a hand-written build setting does nothing).
+
+`BuildConfigField.string('CHANNEL', 'preview')` quotes the value for Gradle, and `ReplaceRule.literal` escapes its needle and defaults `required` to true, so a rule that stops matching after an SDK upgrade fails the build instead of disappearing.
+
+The earlier standalone helpers (`shareExtension`, `widgetExtension`, `appClip`, `swiftPackage`, `localSwiftPackage`, `scheme`, `androidLibrary`, `androidFeature`) remain exported and behave exactly as before. None of these create Swift or Kotlin files.
 
 ## File discovery and paths
 
@@ -97,6 +134,13 @@ All fields are optional unless marked required. Unknown fields are rejected rath
 | `fixExtensionEmbedCycle`                   | Boolean; control extension embed-cycle correction                       |
 | `xcode.env.exports`                        | String map exported into generated Xcode environment configuration      |
 | `xcode.env.lines`                          | Array of shell lines for the Xcode environment; executable shell code   |
+| `buildSettings`                            | Build settings on the **host app** target                               |
+| `runScripts`                               | Shell-script build phases on the host app target                        |
+| `resources`                                | App-root files copied beside the project and bundled with the app       |
+| `podfileProperties`                        | `Podfile.properties.json` keys; the Expo-sanctioned Podfile channel     |
+| `autolinkingExclude`                       | Expo modules excluded from `use_expo_modules!`                          |
+| `appDelegate`                              | `imports` / `didFinishLaunching` lines injected into the AppDelegate    |
+| `podfile`                                  | Escape hatch: raw `postInstall`, `lines`, regex `replace`               |
 
 | Android field                                      | Shape / purpose                                                            |
 | -------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -109,6 +153,20 @@ All fields are optional unless marked required. Unknown fields are rejected rath
 | `queries`                                          | `{ intents?: [{ action, scheme }], packages?: string[] }`                  |
 | `dependencies`                                     | `{ module, configuration? }[]`, Maven `group:artifact:version` coordinates |
 | `applicationAttributes`                            | String map of Android manifest application attributes                      |
+| `metaData`                                         | `<meta-data>` entries on `<application>` — where most SDK keys live        |
+| `components`                                       | `<activity>`/`<service>`/`<receiver>`/`<provider>` entries or removals     |
+| `supportsScreens`                                  | `<supports-screens>` flags, e.g. `{ largeScreens: false }`                 |
+| `manifestPlaceholders`, `buildConfigFields`        | `defaultConfig` entries                                                    |
+| `abiFilters`                                       | `ndk.abiFilters` plus React Native's `reactNativeArchitectures`            |
+| `mavenRepositories`, `flatDirs`                    | Extra repositories for every project                                       |
+| `buildscriptDependencies`, `plugins`               | Root `classpath` coordinates and applied app plugins                       |
+| `forceDependencies`                                | `resolutionStrategy.force` coordinates                                     |
+| `modules`                                          | Local Gradle modules included from `settings.gradle`                       |
+| `autolinkingExclude`                               | Expo modules excluded from Android autolinking                             |
+| `strings`, `colors`, `styles`                      | Typed resource values through Expo's introspectable mods                   |
+| `resources`                                        | Raw files under `app/src/main/res` (for resources with no typed mod)       |
+| `mainApplication`                                  | `imports` / `onCreate` lines injected into MainApplication                 |
+| `gradle`                                           | Escape hatch: regex `replace` rules per Gradle file                        |
 | `lint`                                             | Optional `checkReleaseBuilds` and `abortOnError` booleans                  |
 | `signing`                                          | One of the two signing shapes described below                              |
 
@@ -131,17 +189,17 @@ export default defineWorkspace({
 
 Each target has a unique `name`, target `type` supplied by the helper, optional `source`, `bundleIdentifier`, `deploymentTarget`, `frameworks`, `entitlements`, `buildSettings`, and `pods`. A leading dot in the bundle identifier appends to the host app identifier. Source paths resolve from the app root; the default is `targets/<name>`. Keep Info.plist and native sources in that directory when custom behavior is needed. `ios.deploymentTarget` supplies a default for extension targets only; it does not configure the host app deployment target.
 
-| Target field       | Meaning                                                                      |
-| ------------------ | ---------------------------------------------------------------------------- |
-| `name` (required)  | Unique target name, starting with a letter; then letters, digits, `_` or `-` |
-| `type` (required)  | `share`, `widget`, or `clip`; helpers supply it                              |
-| `bundleIdentifier` | Explicit ID or suffix such as `.share`; resolved IDs must be unique          |
-| `source`           | Existing source directory inside the app root                                |
-| `deploymentTarget` | Target override, then `ios.deploymentTarget`, then generator default `18.0`  |
-| `frameworks`       | Additional system framework names                                            |
-| `entitlements`     | Plist-shaped entitlement values                                              |
-| `buildSettings`    | String map of Xcode build settings                                           |
-| `pods`             | Dependencies for this target, using the Pod shape below                      |
+| Target field       | Meaning                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------- |
+| `name` (required)  | Unique target name, starting with a letter; then letters, digits, `_` or `-`                            |
+| `type` (required)  | `share`, `widget`, `clip`, `notification-service`, `notification-content`, `intent`, `action`, `safari` |
+| `bundleIdentifier` | Explicit ID or suffix such as `.share`; resolved IDs must be unique                                     |
+| `source`           | Existing source directory inside the app root                                                           |
+| `deploymentTarget` | Target override, then `ios.deploymentTarget`, then generator default `18.0`                             |
+| `frameworks`       | Additional system framework names                                                                       |
+| `entitlements`     | Plist-shaped entitlement values                                                                         |
+| `buildSettings`    | String map of Xcode build settings                                                                      |
+| `pods`             | Dependencies for this target, using the Pod shape below                                                 |
 
 The host must define `expo.ios.bundleIdentifier` when targets are declared. `appClip({ name: 'Preview', source: './targets/Preview', bundleIdentifier: '.clip' })` declares an App Clip; you supply its native app sources and app-specific setup. There is currently no App Clip init preset.
 
@@ -240,9 +298,92 @@ const queries = {
 
 Each intent produces a separate `<intent>` query containing one action and scheme. Existing queries are merged into one `<queries>` root; duplicate entries are removed and provider queries are preserved. Package visibility enables discovery; it does not install applications or grant permissions. Removing a declaration requires clean prebuild to remove stale generated entries.
 
+## Host app, resources and build phases
+
+`ios.buildSettings` applies to the **host application** target; an extension's own settings stay on its target declaration. `ios.runScripts` adds shell-script build phases, matched by `name`, so a repeated prebuild updates the phase in place instead of appending a second copy.
+
+```ts
+const ios = {
+  buildSettings: { LD_EXPORT_SYMBOLS: 'NO' },
+  runScripts: [{ name: 'Upload dSYMs', script: './scripts/upload-dsyms.sh' }],
+  resources: ['assets/notification.wav'],
+};
+```
+
+`ios.resources` copies each app-root file next to the generated project and adds it to the host target's Resources phase. Files are addressed by basename, so two entries with the same filename are rejected.
+
+## Safe Podfile configuration
+
+`ios.podfileProperties` writes `Podfile.properties.json`, which the versioned Expo Podfile template reads. Expo documents this as the only safe channel for Podfile configuration, and it is visible to `expo config --type introspect`. Prefer it whenever the value you need has a property.
+
+## Android manifest components and resources
+
+```ts
+const android = {
+  metaData: { 'com.example.API_KEY': 'value' },
+  components: [
+    { kind: 'receiver', name: 'androidx.profileinstaller.ProfileInstallReceiver', remove: true },
+    { kind: 'activity', name: '.CustomActivity', attributes: { 'android:exported': 'false' } },
+  ],
+  supportsScreens: { largeScreens: false },
+  strings: { expo_custom_value: 'hello' },
+};
+```
+
+`remove: true` emits `tools:node="remove"`, the supported way to drop a component a dependency merges in; the `tools` namespace is added to `<manifest>` automatically. `strings`, `colors` and `styles` go through Expo's own `withStringsXml` / `withAndroidColors` / `withAndroidStyles` mods, so they are introspectable — and `strings.xml` is the documented channel for values native code must read before the JS engine starts. Use `android.resources` only for resource files that have no typed mod, such as `xml/network_security_config.xml`.
+
+## Android Gradle structure
+
+```ts
+const android = {
+  mavenRepositories: ['https://jitpack.io'],
+  buildscriptDependencies: ['com.google.gms:google-services:4.4.2'],
+  plugins: ['com.google.gms.google-services'],
+  forceDependencies: ['com.google.android.material:material:1.12.0'],
+  modules: [
+    { name: 'watermelondb-jsi', path: 'node_modules/@nozbe/watermelondb/native/android-jsi' },
+  ],
+  dependencies: [
+    { project: 'watermelondb-jsi' },
+    { platform: 'com.google.firebase:firebase-bom:33.1.0' },
+  ],
+  abiFilters: ['arm64-v8a'],
+};
+```
+
+A dependency entry is a Maven coordinate (`module`, with optional `exclude`), a local Gradle module (`project`), or a BOM (`platform`). `modules` writes the `include` / `projectDir` pair into `settings.gradle`; `dependencies` still has to reference the module for it to be linked. `abiFilters` sets both `ndk.abiFilters` and `reactNativeArchitectures`, because React Native compiles per architecture from its own property and would otherwise still ship every ABI.
+
+## Entry-point injection
+
+`ios.appDelegate` and `android.mainApplication` insert lines into the generated AppDelegate and MainApplication inside a replaceable tagged block.
+
+```ts
+const config = {
+  ios: { appDelegate: { didFinishLaunching: ['RCTI18nUtil.sharedInstance().forceRTL(true)'] } },
+  android: {
+    mainApplication: {
+      imports: ['import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage'],
+      onCreate: ['packages.add(WatermelonDBJSIPackage())'],
+    },
+  },
+};
+```
+
+These are escape hatches: the lines are your own native code, in the generated file's language, and nothing validates that they compile. Expo's own recommendation is to prefer `ReactActivityLifecycleListeners` plus `android.strings` for Android startup configuration, and to reach for injection only when no module-level hook exists.
+
+## Escape hatches
+
+`ios.podfile` (`postInstall`, `lines`, `replace`) and `android.gradle` (`app`, `project`, `settings` replace rules) edit generated Ruby and Groovy directly. Expo's plugin guidance is explicit that regular-expression rewrites of generated code are a last resort: they break silently when the template changes between SDK versions. They exist because real apps need them — repointing a vendor plugin's hardcoded `node_modules` path in a monorepo has no static equivalent — and every such operation is reported with `risk: "escape-hatch"`, listed by `plan --verbose`, and warned about by `doctor`.
+
+Reach for a typed field first, `ios.podfileProperties` or `android.strings` second, and an escape hatch only when neither can express the change. Re-verify every escape hatch after an Expo SDK upgrade.
+
+## Removing a declaration
+
+Every generated block carries a tag. Deleting a declaration from the config emits a removal operation for its tag, so the block disappears on the next prebuild without `--clean`. These cleanup operations are hidden from `plan` unless `--verbose` is passed. Two things are still not reversible this way: entries merged into structured files (a `gradle.properties` key, a manifest permission) stay until a clean prebuild, and an escape-hatch `replace` cannot be undone at all, because a regular expression has no inverse.
+
 ## Scope and unsupported inputs
 
-The public schema rejects unknown fields, including arbitrary patch declarations. Prefer a typed capability and a focused regression test when adding first-party support. Config files themselves are executable trusted project code, not safely sandboxed data.
+The public schema rejects unknown fields. Config files themselves are executable trusted project code, not safely sandboxed data. Prefer a typed capability and a focused regression test when adding first-party support.
 
 ## Android release signing
 

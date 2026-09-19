@@ -2,7 +2,7 @@
 
 Declare native project changes in `workspace.config.ts`, review a plan, and apply them through Expo prebuild.
 
-One package provides an Expo config plugin, a CLI, typed helpers, and agent skills. It supports iOS extensions, Swift packages, CocoaPods, Xcode schemes, and Android Gradle and manifest configuration.
+One package provides an Expo config plugin, a CLI, typed helpers, and agent skills. It supports iOS extensions (share, widget, App Clip, notification service/content, intent, action, Safari), Swift packages, CocoaPods, host-target build settings and build phases, Xcode schemes, Android Gradle structure (repositories, classpath, local modules, ABI filters, dependency resolution), Android manifest and resource entries, and — where nothing typed can express the change — explicitly flagged escape hatches.
 
 **Release status:** this is an unpublished project prepared for release. Registry availability and ownership must be verified before advertising an npm install command. Use the local workspace or a packed tarball now.
 
@@ -21,13 +21,13 @@ pnpm --filter @expo-native-workspace/example-share-extension prebuild --platform
 For an existing Expo app, pack the package with `pnpm --filter expo-native-workspace pack --pack-destination /tmp`, install the resulting `.tgz` using that app's package manager, and run `expo-native-workspace init --template minimal --yes` through the package manager. Register `expo-native-workspace/plugin` in your Expo config's `plugins` array. See [getting started](docs/getting-started.md).
 
 ```ts
-import { defineWorkspace, shareExtension } from 'expo-native-workspace';
+import { defineWorkspace, Target } from 'expo-native-workspace';
 
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
     targets: [
-      shareExtension({
+      Target.share({
         name: 'WorkspaceShare',
         source: './targets/WorkspaceShare',
         bundleIdentifier: '.share',
@@ -36,6 +36,8 @@ export default defineWorkspace({
   },
 });
 ```
+
+Declarations can be written as plain objects or built with constructors — `Target.share(…)`, `AndroidDependency.project(…)`, `XcodeBuildSettings.of({ ldExportSymbols: false })` — which supply the discriminants, the Xcode and `android:` key names, and the defaults, so the config carries fewer magic strings. Both styles validate identically; JSON configs use the object form.
 
 Run `expo-native-workspace validate`, `plan`, and `doctor` before `expo prebuild`. A plan describes intended operations; it does not compare every byte of the existing native project or prove that a native build succeeds.
 
