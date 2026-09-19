@@ -212,3 +212,49 @@ test('doctor blocks an older Expo SDK but only warns about a newer one', () => {
     );
   }
 });
+
+test('the lifecycle module template scaffolds Expo hooks and no entry-point edits', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'enw-lifecycle-'));
+  writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({ name: 'fixture', version: '1.0.0' }),
+  );
+  const result = run(
+    'init',
+    '--template',
+    'lifecycle-module',
+    '--yes',
+    '--project',
+    root,
+    '--json',
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const { files } = JSON.parse(result.stdout) as { files: string[] };
+
+  // Both platforms register through Expo's own mechanisms.
+  const config = JSON.parse(
+    readFileSync(path.join(root, 'modules/startup/expo-module.config.json'), 'utf8'),
+  ) as { apple: { appDelegateSubscribers: string[] } };
+  assert.deepEqual(config.apple.appDelegateSubscribers, ['StartupAppDelegateSubscriber']);
+  const kotlin = readFileSync(
+    path.join(root, 'modules/startup/android/src/main/java/expo/modules/startup/StartupPackage.kt'),
+    'utf8',
+  );
+  assert.match(kotlin, /BasePackage/);
+  assert.match(kotlin, /ApplicationLifecycleListener/);
+
+  // The value the listener reads comes from android.strings, not a patched file.
+  assert.match(readFileSync(path.join(root, 'workspace.config.ts'), 'utf8'), /startup_value/);
+
+  // Nothing generated should reference a generated entry point.
+  for (const file of files) {
+    assert.doesNotMatch(
+      readFileSync(path.join(root, file), 'utf8'),
+      /AppDelegate\.(swift|mm)|MainApplication\.(kt|java)/,
+      `${file} must not reference a generated entry point`,
+    );
+  }
+
+  // Init never overwrites: a second run refuses rather than clobbering edits.
+  assert.equal(run('init', '--template', 'lifecycle-module', '--yes', '--project', root).status, 1);
+});

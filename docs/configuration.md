@@ -358,7 +358,15 @@ This package does not edit `AppDelegate` or `MainApplication`, and has no field 
 - **iOS** — an `ExpoAppDelegateSubscriber` in an Expo module receives the AppDelegate lifecycle without anyone editing the AppDelegate.
 - **Android** — `ReactActivityLifecycleListener` and the application lifecycle listeners in `expo-modules-core` do the same, and `strings.xml` carries the values they read. That is why `android.strings` goes through Expo's own mod: a listener can read a string resource before the JS engine starts.
 
-Create a local Expo module (`npx create-expo-module --local`), implement the listener or subscriber there, and declare its configuration with `android.strings`. A library that needs registering usually ships its own config plugin — register that in `expo.plugins` rather than reproducing what it does.
+`init --template lifecycle-module` scaffolds exactly that:
+
+```sh
+npx expo-native-config init --template lifecycle-module --yes
+```
+
+It writes a local Expo module under `modules/startup` — an `ApplicationLifecycleListener` on Android, an `ExpoAppDelegateSubscriber` on iOS, and a `startup_value` string resource the listener reads — plus the `android.strings` entry that supplies that value. Autolinking discovers the module, so there is no registration step and no plugin entry; put the startup work in the two `TODO`s.
+
+It is deliberately smaller than `npx create-expo-module --local`: there is no JavaScript API, because a startup hook is not called from JavaScript. Use `create-expo-module` when you do want one. A library that needs registering usually ships its own config plugin — register that in `expo.plugins` rather than reproducing what it does.
 
 ## Being told where a change belongs
 
