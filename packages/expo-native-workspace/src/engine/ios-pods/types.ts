@@ -1,3 +1,4 @@
+import type { BaseOp, Op } from '../core';
 import type { NameMatcher, XcodeBuildConfiguration } from '../core';
 
 export type PodTargetMatcher = NameMatcher;
@@ -38,4 +39,14 @@ export interface IosPodsManifest {
   remotePods?: RemotePodDeclaration[];
   podBuildSettings?: PodBuildSettingsRule[];
   removePodBuildPhases?: PodRemoveBuildPhaseRule[];
+}
+
+/** Writes keys into the template-read `Podfile.properties.json`. */
+export interface PodfilePropertiesOp extends BaseOp {
+  kind: 'iosPodfileProperties';
+  properties: Record<string, string>;
+}
+
+export function isPodfilePropertiesOp(op: Op): op is PodfilePropertiesOp {
+  return op.kind === 'iosPodfileProperties';
 }
