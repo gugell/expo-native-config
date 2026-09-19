@@ -39,6 +39,16 @@ A `native-workarounds` sample was then added to hold the workarounds apps hand-w
 
 Not verified in this run: an iOS host-app compile after these changes (that needs CocoaPods installation), AppDelegate injection against a real generated AppDelegate, `ios.resources` bundling in a built app, Maven repositories with credentials, and every new extension target type beyond schema and Info.plist generation. `pnpm native:check` recompiled both extension targets; `examples:check --prebuild` was run for the two samples that changed, not all six.
 
+## Expo SDK 57 — 2026-09-19
+
+A project generated with `create-expo-app@latest` (Expo `~57.0.24`, React Native `0.86.3`) installed the packed tarball with plain `npm install` — which failed before the peer range was widened — and then:
+
+- `init --template share-extension`, `validate`, `plan`, `plan --verbose`, `explain --id`, `completion` for bash/zsh/fish, `--help` and `--version` all behaved as documented, with the exit codes the CLI specifies for unknown ids, unknown commands, a missing config and an unsupported shell.
+- `doctor` exits 0 against SDK 57 on Node 24.11.1, reporting only the escape-hatch warnings for the declarations that ask for them.
+- `expo prebuild` applied the whole declared surface to the SDK 57 template: the share extension target and its Info.plist, host build settings, a run-script phase, Podfile properties, the autolinking exclusion and raw `post_install` block, ABI filters with `reactNativeArchitectures`, buildscript classpath, Maven repository, forced version, manifest placeholders, BuildConfig field, `<meta-data>`, merged `.MainActivity` attributes, `tools:node="remove"`, `<supports-screens>`, a strings.xml value, and both entry-point injections.
+
+Native compilation on SDK 57 was not attempted; this establishes that the plugin applies and the CLI works there, not that the resulting projects build.
+
 ## Boundaries
 
 The plan displays intended operations, not a native state diff. Release-it offline dry run passed against the initial Git commit, calculating the next version and changelog without changing files, publishing, or contacting a remote. Interactive share-sheet/widget behavior, physical-device signing, App Store submission, Windows/Linux CI execution, and registry publication have not been verified locally. The repository includes CI jobs; those jobs do not have a remote run until the repository is created and pushed.

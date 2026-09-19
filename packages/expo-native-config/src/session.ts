@@ -36,7 +36,9 @@ export const configNames = [
 /** Empty unless this package is missing from the project the config belongs to. */
 function installHint(projectRoot: string): string {
   try {
-    createRequire(path.join(projectRoot, 'package.json')).resolve('expo-native-config/package.json');
+    createRequire(path.join(projectRoot, 'package.json')).resolve(
+      'expo-native-config/package.json',
+    );
     return '';
   } catch {
     return ' Install expo-native-config in this project first.';

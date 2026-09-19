@@ -159,3 +159,56 @@ test('dynamic Expo config errors are surfaced, never replaced by app.json', () =
   assert.equal(result.status, 1);
   assert.match(result.stdout, /fixture dynamic config failure/);
 });
+
+/** Installs a fake `expo` package so doctor can be pointed at any SDK version. */
+function withExpoVersion(root: string, version: string): void {
+  const dir = path.join(root, 'node_modules', 'expo');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'expo', version }));
+}
+
+test('doctor blocks an older Expo SDK but only warns about a newer one', () => {
+  const root = fixture({ schemaVersion: 1 });
+
+  // Newer than the latest verified SDK: a warning, not an error. Blocking here
+  // would make the CLI unusable on the day a new SDK ships.
+  withExpoVersion(root, '58.0.0');
+  const newer = JSON.parse(run('doctor', '--project', root, '--json').stdout) as {
+    valid: boolean;
+    diagnostics: Array<{ severity: string; code: string; message: string }>;
+  };
+  const newerDiagnostic = newer.diagnostics.find((d) => d.code === 'expo.version');
+  assert.equal(newerDiagnostic?.severity, 'warning');
+  assert.match(newerDiagnostic?.message ?? '', /newer than SDK 57/);
+  assert.match(newerDiagnostic?.message ?? '', /Inspect the generated native projects/);
+  assert.equal(
+    newer.diagnostics.some((d) => d.severity === 'error' && d.code === 'expo.version'),
+    false,
+  );
+
+  // Older than the minimum: a real error.
+  withExpoVersion(root, '54.0.0');
+  const older = JSON.parse(run('doctor', '--project', root, '--json').stdout) as {
+    valid: boolean;
+    diagnostics: Array<{ severity: string; code: string; message: string }>;
+  };
+  assert.equal(older.valid, false);
+  assert.ok(
+    older.diagnostics.some(
+      (d) => d.code === 'expo.version' && d.severity === 'error' && /older than/.test(d.message),
+    ),
+  );
+
+  // Both verified SDKs produce no version diagnostic at all.
+  for (const version of ['56.0.21', '57.0.24']) {
+    withExpoVersion(root, version);
+    const supported = JSON.parse(run('doctor', '--project', root, '--json').stdout) as {
+      diagnostics: Array<{ code: string }>;
+    };
+    assert.equal(
+      supported.diagnostics.some((d) => d.code === 'expo.version'),
+      false,
+      `Expo ${version} should be supported without a diagnostic`,
+    );
+  }
+});

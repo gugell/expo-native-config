@@ -13,6 +13,9 @@ interface Options {
   yes?: boolean;
 }
 const commands = 'init plan validate doctor explain completion';
+/** Oldest SDK this package supports, and the newest it has been verified against. */
+const MINIMUM_EXPO_SDK = 56;
+const LATEST_VERIFIED_EXPO_SDK = 57;
 function base(command: Command): Command {
   if (command.name() !== 'init')
     command.option('--config <file>', 'Explicit workspace config path');
@@ -39,11 +42,21 @@ async function inspect(command: string, options: Options): Promise<void> {
       const { createRequire } = await import('node:module');
       const req = createRequire(path.join(path.resolve(options.project), 'package.json'));
       const expo = req('expo/package.json') as { version: string };
-      if (Number(expo.version.split('.')[0]) !== 56)
+      const major = Number(expo.version.split('.')[0]);
+      // Below the minimum is a real error. Above the tested range is a warning:
+      // a new SDK usually works, and blocking doctor would make the tool
+      // unusable for anyone on the latest release before it is re-verified.
+      if (major < MINIMUM_EXPO_SDK)
         diagnostics.push({
           severity: 'error',
           code: 'expo.version',
-          message: `Expo ${expo.version} is outside the tested SDK 56 range.`,
+          message: `Expo ${expo.version} is older than the supported SDK ${MINIMUM_EXPO_SDK}.`,
+        });
+      else if (major > LATEST_VERIFIED_EXPO_SDK)
+        diagnostics.push({
+          severity: 'warning',
+          code: 'expo.version',
+          message: `Expo ${expo.version} is newer than SDK ${LATEST_VERIFIED_EXPO_SDK}, the latest this package was verified against. Inspect the generated native projects after prebuild.`,
         });
     } catch {
       diagnostics.push({
