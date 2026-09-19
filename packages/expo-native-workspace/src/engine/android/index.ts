@@ -1,4 +1,7 @@
 export { androidGenerator } from './generators/android';
+export { gradleExtrasGenerator } from './generators/gradleExtras';
+export { manifestExtrasGenerator } from './generators/manifestExtras';
+export { androidResourcesGenerator } from './generators/resources';
 export { androidExecutor } from './androidExecutor';
 export { isAndroidOp } from './types';
 export { androidLibrary, renderAndroidDependency, renderAndroidDependencies } from './dependencies';
