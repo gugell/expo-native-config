@@ -107,6 +107,38 @@ export interface AppendOnceOp extends BaseOp {
   contents: string;
 }
 
+/** Copies an app-owned file (text or binary) into a generated native directory. */
+export interface CopyFileOp extends BaseOp {
+  kind: 'copyFile';
+  base?: FileBase;
+  /** Source path, relative to the Expo app root. */
+  from: string;
+  /** Destination path, relative to `base`. */
+  path: string;
+}
+
+export interface ReplaceInFileOp extends BaseOp {
+  kind: 'replaceInFile';
+  base?: FileBase;
+  path: string;
+  /** Regex source applied to the file contents. */
+  find: string;
+  replacement: string;
+  all?: boolean;
+  /** Skip entirely when the file already contains this marker. */
+  skipIfContains?: string;
+  /** Fail instead of silently doing nothing when the pattern never matches. */
+  required?: boolean;
+}
+
+/** Removes a previously merged tagged block. Emitted when a declaration disappears. */
+export interface RemoveBlockOp extends BaseOp {
+  kind: 'removeBlock';
+  base?: FileBase;
+  path: string;
+  tag: string;
+}
+
 export interface DeleteGlobOp extends BaseOp {
   kind: 'deleteGlob';
   base?: FileBase;
@@ -114,9 +146,24 @@ export interface DeleteGlobOp extends BaseOp {
   match: (filename: string) => boolean;
 }
 
-export type FileOp = WriteFileOp | MergeBlockOp | AppendOnceOp | DeleteGlobOp;
+export type FileOp =
+  | WriteFileOp
+  | MergeBlockOp
+  | AppendOnceOp
+  | DeleteGlobOp
+  | ReplaceInFileOp
+  | RemoveBlockOp
+  | CopyFileOp;
 
-export const FILE_OP_KINDS = new Set(['writeFile', 'mergeBlock', 'appendOnce', 'deleteGlob']);
+export const FILE_OP_KINDS = new Set([
+  'writeFile',
+  'mergeBlock',
+  'appendOnce',
+  'deleteGlob',
+  'replaceInFile',
+  'removeBlock',
+  'copyFile',
+]);
 
 export function isFileOp(op: BaseOp): op is FileOp {
   return FILE_OP_KINDS.has(op.kind);

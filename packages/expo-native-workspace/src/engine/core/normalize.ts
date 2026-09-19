@@ -9,9 +9,9 @@ function asArray<T>(value: unknown): T[] | undefined {
 }
 
 /**
- * Flatten nested `workspace.config.ts` (`ios` / `android` / `patches`) and the
- * legacy flat `workspace.manifest.js` into the canonical generator-facing
- * RawManifest. Nested fields win when both are present.
+ * Flatten nested `workspace.config.ts` (`ios` / `android`) and the legacy flat
+ * `workspace.manifest.js` into the canonical generator-facing RawManifest.
+ * Nested fields win when both are present.
  */
 export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
   if (!isRecord(raw)) {
@@ -44,7 +44,6 @@ export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
 
   const swiftPackages = mergeSwiftPackages(nestedIos, raw);
   const android = pick(raw.android, undefined);
-  const patches = pick(raw.patches, undefined);
   const deploymentTarget =
     typeof nestedIos?.deploymentTarget === 'string' ? nestedIos.deploymentTarget : undefined;
 
@@ -69,7 +68,13 @@ export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
   assign(manifest, 'removePodBuildPhases', removePodBuildPhases);
   assign(manifest, 'swiftPackages', swiftPackages);
   assign(manifest, 'android', android);
-  assign(manifest, 'patches', patches);
+  assign(manifest, 'iosBuildSettings', nestedIos?.buildSettings);
+  assign(manifest, 'runScripts', nestedIos?.runScripts);
+  assign(manifest, 'iosResources', nestedIos?.resources);
+  assign(manifest, 'appDelegate', nestedIos?.appDelegate);
+  assign(manifest, 'iosAutolinkingExclude', nestedIos?.autolinkingExclude);
+  assign(manifest, 'podfileProperties', nestedIos?.podfileProperties);
+  assign(manifest, 'podfile', nestedIos?.podfile);
   assign(manifest, 'iosDeploymentTarget', deploymentTarget);
 
   return manifest;
