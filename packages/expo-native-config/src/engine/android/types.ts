@@ -87,8 +87,6 @@ export interface AndroidSlice {
   kotlinVersion?: string;
   /** Arbitrary gradle.properties entries. */
   gradleProperties?: Record<string, string | number | boolean>;
-  /** Permission names (e.g. "android.permission.RECORD_AUDIO"). */
-  permissions?: string[];
   /**
    * App Gradle dependencies. Prefer `{ module, configuration }` over raw Groovy
    * lines so plan/doctor can show coordinates instead of opaque strings.

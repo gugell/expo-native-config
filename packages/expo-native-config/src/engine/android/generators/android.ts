@@ -78,29 +78,6 @@ export const androidGenerator: Generator = {
       }
     }
 
-    for (const permission of slice.permissions ?? []) {
-      if (typeof permission !== 'string' || !permission.trim()) {
-        throw new Error(`${ERR} android.permissions entries must be non-empty strings.`);
-      }
-      const name = permission.trim();
-      ops.push(
-        tag(
-          {
-            kind: 'androidManifestPermission',
-            permission: name,
-            label: `android:permission:${name}`,
-          },
-          {
-            id: `android.permission.${name}`,
-            semanticKind: 'android.permission.add',
-            source: 'android.permissions',
-            files: ['android/app/src/main/AndroidManifest.xml'],
-            desired: name,
-          },
-        ),
-      );
-    }
-
     if (slice.applicationAttributes) {
       for (const [name, value] of Object.entries(slice.applicationAttributes)) {
         ops.push(

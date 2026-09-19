@@ -23,3 +23,5 @@ cd android
 ```
 
 Run from this sample directory before entering `android/`. A successful `expo run:android` additionally installs and launches the app.
+
+The camera permission is declared in `app.json` under `expo.android.permissions`, not in the workspace config: Expo owns permissions. `<uses-feature>` has no equivalent there, so it lives here.

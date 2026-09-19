@@ -27,7 +27,6 @@ import {
   AndroidFeature,
   AndroidHardware,
   AndroidModule,
-  AndroidPermission,
   BuildConfigField,
   MavenRepository,
   Package,
@@ -309,7 +308,6 @@ test('factories build the same values a literal config would, and stay schema-va
     },
     android: {
       abiFilters: [Abi.arm64],
-      permissions: [AndroidPermission.camera],
       features: [AndroidFeature.optional(AndroidHardware.camera)],
       applicationAttributes: AndroidApplication.attributes({ largeHeap: true, allowBackup: false }),
       components: [

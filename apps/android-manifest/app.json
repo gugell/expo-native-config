@@ -7,7 +7,8 @@
       "bundleIdentifier": "dev.exponativeconfig.androidmanifest"
     },
     "android": {
-      "package": "dev.exponativeconfig.androidmanifest"
+      "package": "dev.exponativeconfig.androidmanifest",
+      "permissions": ["android.permission.CAMERA"]
     },
     "plugins": ["expo-native-config/plugin"],
     "sdkVersion": "56.0.0"

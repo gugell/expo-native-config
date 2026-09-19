@@ -87,7 +87,7 @@ test('minimal init is repeat safe and produces a valid config', () => {
 test('plan succeeds for valid Android intent and never writes native directories', () => {
   const root = fixture({
     schemaVersion: 1,
-    android: { permissions: ['android.permission.CAMERA'] },
+    android: { features: [{ name: 'android.hardware.camera', required: false }] },
   });
   const r = run('plan', '--project', root, '--json');
   assert.equal(r.status, 0, r.stderr);
@@ -95,7 +95,9 @@ test('plan succeeds for valid Android intent and never writes native directories
   assert.equal(result.valid, true);
   assert.equal(existsSync(path.join(root, 'ios')), false);
   assert.equal(existsSync(path.join(root, 'android')), false);
-  assert.ok(result.operations.some((op: { id: string }) => op.id.includes('CAMERA')));
+  assert.ok(
+    result.operations.some((op: { id: string }) => op.id.includes('android.hardware.camera')),
+  );
 });
 test('config load errors stay machine readable', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'enw-missing-'));

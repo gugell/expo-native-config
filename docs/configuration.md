@@ -25,7 +25,6 @@ export default defineWorkspace({
     schemes: [{ name: 'Example Debug', configuration: 'Debug', archive: 'Release' }],
   },
   android: {
-    permissions: ['android.permission.CAMERA'],
     features: [{ name: 'android.hardware.camera', required: false }],
   },
 });
@@ -147,7 +146,6 @@ All fields are optional unless marked required. Unknown fields are rejected rath
 | `compileSdkVersion`, `targetSdkVersion`            | Positive integers; supplied values must respect min ≤ target ≤ compile     |
 | `buildToolsVersion`, `ndkVersion`, `kotlinVersion` | Dotted version strings                                                     |
 | `gradleProperties`                                 | String/number/boolean map                                                  |
-| `permissions`                                      | Array of manifest permission strings                                       |
 | `features`                                         | Feature names or `{ name, required?, glEsVersion? }`                       |
 | `queries`                                          | `{ intents?: [{ action, scheme }], packages?: string[] }`                  |
 | `dependencies`                                     | `{ module, configuration? }[]`, Maven `group:artifact:version` coordinates |
@@ -270,12 +268,13 @@ export default defineWorkspace({
   android: {
     dependencies: [androidLibrary('androidx.collection:collection-ktx:1.4.5')],
     gradleProperties: { 'org.gradle.parallel': true },
-    permissions: ['android.permission.CAMERA'],
     features: [androidFeature('android.hardware.camera', false)],
     applicationAttributes: { 'android:supportsRtl': 'true' },
   },
 });
 ```
+
+Permissions are **not** here: `expo.android.permissions` in the Expo config writes the same manifest entries, and `expo.android.blockedPermissions` removes ones a dependency merges in. `<uses-feature>` has no equivalent there, which is why `features` is.
 
 `androidLibrary(module, configuration)` defaults to `implementation`. Supported configurations are `implementation`, `api`, `compileOnly`, `runtimeOnly`, `debugImplementation`, and `releaseImplementation`. `androidFeature(name, required)` defaults to required. Optional hardware avoids unnecessarily excluding devices. Declaring a permission does not grant runtime access; request dangerous permissions at runtime.
 

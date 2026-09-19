@@ -34,6 +34,35 @@ export const configNames = [
   'workspace.config.mjs',
   'workspace.config.json',
 ];
+/**
+ * Fields this package deliberately does not own, and where they live instead.
+ * An unrecognized-key error is accurate but unhelpful when the field exists —
+ * somewhere else.
+ */
+const MOVED_FIELDS: Record<string, string> = {
+  'android.permissions':
+    ' Declare permissions in expo.android.permissions in your Expo app config; it writes the same manifest entries, and expo.android.blockedPermissions removes ones a dependency merges in.',
+  'ios.appDelegate':
+    ' Entry-point injection was removed. Run launch code from an ExpoAppDelegateSubscriber: expo-native-config init --template lifecycle-module.',
+  'android.mainApplication':
+    ' Entry-point injection was removed. Run launch code from an ApplicationLifecycleListener: expo-native-config init --template lifecycle-module.',
+};
+
+/** Names the new home of a field whose unrecognized key we recognize. */
+function movedFieldHint(issue: { code: string; path: PropertyKey[]; keys?: string[] }): string {
+  if (issue.code !== 'unrecognized_keys') {
+    return '';
+  }
+  const prefix = issue.path.join('.');
+  for (const key of issue.keys ?? []) {
+    const hint = MOVED_FIELDS[prefix ? `${prefix}.${key}` : key];
+    if (hint) {
+      return hint;
+    }
+  }
+  return '';
+}
+
 /** Empty unless this package is missing from the project the config belongs to. */
 function installHint(projectRoot: string): string {
   try {
@@ -90,12 +119,15 @@ export function createSession(
   const parsed = WorkspaceSchema.safeParse(raw);
   if (!parsed.success)
     throw new ConfigError(
-      parsed.error.issues.map((i) => ({
-        severity: 'error',
-        code: 'config.schema',
-        message: `${i.path.join('.') || 'config'}: ${i.message}`,
-        source: i.path.join('.'),
-      })),
+      parsed.error.issues.map((i) => {
+        const source = i.path.join('.');
+        return {
+          severity: 'error' as const,
+          code: 'config.schema',
+          message: `${source || 'config'}: ${i.message}${movedFieldHint(i)}`,
+          source,
+        };
+      }),
     );
   const config = parsed.data;
   let app: WorkspaceAppConfig;
