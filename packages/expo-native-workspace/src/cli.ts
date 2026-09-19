@@ -53,6 +53,19 @@ async function inspect(command: string, options: Options): Promise<void> {
       });
     }
   }
+  if (command === 'doctor' || command === 'plan') {
+    // Regex rewrites of generated Ruby/Groovy are the documented last resort:
+    // they break silently when the Expo template changes between SDKs.
+    const escapeHatches = operations.filter(
+      (op) => op.risk === 'escape-hatch' && op.phase !== 'cleanup',
+    );
+    for (const op of escapeHatches)
+      diagnostics.push({
+        severity: 'warning',
+        code: 'plan.escape-hatch',
+        message: `${op.id} edits generated native source directly (${op.source}). Re-verify it after an Expo SDK upgrade.`,
+      });
+  }
   const valid = !diagnostics.some((d) => d.severity === 'error');
   if (command === 'explain' && options.id && !operations.some((op) => op.id === options.id)) {
     const { ConfigError } = await import('./session');
@@ -89,13 +102,19 @@ async function inspect(command: string, options: Options): Promise<void> {
     );
     for (const d of diagnostics) console.log(`${d.severity}: ${d.message}`);
     if (['plan', 'explain'].includes(command)) {
-      for (const op of selected) {
+      // Cleanup ops remove blocks a previous config left behind; they are noise
+      // unless you are auditing the whole plan.
+      const shown = options.verbose ? selected : selected.filter((op) => op.phase !== 'cleanup');
+      const hidden = selected.length - shown.length;
+      for (const op of shown) {
         console.log(`  ${op.id}  ${op.label}`);
         if (options.verbose || command === 'explain')
           console.log(`    ${op.kind} · ${op.source}\n    ${JSON.stringify(op.desired ?? null)}`);
       }
       console.log(
-        `${selected.length} declared operations. Preview only; native state is not compared.`,
+        `${shown.length} declared operations${
+          hidden > 0 ? ` (+${hidden} cleanup, use --verbose)` : ''
+        }. Preview only; native state is not compared.`,
       );
     }
   }
