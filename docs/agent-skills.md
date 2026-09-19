@@ -1,8 +1,9 @@
 # Agent skills
 
-The package includes two self-contained skills:
+The package includes three self-contained skills:
 
-- `skills/expo-native-config/SKILL.md` helps agents configure consuming Expo apps.
+- `skills/expo-native-changes/SKILL.md` decides where a native change belongs in **any** Expo app that uses prebuild — the app config, expo-build-properties, a library's own plugin, a local Expo module, or a config plugin you write — and how to verify it landed. It does not depend on this package being installed, and is the one to read when the answer might be "not here".
+- `skills/expo-native-config/SKILL.md` helps agents configure consuming Expo apps with this package.
 - `skills/expo-native-config-maintainer/SKILL.md` helps agents change this package without confusing planning with execution.
 
 To install one, copy its whole folder from the installed package's `skills/` directory into your agent's configured skill directory. For Codex, this is normally `~/.codex/skills/`. Inspect the content first and preserve an existing skill rather than silently overwriting it. No installer or remote skill service is required.
