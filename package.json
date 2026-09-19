@@ -15,8 +15,8 @@
     "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "pack:check": "node scripts/pack-check.mjs",
     "examples:check": "node scripts/verify-examples.mjs",
-    "release": "./scripts/release.sh",
-    "release:dry-run": "./scripts/release.sh --dry-run",
+    "release": "bash ./scripts/release.sh",
+    "release:dry-run": "bash ./scripts/release.sh --dry-run",
     "native:check": "node scripts/verify-native.mjs",
     "android:check": "node scripts/verify-android.mjs"
   },
