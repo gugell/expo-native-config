@@ -12,6 +12,23 @@ export interface SchemeDefinition {
   includeUnitTestTarget?: boolean;
 }
 
+/** A shell-script build phase on the main application target. */
+export interface RunScriptSpec {
+  /** Phase name in Xcode; also the identity used to update it in place. */
+  name: string;
+  script: string;
+  /** Interpreter path. Default: /bin/sh. */
+  shell?: string;
+  inputPaths?: string[];
+  outputPaths?: string[];
+  inputFileListPaths?: string[];
+  outputFileListPaths?: string[];
+  /** "Run script only when installing". */
+  runOnlyForDeploymentPostprocessing?: boolean;
+  /** Skip dependency analysis and run on every build. */
+  alwaysOutOfDate?: boolean;
+}
+
 export interface XcodeEnvSpec {
   exports?: Record<string, string>;
   lines?: string[];
@@ -24,4 +41,9 @@ export interface IosXcodeManifest {
   xcodeEnv?: XcodeEnvSpec;
   /** Reorder "Embed Foundation Extensions" after Resources. Default: true. */
   fixExtensionEmbedCycle?: boolean;
+  /** Build settings applied to the main application target. */
+  iosBuildSettings?: Record<string, string>;
+  runScripts?: RunScriptSpec[];
+  /** App-root-relative files copied next to the generated project and bundled. */
+  iosResources?: string[];
 }
