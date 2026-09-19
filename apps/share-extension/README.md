@@ -30,3 +30,5 @@ xcodebuild -workspace ios/ShareExtension.xcworkspace -scheme ShareExtension \
 ```
 
 The workspace is created by `pod install` from `ios/`; use the documented Node version on your PATH when installing pods and building.
+
+This sample also declares host-app configuration that is not part of the extension: `ios.buildSettings` (a build setting on the application target), `ios.runScripts` (a shell-script build phase, matched by name so repeated prebuilds update it in place), and `ios.podfileProperties` (the `Podfile.properties.json` channel Expo documents as safe for Podfile configuration). Inspect `ios/ShareExtension.xcodeproj/project.pbxproj` and `ios/Podfile.properties.json` after prebuild.

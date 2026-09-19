@@ -1,6 +1,17 @@
 # Android Gradle
 
-This app declares AndroidX Collection and a Gradle property. Inspect android/app/build.gradle and android/gradle.properties after prebuild.
+This app declares AndroidX Collection and a Gradle property, plus the Gradle and manifest surface beyond dependencies: an ABI filter, a manifest placeholder, a BuildConfig field, an `<application>` `<meta-data>` entry, a `tools:node="remove"` for a receiver a dependency merges in, and a `strings.xml` value.
+
+After prebuild, inspect:
+
+| File                                          | What to look for                                                 |
+| --------------------------------------------- | ---------------------------------------------------------------- |
+| `android/app/build.gradle`                    | `ndk { abiFilters }`, `manifestPlaceholders`, `buildConfigField` |
+| `android/gradle.properties`                   | `org.gradle.parallel`, `reactNativeArchitectures`                |
+| `android/app/src/main/AndroidManifest.xml`    | `<meta-data>`, `<receiver … tools:node="remove">`                |
+| `android/app/src/main/res/values/strings.xml` | `workspace_sample_value`                                         |
+
+Deleting a declaration and prebuilding again removes its generated block; the tagged blocks are what makes that possible.
 
 From the repository root:
 
