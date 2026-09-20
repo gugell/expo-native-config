@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getConfigFilePaths } from '@expo/config';
 import jiti from 'jiti';
-import { ConfigError, configNames } from './session';
+import { ConfigError, configNames, withQuietStdout } from './session';
 import { WorkspaceSchema } from './schema';
 
 /**
@@ -74,6 +74,17 @@ const GENERATED_META_DATA = [
  * write by hand, because the plugin body is arbitrary JavaScript.
  */
 const MOD_FIELDS: Array<[RegExp, string]> = [
+  // Ordered by how specific the answer is: the first match becomes the headline
+  // field, and the entry-point rule is the one with a definitive answer, so it
+  // must outrank the generic withDangerousMod hint that also matches it.
+  // Matches the mod AND the file it targets: patching AppDelegate.swift
+  // through withDangerousMod is the common shape, and naming the generic
+  // dangerous-mod field for it would bury the one answer that matters. This is
+  // the same rule `guidance.ts` enforces on escape hatches.
+  [
+    /withMainApplication|withMainActivity|withAppDelegate|AppDelegate|MainApplication|MainActivity\.(kt|java)/,
+    'a local Expo module (init --template lifecycle-module) — this package does not edit entry points',
+  ],
   [/withPodfileProperties/, 'ios.podfileProperties'],
   [/withPodfile\b/, 'ios.pods, ios.podBuildSettings or ios.podfile'],
   [/withDangerousMod/, 'the typed field for that file, or an escape hatch'],
@@ -88,10 +99,6 @@ const MOD_FIELDS: Array<[RegExp, string]> = [
   [/withStringsXml/, 'android.strings'],
   [/withAndroidColors/, 'android.colors'],
   [/withAndroidStyles/, 'android.styles'],
-  [
-    /withMainApplication|withMainActivity|withAppDelegate/,
-    'a local Expo module (init --template lifecycle-module)',
-  ],
 ];
 
 /** True for a plugins[] entry that names a file in this project rather than a package. */
@@ -159,11 +166,14 @@ function readPluginEntries(
   }
   try {
     const loader = jiti(__filename, { interopDefault: true, requireCache: false });
-    const loaded = loader(dynamicConfigPath) as unknown;
-    const resolved =
-      typeof loaded === 'function'
+    // Both the load AND the call have to be inside the guard: a dynamic config
+    // usually exports a function, and the logging happens when it runs.
+    const resolved = withQuietStdout(() => {
+      const loaded = loader(dynamicConfigPath) as unknown;
+      return typeof loaded === 'function'
         ? (loaded as (context: { config: object }) => { plugins?: unknown[] })({ config: {} })
         : (loaded as { expo?: { plugins?: unknown[] }; plugins?: unknown[] });
+    });
     const entries =
       (resolved as { plugins?: unknown[] })?.plugins ??
       (resolved as { expo?: { plugins?: unknown[] } })?.expo?.plugins ??
@@ -174,7 +184,18 @@ function readPluginEntries(
     // read env vars or call getConfig itself. Scanning its source still finds
     // the local plugin paths, which is the part worth reporting.
     const source = read(dynamicConfigPath) ?? '';
-    const entries = [...source.matchAll(/['"`](\.[^'"`]*plugin[^'"`]*)['"`]/gi)].map((m) => m[1]);
+    // Every relative path literal is a candidate, then kept only if it resolves
+    // to a file that imports config-plugins. Matching on "plugin" in the path
+    // was narrower but silently dropped a plugin living anywhere else, and a
+    // migration report that omits a plugin without saying so is worse than a
+    // noisy one.
+    const entries = [...source.matchAll(/['"`](\.[^'"`\n]+)['"`]/g)]
+      .map((match) => match[1])
+      .filter((candidate, index, all) => all.indexOf(candidate) === index)
+      .filter((candidate) => {
+        const file = resolveLocalPlugin(projectRoot, candidate);
+        return file ? /['"`](?:@expo\/|expo\/)config-plugins['"`]/.test(read(file) ?? '') : false;
+      });
     findings.push({
       source: path.basename(dynamicConfigPath),
       status: 'manual',
