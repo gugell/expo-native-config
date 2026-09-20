@@ -257,8 +257,12 @@ test('a typo in a discovered target.config.js is rejected like a typo inline', (
   );
   const result = run('validate', '--project', app, '--json');
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /is not a valid target/);
-  assert.match(result.stdout, /targets[\\/]Typo/);
+  // Decode rather than matching the raw stdout: the message carries a platform
+  // path, and JSON escapes a Windows backslash as two characters.
+  const [diagnostic] = (JSON.parse(result.stdout) as { diagnostics: Array<{ message: string }> })
+    .diagnostics;
+  assert.match(diagnostic.message, /is not a valid target/);
+  assert.ok(diagnostic.message.includes(path.join('targets', 'Typo')));
 });
 
 test('a target source outside the workspace is still refused', () => {
@@ -467,6 +471,8 @@ test("@bacons/apple-targets' asset fields are rejected with the file named", () 
   );
   const result = run('validate', '--project', app, '--json');
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /Unrecognized keys/);
-  assert.match(result.stdout, /targets[\\/]W[\\/]target\.config\.js/);
+  const [diagnostic] = (JSON.parse(result.stdout) as { diagnostics: Array<{ message: string }> })
+    .diagnostics;
+  assert.match(diagnostic.message, /Unrecognized keys/);
+  assert.ok(diagnostic.message.includes(path.join('targets', 'W', 'target.config.js')));
 });
