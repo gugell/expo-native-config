@@ -40,6 +40,23 @@ export const TargetSchema = z.strictObject({
   buildSettings: settings.optional(),
   pods: z.array(PodSchema).optional(),
 });
+/**
+ * An `ios.targets` entry that links a target a workspace package ships.
+ *
+ * The package's own `target.config.js` supplies type, frameworks and the rest;
+ * everything here overrides it, because the app linking a shared target is the
+ * one that knows its bundle identifier.
+ */
+export const PackageTargetSchema = z.strictObject({
+  package: text,
+  name: safeName.optional(),
+  bundleIdentifier: text.optional(),
+  deploymentTarget: version.optional(),
+  entitlements: values.optional(),
+  frameworks: z.array(text).optional(),
+  buildSettings: settings.optional(),
+});
+export const TargetEntrySchema = z.union([TargetSchema, PackageTargetSchema]);
 export const RequirementSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('upToNextMajorVersion'), minimumVersion: version }),
   z.strictObject({ kind: z.literal('upToNextMinorVersion'), minimumVersion: version }),
@@ -220,7 +237,7 @@ export const WorkspaceSchema = z.strictObject({
         )
         .optional(),
       targetsRoot: text.optional(),
-      targets: z.array(TargetSchema).optional(),
+      targets: z.array(TargetEntrySchema).optional(),
       buildSettings: settings.optional(),
       runScripts: z.array(RunScriptSchema).optional(),
       resources: z.array(text).optional(),
@@ -303,6 +320,16 @@ export type PodRemoveBuildPhase = z.infer<typeof PodRemoveBuildPhaseSchema>;
 export type TargetSpec = z.infer<typeof TargetSchema>;
 export type SwiftPackage = z.infer<typeof RemotePackageSchema>;
 export type LocalSwiftPackage = z.infer<typeof LocalPackageSchema>;
+export type PackageTarget = z.infer<typeof PackageTargetSchema>;
+/**
+ * A config whose `ios.targets` have all been resolved to real source
+ * directories — package entries linked and self-describing directories read.
+ * Everything downstream of the session sees this, never the input union.
+ */
+type WorkspaceOutput = z.infer<typeof WorkspaceSchema>;
+export type ResolvedWorkspaceConfig = Omit<WorkspaceOutput, 'ios'> & {
+  ios?: Omit<NonNullable<WorkspaceOutput['ios']>, 'targets'> & { targets?: TargetSpec[] };
+};
 export type Scheme = z.infer<typeof SchemeSchema>;
 export type AndroidDependency = z.infer<typeof AndroidDependencySchema>;
 export type AndroidFeature = z.infer<typeof AndroidFeatureSchema>;

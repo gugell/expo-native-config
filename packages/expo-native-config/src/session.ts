@@ -6,8 +6,15 @@ import { getConfig } from '@expo/config';
 import jiti from 'jiti';
 import { resolveTargetBundleId } from './engine/ios-targets/bundleId';
 import { collectGuidance } from './guidance';
-import { WorkspaceSchema, type WorkspaceConfig } from './schema';
+import {
+  TargetSchema,
+  WorkspaceSchema,
+  type ResolvedWorkspaceConfig,
+  type TargetSpec,
+  type WorkspaceConfig,
+} from './schema';
 import { collect, type WorkspaceAppConfig, type WorkspacePlan } from './engine';
+import { discoverTargets, readPackageTarget } from './engine/ios-targets/discover';
 export interface Diagnostic {
   severity: 'error' | 'warning';
   code: string;
@@ -16,7 +23,7 @@ export interface Diagnostic {
 }
 export interface Session {
   configPath: string;
-  config: WorkspaceConfig;
+  config: ResolvedWorkspaceConfig;
   plan: WorkspacePlan;
   diagnostics: Diagnostic[];
   valid: boolean;
@@ -55,6 +62,102 @@ export function withQuietStdout<T>(load: () => T): T {
   } finally {
     process.stdout.write = write;
   }
+}
+
+/**
+ * The directory the package manager treats as the workspace root, or the app
+ * root when there is no workspace.
+ *
+ * Target sources are confined to this, not to the app: in a monorepo a target
+ * legitimately lives in a sibling package, and the reason for the check is to
+ * keep a config from reaching anywhere on the filesystem, not to keep it inside
+ * one directory.
+ */
+export function findWorkspaceRoot(projectRoot: string): string {
+  let dir = projectRoot;
+  for (;;) {
+    if (fs.existsSync(path.join(dir, 'pnpm-workspace.yaml'))) {
+      return dir;
+    }
+    const manifest = path.join(dir, 'package.json');
+    if (fs.existsSync(manifest)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(manifest, 'utf8')) as { workspaces?: unknown };
+        if (parsed.workspaces) {
+          return dir;
+        }
+      } catch {
+        // An unreadable manifest is not a workspace marker; keep walking.
+      }
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return projectRoot;
+    }
+    dir = parent;
+  }
+}
+
+/**
+ * Expands `ios.targets` with the targets that describe themselves: package
+ * entries that name a workspace package, and directories under `targetsRoot`
+ * carrying a `target.config.*`.
+ *
+ * Both produce ordinary target specs with an explicit `source`, so validation,
+ * planning and the generators see one shape and need no notion of where a
+ * target came from.
+ */
+function expandTargets(projectRoot: string, config: WorkspaceConfig): ResolvedWorkspaceConfig {
+  const declared = config.ios?.targets ?? [];
+  const targetsRoot = config.ios?.targetsRoot ?? 'targets';
+  const expanded: TargetSpec[] = [];
+  const sources: string[] = [];
+  for (const [index, entry] of declared.entries()) {
+    if (!('package' in entry)) {
+      expanded.push(entry as TargetSpec);
+      sources.push(`ios.targets[${index}]`);
+      continue;
+    }
+    const { package: specifier, ...overrides } = entry;
+    const { dir, spec } = readPackageTarget(projectRoot, specifier);
+    expanded.push({
+      ...spec,
+      ...Object.fromEntries(Object.entries(overrides).filter(([, value]) => value !== undefined)),
+      source: path.relative(projectRoot, dir) || '.',
+    } as TargetSpec);
+    sources.push(`${specifier} (${path.join(path.relative(projectRoot, dir), 'target.config')})`);
+  }
+  // A directory that describes itself is only added when nothing already
+  // declares its name, so an inline entry stays authoritative and a config
+  // never grows a duplicate target by having both.
+  const claimed = new Set(expanded.map((target) => target.name));
+  for (const found of discoverTargets(projectRoot, targetsRoot)) {
+    if (claimed.has(String(found.spec.name))) {
+      continue;
+    }
+    expanded.push({
+      ...found.spec,
+      source: path.relative(projectRoot, found.dir),
+    } as unknown as TargetSpec);
+    sources.push(found.origin);
+  }
+  // A config file read off disk has had no schema applied yet: the strict
+  // object that rejects a typo in an inline target has to reject the same typo
+  // in a target.config.js, or a discovered target reaches the generators as
+  // whatever the file happened to export.
+  const checked = expanded.map((target, index) => {
+    const parsed = TargetSchema.safeParse(target);
+    if (!parsed.success) {
+      const origin = sources[index] ?? `ios.targets[${index}]`;
+      const detail = parsed.error.issues
+        .map((issue) => `${issue.path.join('.') || 'target'}: ${issue.message}`)
+        .join('; ');
+      throw new Error(`${origin} is not a valid target — ${detail}`);
+    }
+    return parsed.data;
+  });
+  const ios = config.ios ?? {};
+  return { ...config, ios: { ...ios, targets: checked } } as ResolvedWorkspaceConfig;
 }
 
 export const configNames = [
@@ -159,7 +262,19 @@ export function createSession(
         };
       }),
     );
-  const config = parsed.data;
+  let expandedConfig: ResolvedWorkspaceConfig;
+  try {
+    expandedConfig = expandTargets(projectRoot, parsed.data);
+  } catch (error) {
+    throw new ConfigError([
+      {
+        severity: 'error',
+        code: 'target.package',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    ]);
+  }
+  const config = expandedConfig;
   let app: WorkspaceAppConfig;
   try {
     app =
@@ -202,11 +317,15 @@ export function createSession(
       projectRoot,
       target.source ?? path.join(config.ios?.targetsRoot ?? 'targets', target.name),
     );
-    const canonicalRoot = fs.realpathSync(projectRoot);
+    const canonicalRoot = fs.realpathSync(findWorkspaceRoot(projectRoot));
     const canonicalDir = fs.existsSync(dir) ? fs.realpathSync(dir) : dir;
     const relative = path.relative(canonicalRoot, canonicalDir);
     if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative))
-      add('target.source', `Target source must stay inside the project: ${dir}`, source);
+      add(
+        'target.source',
+        `Target source must stay inside the workspace (${canonicalRoot}): ${dir}`,
+        source,
+      );
     if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory())
       add('target.source', `Target source directory not found: ${dir}`, source);
     const groups = target.entitlements?.['com.apple.security.application-groups'];
