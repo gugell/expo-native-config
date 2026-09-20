@@ -146,7 +146,17 @@ Declarations can be written as plain objects or built with constructors — `Tar
 
 Run `expo-native-config validate`, `plan`, and `doctor` before `expo prebuild`.
 
-The example expects `targets/WorkspaceShare/` to contain native sources. To generate a source-bearing starter instead, use `init --template share-extension --yes` in an app without an existing workspace config. See [all four starter presets](docs/templates.md) for exact files and remaining implementation work. Add Android settings, packages, or schemes to the same manifest as needed; templates do not restrict its capabilities.
+### Already have config plugins?
+
+`migrate --dry-run` reads your Expo config, your local plugins and your generated native directories, and proposes a manifest without writing anything:
+
+```sh
+pnpm exec expo-native-config migrate --dry-run
+```
+
+It extracts what it can read unambiguously, leaves alone anything an Expo template or a published plugin already owns, and — for each local plugin — names the workspace field that replaces it. It does not translate plugin JavaScript, and it says so rather than pretending otherwise. See [migrating an existing app](docs/migrate.md).
+
+The example expects `targets/WorkspaceShare/` to contain native sources. To generate a source-bearing starter instead, use `init --template share-extension --yes` in an app without an existing workspace config. See [all five starter presets](docs/templates.md) for exact files and remaining implementation work. Add Android settings, packages, or schemes to the same manifest as needed; templates do not restrict its capabilities.
 
 ## What can be declared
 
@@ -180,7 +190,7 @@ The [configuration reference](docs/configuration.md) documents every field; the 
 Implementation is complete and locally verified; publication is not. The full checklist, with the evidence behind each box, is in the [implementation plan](docs/implementation-plan.md).
 
 - [x] Schema, normalization, planning and execution for the declared surface
-- [x] CLI — `init`, `validate`, `plan`, `doctor`, `explain`, `completion` — sharing one session with the plugin
+- [x] CLI — `init`, `migrate`, `validate`, `plan`, `doctor`, `explain`, `completion` — sharing one session with the plugin
 - [x] Seven runnable samples with real native source, prebuilt and checked
 - [x] Tarball consumer check, CI, release tooling and conventional changelog
 - [x] Documentation, agent skills, and an independent final review with findings fixed
@@ -192,7 +202,10 @@ Implementation is complete and locally verified; publication is not. The full ch
 
 ## Documentation
 
-- [Getting started](docs/getting-started.md) and [configuration reference](docs/configuration.md)
+- [Getting started](docs/getting-started.md) — a seven-step path from install to a verified native change
+- [Migrating an existing app](docs/migrate.md) — turn config plugins into declarations with `migrate --dry-run`
+- [Monorepos](docs/monorepos.md) — pnpm, yarn, bun and npm workspaces
+- [Configuration reference](docs/configuration.md)
 - [Templates: what they generate and why](docs/templates.md) and [complete configuration recipes](docs/recipes.md)
 - [Architecture](docs/architecture.md) and [development rules](docs/development-rules.md)
 - [Implementation plan and status](docs/implementation-plan.md)

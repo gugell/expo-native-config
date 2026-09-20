@@ -26,20 +26,27 @@ pnpm exec expo-native-config doctor
 pnpm exec expo prebuild --platform android
 ```
 
+Already using hand-written config plugins? `migrate --dry-run` reads the app's Expo config, its local plugins and its generated native directories, and proposes a manifest without writing anything:
+
+```sh
+pnpm exec expo-native-config migrate --dry-run
+```
+
 Choose one starter in an existing Expo app without a workspace config:
 
 ```sh
 pnpm exec expo-native-config init --template minimal --yes
 ```
 
-| Template          | Generated files                                             | Purpose                                                                  |
-| ----------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `minimal`         | `workspace.config.ts`                                       | Compose any supported capabilities yourself                              |
-| `share-extension` | Config + `targets/ShareExtension/ShareViewController.swift` | Starting share controller; implement attachment handling and persistence |
-| `widget`          | Config + `targets/WorkspaceWidget/WorkspaceWidget.swift`    | Static small WidgetKit widget; implement real data and refresh           |
-| `android`         | Config with camera permission and optional camera feature   | Manifest example; implement runtime permissions and UI                   |
+| Template           | Generated files                                             | Purpose                                                                                         |
+| ------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `minimal`          | `workspace.config.ts`                                       | Compose any supported capabilities yourself                                                     |
+| `share-extension`  | Config + `targets/ShareExtension/ShareViewController.swift` | Starting share controller; implement attachment handling and persistence                        |
+| `widget`           | Config + `targets/WorkspaceWidget/WorkspaceWidget.swift`    | Static small WidgetKit widget; implement real data and refresh                                  |
+| `android`          | Config with camera permission and optional camera feature   | Manifest example; implement runtime permissions and UI                                          |
+| `lifecycle-module` | Config + a local Expo module under `modules/startup`        | Run code at launch through Expo lifecycle hooks, without editing AppDelegate or MainApplication |
 
-These four presets cover common starting points, not the package's full capability list. Init does not create an Expo app or register its plugin, and cannot merge into an existing config. Add packages, pods, schemes, Android settings, or more targets by editing the same config. App Clips are supported declarations without an init preset.
+These five presets cover common starting points, not the package's full capability list. Init does not create an Expo app or register its plugin, and cannot merge into an existing config. Add packages, pods, schemes, Android settings, or more targets by editing the same config. App Clips are supported declarations without an init preset.
 
 The workspace manifest has optional `schemaVersion: 1`, `ios`, and `android` fields, with no `expo` wrapper. `app.json` owns host identity and plugin registration. Preserve existing plugins and append this one:
 
@@ -76,6 +83,6 @@ Public helpers include `defineWorkspace`, `shareExtension`, `widgetExtension`, `
 
 Native compilation and device behavior need separate testing. Expo Go cannot host custom native targets. Config files execute code and must be trusted. Keep signing credentials in environment references or private properties files. Environment signing resolves secrets into generated Gradle properties during prebuild; protect that output.
 
-Self-contained agent skills are bundled in `skills/expo-native-config` and `skills/expo-native-config-maintainer`. Copy the desired whole folder into your agent's configured skill directory after reviewing it.
+Self-contained agent skills are bundled in `skills/expo-native-config`, `skills/expo-native-changes` and `skills/expo-native-config-maintainer`. Copy the desired whole folder into your agent's configured skill directory after reviewing it.
 
 The source repository contains complete sample apps and documentation. Confirm the repository URL in package metadata is publicly available before publication. MIT licensed.
