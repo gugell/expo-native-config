@@ -234,7 +234,15 @@ ios: {
 }
 ```
 
-The package must be a dependency of the app. Its `target.config.js` supplies the declaration; `name`, `bundleIdentifier`, `deploymentTarget`, `entitlements`, `frameworks` and `buildSettings` on the entry override it. See [monorepos](monorepos.md).
+Or point at a plain directory that carries one:
+
+```ts
+ios: {
+  targets: [{ path: '../../shared/native/MyWidget', bundleIdentifier: '.widget' }],
+}
+```
+
+The package must be a dependency of the app. Its `target.config.js` supplies the declaration; `name`, `bundleIdentifier`, `deploymentTarget`, `entitlements`, `frameworks` and `buildSettings` on the entry override it. See [iOS targets](targets.md) for all four forms and [monorepos](monorepos.md) for workspace layout.
 
 ## Swift packages and CocoaPods
 

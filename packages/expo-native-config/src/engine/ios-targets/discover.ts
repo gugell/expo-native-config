@@ -26,6 +26,25 @@ const CONFIG_NAMES = [
   'expo-target.config.json',
 ];
 
+/**
+ * Refuses a directory outside `workspaceRoot`, before anything in it is read.
+ *
+ * A `target.config.js` is executed, so the boundary has to be enforced here
+ * rather than by the later validation pass: rejecting a path after running its
+ * config is not a boundary at all. Symlinks are canonicalized first, since
+ * following one is the obvious way out.
+ */
+export function assertInsideWorkspace(workspaceRoot: string, dir: string, label: string): void {
+  const canonicalRoot = fs.realpathSync(workspaceRoot);
+  const canonicalDir = fs.existsSync(dir) ? fs.realpathSync(dir) : path.resolve(dir);
+  const relative = path.relative(canonicalRoot, canonicalDir);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(
+      `${label} resolves to ${canonicalDir}, which is outside the workspace (${canonicalRoot}). Nothing there is read.`,
+    );
+  }
+}
+
 /** The config file in `dir`, or undefined when that directory does not describe a target. */
 export function findTargetConfig(dir: string): string | undefined {
   for (const name of CONFIG_NAMES) {
@@ -87,7 +106,11 @@ export interface DiscoveredTarget {
  * entries keep pointing at plain source directories, and adding a config file
  * is what opts a directory into describing itself.
  */
-export function discoverTargets(projectRoot: string, targetsRoot: string): DiscoveredTarget[] {
+export function discoverTargets(
+  projectRoot: string,
+  targetsRoot: string,
+  workspaceRoot: string,
+): DiscoveredTarget[] {
   const root = path.resolve(projectRoot, targetsRoot);
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
     return [];
@@ -98,6 +121,9 @@ export function discoverTargets(projectRoot: string, targetsRoot: string): Disco
       continue;
     }
     const dir = path.join(root, entry.name);
+    // A symlinked directory under targetsRoot is the quiet way out of the
+    // workspace, so it is checked before its config is executed.
+    assertInsideWorkspace(workspaceRoot, dir, path.relative(projectRoot, dir));
     const file = findTargetConfig(dir);
     if (!file) {
       continue;
@@ -111,10 +137,31 @@ export function discoverTargets(projectRoot: string, targetsRoot: string): Disco
   return found.sort((a, b) => a.dir.localeCompare(b.dir));
 }
 
+/** Reads the target a directory describes, for an `ios.targets` entry naming a path. */
+export function readPathTarget(
+  projectRoot: string,
+  relative: string,
+  workspaceRoot: string,
+): { dir: string; spec: Record<string, unknown> } {
+  const dir = path.resolve(projectRoot, relative);
+  assertInsideWorkspace(workspaceRoot, dir, `Target path "${relative}"`);
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+    throw new Error(`Target directory not found: ${dir}`);
+  }
+  const file = findTargetConfig(dir);
+  if (!file) {
+    throw new Error(
+      `${dir} has no target.config.js. Add one so the directory describes itself, or declare the target inline with a "source".`,
+    );
+  }
+  return { dir, spec: { name: path.basename(dir), ...readTargetConfig(file) } };
+}
+
 /** Reads the target a package ships, for an `ios.targets` entry that names one. */
 export function readPackageTarget(
   projectRoot: string,
   specifier: string,
+  workspaceRoot: string,
 ): { dir: string; spec: Record<string, unknown> } {
   const dir = resolvePackageDir(projectRoot, specifier);
   if (!dir) {
@@ -122,6 +169,7 @@ export function readPackageTarget(
       `Cannot resolve package "${specifier}" from ${projectRoot}. Add it as a dependency of this app so the package manager links it.`,
     );
   }
+  assertInsideWorkspace(workspaceRoot, dir, `Package "${specifier}"`);
   const file = findTargetConfig(dir);
   if (!file) {
     throw new Error(

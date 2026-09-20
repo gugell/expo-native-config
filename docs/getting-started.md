@@ -205,6 +205,7 @@ JSON failure output carries `valid: false` and a `diagnostics` array. Check the 
 ## Next
 
 - [Migrating an existing app](migrate.md) — turn config plugins into declarations
+- [iOS targets](targets.md) — inline, discovered, by path, by package
 - [Monorepos](monorepos.md) — pnpm, yarn, bun and npm workspaces
 - [Configuration reference](configuration.md) — every field
 - [Recipes](recipes.md) — twelve complete configurations

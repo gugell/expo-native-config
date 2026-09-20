@@ -14,7 +14,7 @@ import {
   type WorkspaceConfig,
 } from './schema';
 import { collect, type WorkspaceAppConfig, type WorkspacePlan } from './engine';
-import { discoverTargets, readPackageTarget } from './engine/ios-targets/discover';
+import { discoverTargets, readPackageTarget, readPathTarget } from './engine/ios-targets/discover';
 export interface Diagnostic {
   severity: 'error' | 'warning';
   code: string;
@@ -110,30 +110,58 @@ export function findWorkspaceRoot(projectRoot: string): string {
 function expandTargets(projectRoot: string, config: WorkspaceConfig): ResolvedWorkspaceConfig {
   const declared = config.ios?.targets ?? [];
   const targetsRoot = config.ios?.targetsRoot ?? 'targets';
+  // Resolved once: every reader checks against it before executing anything.
+  const workspaceRoot = findWorkspaceRoot(projectRoot);
   const expanded: TargetSpec[] = [];
   const sources: string[] = [];
   for (const [index, entry] of declared.entries()) {
-    if (!('package' in entry)) {
+    // An inline target declares everything; `package` and `path` name a
+    // directory that describes itself.
+    if (!('package' in entry) && !('path' in entry)) {
       expanded.push(entry as TargetSpec);
       sources.push(`ios.targets[${index}]`);
       continue;
     }
-    const { package: specifier, ...overrides } = entry;
-    const { dir, spec } = readPackageTarget(projectRoot, specifier);
+    const {
+      package: specifier,
+      path: folder,
+      ...overrides
+    } = entry as {
+      package?: string;
+      path?: string;
+    } & Record<string, unknown>;
+    const { dir, spec } =
+      specifier !== undefined
+        ? readPackageTarget(projectRoot, specifier, workspaceRoot)
+        : readPathTarget(projectRoot, folder as string, workspaceRoot);
+    // The file's own directory is the source. Accepting a `source` here would
+    // silently do nothing, which is the failure this package exists to avoid.
+    if ('source' in spec) {
+      throw new Error(
+        `${path.join(path.relative(projectRoot, dir), 'target.config')} sets "source", which a self-describing target cannot: its own directory is the source. Remove it.`,
+      );
+    }
     expanded.push({
       ...spec,
       ...Object.fromEntries(Object.entries(overrides).filter(([, value]) => value !== undefined)),
       source: path.relative(projectRoot, dir) || '.',
     } as TargetSpec);
-    sources.push(`${specifier} (${path.join(path.relative(projectRoot, dir), 'target.config')})`);
+    sources.push(
+      `${specifier ?? folder} (${path.join(path.relative(projectRoot, dir), 'target.config')})`,
+    );
   }
   // A directory that describes itself is only added when nothing already
   // declares its name, so an inline entry stays authoritative and a config
   // never grows a duplicate target by having both.
   const claimed = new Set(expanded.map((target) => target.name));
-  for (const found of discoverTargets(projectRoot, targetsRoot)) {
+  for (const found of discoverTargets(projectRoot, targetsRoot, workspaceRoot)) {
     if (claimed.has(String(found.spec.name))) {
       continue;
+    }
+    if ('source' in found.spec) {
+      throw new Error(
+        `${found.origin} sets "source", which a self-describing target cannot: its own directory is the source. Remove it.`,
+      );
     }
     expanded.push({
       ...found.spec,

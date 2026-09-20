@@ -190,4 +190,4 @@ pnpm exec expo-native-config migrate --dry-run --project apps/mobile
 
 It reads that app's Expo config and that app's native directories — not sibling packages. A plugin registered by a relative path _is_ followed out of the app package, so a shared plugin at `../../packages/plugins/withShared` is read and classified like any other local one. Its finding is reported once per app that registers it, and rewriting it as declarations is a per-app edit.
 
-See [getting started](getting-started.md) for the first install and [configuration reference](configuration.md) for the full path table.
+See [iOS targets](targets.md) for all four ways to include one, [getting started](getting-started.md) for the first install, and the [configuration reference](configuration.md) for the full path table.

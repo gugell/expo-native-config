@@ -143,7 +143,11 @@ test('target source symlinks cannot escape the workspace', () => {
   symlinkSync(outside, path.join(root, 'targets', 'Share'), 'junction');
   const result = run('validate', '--project', root, '--json');
   assert.equal(result.status, 1, result.stdout);
-  assert.match(result.stdout, /must stay inside the workspace/);
+  // Two layers refuse this. Discovery checks the boundary before reading a
+  // directory, so a symlinked target carrying a config is stopped before the
+  // config executes; validation checks it again for sources with no config
+  // file. Either message is a correct refusal.
+  assert.match(result.stdout, /outside the workspace|must stay inside the workspace/);
 });
 
 test('Expo plugin rejects the same invalid intent before registering native mods', () => {

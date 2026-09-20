@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -325,4 +325,148 @@ test('a pods.rb is reported rather than silently ignored', () => {
   assert.ok(warning, 'the stray pods.rb is surfaced');
   assert.equal(warning.severity, 'warning', 'it is a warning, not a hard failure');
   assert.match(warning.message, /\.pods/);
+});
+
+test('a plain folder is linked by path through its target.config.js', () => {
+  const { root, app } = workspace();
+  // Not under targetsRoot, and not an installable package — just a directory
+  // two apps in the repo both point at.
+  write(root, 'shared/native/PathWidget/PathWidget.swift', WIDGET_SWIFT);
+  write(
+    root,
+    'shared/native/PathWidget/target.config.js',
+    "module.exports = { type: 'widget', deploymentTarget: '18.0' };\n",
+  );
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: {
+        targets: [{ path: '../../shared/native/PathWidget', bundleIdentifier: '.pathwidget' }],
+      },
+    }),
+  );
+  const plan = planOf(app);
+  assert.ok(plan.valid);
+  // The name defaults to the directory when the entry does not set one.
+  assert.ok(plan.operations.some((op) => op.id === 'target:PathWidget:infoPlist'));
+  assert.equal(run('validate', '--project', app).status ?? 0, 0);
+});
+
+test('a remote npm package is linked exactly like a workspace one', () => {
+  const { app } = workspace();
+  // A plain node_modules directory, no workspace symlink involved.
+  write(
+    app,
+    'node_modules/acme-widget/package.json',
+    JSON.stringify({ name: 'acme-widget', version: '2.1.0', main: 'index.js' }),
+  );
+  write(app, 'node_modules/acme-widget/index.js', 'module.exports = {};');
+  write(app, 'node_modules/acme-widget/AcmeWidget.swift', WIDGET_SWIFT);
+  write(
+    app,
+    'node_modules/acme-widget/target.config.js',
+    "module.exports = { type: 'widget', deploymentTarget: '18.0' };\n",
+  );
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: {
+        targets: [{ package: 'acme-widget', name: 'AcmeWidget', bundleIdentifier: '.acme' }],
+      },
+    }),
+  );
+  assert.ok(planOf(app).operations.some((op) => op.id === 'target:AcmeWidget:infoPlist'));
+});
+
+test('a path with no target.config.js says what to do instead', () => {
+  const { root, app } = workspace();
+  write(root, 'shared/native/Bare/Bare.swift', WIDGET_SWIFT);
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: { targets: [{ path: '../../shared/native/Bare' }] },
+    }),
+  );
+  const result = run('validate', '--project', app, '--json');
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /has no target.config.js/);
+  assert.match(result.stdout, /declare the target inline with a \\"source\\"/);
+});
+
+test('a config outside the workspace is refused BEFORE it is executed', () => {
+  const { app } = workspace();
+  const outside = mkdtempSync(path.join(tmpdir(), 'enc-outside-'));
+  const proof = path.join(outside, 'executed.txt');
+  mkdirSync(path.join(outside, 'Evil'), { recursive: true });
+  writeFileSync(path.join(outside, 'Evil/E.swift'), WIDGET_SWIFT);
+  // A target.config.js is executed, so rejecting the path afterwards would not
+  // be a boundary at all. This file records the fact if it ever runs.
+  writeFileSync(
+    path.join(outside, 'Evil/target.config.js'),
+    `require('node:fs').writeFileSync(${JSON.stringify(proof)}, 'executed');\nmodule.exports = { type: 'widget' };\n`,
+  );
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: { targets: [{ path: path.join(outside, 'Evil'), bundleIdentifier: '.e' }] },
+    }),
+  );
+  const result = run('validate', '--project', app, '--json');
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /outside the workspace/);
+  assert.match(result.stdout, /Nothing there is read/);
+  assert.equal(existsSync(proof), false, 'the outside config never ran');
+});
+
+test('a symlink under targetsRoot cannot smuggle a config in from outside', () => {
+  const { app } = workspace();
+  const outside = mkdtempSync(path.join(tmpdir(), 'enc-outside-'));
+  const proof = path.join(outside, 'executed.txt');
+  mkdirSync(path.join(outside, 'Evil'), { recursive: true });
+  writeFileSync(path.join(outside, 'Evil/E.swift'), WIDGET_SWIFT);
+  writeFileSync(
+    path.join(outside, 'Evil/target.config.js'),
+    `require('node:fs').writeFileSync(${JSON.stringify(proof)}, 'executed');\nmodule.exports = { type: 'widget' };\n`,
+  );
+  mkdirSync(path.join(app, 'targets'), { recursive: true });
+  symlinkSync(path.join(outside, 'Evil'), path.join(app, 'targets/Evil'), 'dir');
+  const result = run('validate', '--project', app, '--json');
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /outside the workspace/);
+  assert.equal(existsSync(proof), false, 'discovery did not execute it either');
+});
+
+test('a target.config.js that sets "source" is rejected, not silently ignored', () => {
+  const { app } = workspace();
+  write(app, 'targets/W/W.swift', WIDGET_SWIFT);
+  write(
+    app,
+    'targets/W/target.config.js',
+    "module.exports = { type: 'widget', source: './elsewhere' };\n",
+  );
+  const result = run('validate', '--project', app, '--json');
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /its own directory is the source/);
+});
+
+test("@bacons/apple-targets' asset fields are rejected with the file named", () => {
+  const { app } = workspace();
+  write(app, 'targets/W/W.swift', WIDGET_SWIFT);
+  write(
+    app,
+    'targets/W/target.config.js',
+    "module.exports = { type: 'widget', icon: '../assets/i.png', colors: { $accent: 'red' } };\n",
+  );
+  const result = run('validate', '--project', app, '--json');
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /Unrecognized keys/);
+  assert.match(result.stdout, /targets\/W\/target\.config\.js/);
 });

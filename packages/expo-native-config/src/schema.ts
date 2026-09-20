@@ -56,7 +56,24 @@ export const PackageTargetSchema = z.strictObject({
   frameworks: z.array(text).optional(),
   buildSettings: settings.optional(),
 });
-export const TargetEntrySchema = z.union([TargetSchema, PackageTargetSchema]);
+/**
+ * An `ios.targets` entry that points at a directory carrying a
+ * `target.config.js`, anywhere in the workspace.
+ *
+ * `package` is for something the package manager resolves; this is for a plain
+ * folder — a path outside `targetsRoot`, or one shared by apps in a repo that
+ * does not make it an installable package.
+ */
+export const PathTargetSchema = z.strictObject({
+  path: text,
+  name: safeName.optional(),
+  bundleIdentifier: text.optional(),
+  deploymentTarget: version.optional(),
+  entitlements: values.optional(),
+  frameworks: z.array(text).optional(),
+  buildSettings: settings.optional(),
+});
+export const TargetEntrySchema = z.union([TargetSchema, PackageTargetSchema, PathTargetSchema]);
 export const RequirementSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('upToNextMajorVersion'), minimumVersion: version }),
   z.strictObject({ kind: z.literal('upToNextMinorVersion'), minimumVersion: version }),
@@ -321,6 +338,7 @@ export type TargetSpec = z.infer<typeof TargetSchema>;
 export type SwiftPackage = z.infer<typeof RemotePackageSchema>;
 export type LocalSwiftPackage = z.infer<typeof LocalPackageSchema>;
 export type PackageTarget = z.infer<typeof PackageTargetSchema>;
+export type PathTarget = z.infer<typeof PathTargetSchema>;
 /**
  * A config whose `ios.targets` have all been resolved to real source
  * directories — package entries linked and self-describing directories read.
