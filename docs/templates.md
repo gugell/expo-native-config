@@ -92,7 +92,7 @@ export default defineWorkspace({
 });
 ```
 
-To add a widget as well, bring its source into `targets/WorkspaceWidget/` and add a `widgetExtension` declaration. The [widget sample](../apps/widget) provides source to study. Do not add a declaration pointing at a directory that does not exist.
+To add a widget as well, bring its source into `targets/WorkspaceWidget/` and add a `widgetExtension` declaration. The [widget sample](../apps/widget) provides source to study — it links its target from a package rather than declaring it inline, which [iOS targets](targets.md) explains. Do not add a declaration pointing at a directory that does not exist.
 
 ## What to review after init
 

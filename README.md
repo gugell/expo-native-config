@@ -178,7 +178,7 @@ The [configuration reference](docs/configuration.md) documents every field; the 
 | App                                             | Demonstrates                                                    |
 | ----------------------------------------------- | --------------------------------------------------------------- |
 | [share-extension](apps/share-extension)         | UIKit share sheet with text and URL activation rules            |
-| [widget](apps/widget)                           | A real SwiftUI / WidgetKit timeline widget                      |
+| [widget](apps/widget)                           | A SwiftUI / WidgetKit widget shipped by a workspace package     |
 | [native-dependencies](apps/native-dependencies) | Source-controlled Swift package and CocoaPod                    |
 | [multi-scheme](apps/multi-scheme)               | Debug and Release Xcode schemes                                 |
 | [android-gradle](apps/android-gradle)           | Typed Maven dependency and Gradle properties                    |

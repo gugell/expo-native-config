@@ -163,6 +163,17 @@ So a target can live anywhere in your monorepo, and nowhere outside it.
 - **`pods.rb` is not read.** Declare those dependencies in the target's `pods` field instead. A `pods.rb` beside a target produces a warning naming the field, rather than silently dropping your extension's dependencies into a link error.
 - **`icon`, `images` and `colors` are not supported.** Asset catalogs are not part of this package's declared surface; add them to the target directory yourself.
 
+## Samples
+
+| Sample                                     | Form                                                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| [share-extension](../apps/share-extension) | Inline — declared in `workspace.config.ts`                                                                              |
+| [widget](../apps/widget)                   | By package — source and `target.config.js` in [`packages/workspace-widget-target`](../packages/workspace-widget-target) |
+
+Both compile in CI, so the package form is exercised end to end: resolved through pnpm, prebuilt, and built with `xcodebuild`. The pbxproj group resolves to `../../../packages/workspace-widget-target`.
+
+The discovered and path forms have no sample of their own; they use the same config file as the package form and are covered by `tests/target-discovery.test.ts`.
+
 ## Related
 
 - [Configuration reference](configuration.md) — every field

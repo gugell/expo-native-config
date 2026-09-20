@@ -1,0 +1,13 @@
+{
+  "name": "workspace-widget-target",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sample: a package that ships an iOS widget target.",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "target.config.js",
+    "*.swift",
+    "Info.plist"
+  ]
+}

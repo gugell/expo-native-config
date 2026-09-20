@@ -1,15 +1,17 @@
-import { defineWorkspace, Target } from 'expo-native-config';
+import { defineWorkspace } from 'expo-native-config';
 
+// The widget's source and declaration live in packages/workspace-widget-target,
+// so more than one app could ship it. See docs/targets.md for the other three
+// ways to include a target.
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
     targets: [
-      Target.widget({
+      {
+        package: 'workspace-widget-target',
         name: 'WorkspaceWidget',
-        source: './targets/WorkspaceWidget',
         bundleIdentifier: '.widget',
-        deploymentTarget: '18.0',
-      }),
+      },
     ],
   },
 });

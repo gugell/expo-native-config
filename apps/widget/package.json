@@ -16,7 +16,8 @@
     "expo": "catalog:",
     "react": "catalog:",
     "react-native": "catalog:",
-    "expo-native-config": "workspace:*"
+    "expo-native-config": "workspace:*",
+    "workspace-widget-target": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

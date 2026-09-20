@@ -200,6 +200,9 @@ importers:
       react-native:
         specifier: 'catalog:'
         version: 0.85.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3)
+      workspace-widget-target:
+        specifier: workspace:*
+        version: link:../../packages/workspace-widget-target
     devDependencies:
       '@types/react':
         specifier: 'catalog:'
@@ -247,6 +250,8 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  packages/workspace-widget-target: {}
 
 packages:
 
