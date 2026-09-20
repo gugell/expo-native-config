@@ -8,7 +8,7 @@ Expo Native Config keeps application-level native configuration in one typed fil
 
 Declare share extensions, widgets, Swift packages, CocoaPods, Xcode schemes and Android settings in `workspace.config.ts`. Run `expo-native-config plan` to inspect the intended operations, then let Expo prebuild generate the native project.
 
-The first preview includes six complete sample apps, strict config validation, JSON diagnostics, a doctor command and agent skills. It targets Expo SDK 56. Removing declared native configuration requires a clean prebuild; the plan does not compare generated native state.
+The first preview includes seven complete sample apps, strict config validation, JSON diagnostics, a doctor command and agent skills. It targets Expo SDK 56. Removing declared native configuration requires a clean prebuild; the plan does not compare generated native state.
 
 Try the share-extension sample first. Feedback is particularly useful from apps currently maintaining local config plugins or manual Xcode edits.
 

@@ -1,6 +1,6 @@
 # Architecture
 
-The repository has one publishable package, `packages/expo-native-config`, and six private sample apps. pnpm manages workspace dependencies and a shared catalog; samples consume the same public entry points as external users.
+The repository has one publishable package, `packages/expo-native-config`, and seven private sample apps. pnpm manages workspace dependencies and a shared catalog; samples consume the same public entry points as external users.
 
 Configuration loading, schema validation, normalization, planning, and execution form separate boundaries. Runtime Zod schemas define the public data model before behavior is implemented. TypeScript types derive from these schemas where practical. The CLI and config plugin share the same validated configuration and planning behavior.
 

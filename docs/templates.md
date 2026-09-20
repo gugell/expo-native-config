@@ -102,7 +102,7 @@ To add a widget as well, bring its source into `targets/WorkspaceWidget/` and ad
 4. Register the plugin alongside existing plugins using [getting started](getting-started.md), then run `validate` and `plan`.
 5. Prebuild and review native output. Compile and exercise the feature on its platform; successful init/validation is not a working feature test.
 
-The six [sample apps](../apps) are separate runnable examples with their own Expo setup. They demonstrate more than the four init presets: local dependencies and schemes are useful examples even though they require no special starter source generator. See [recipes](recipes.md) for additional combinations.
+The seven [sample apps](../apps) are separate runnable examples with their own Expo setup. They demonstrate more than the four init presets: local dependencies and schemes are useful examples even though they require no special starter source generator. See [recipes](recipes.md) for additional combinations.
 
 ## Lifecycle module
 
