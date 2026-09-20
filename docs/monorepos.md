@@ -128,6 +128,10 @@ apps/mobile/
 
 A directory without a config file is not a target — adding the file is what opts a directory in. An inline `ios.targets` entry stays authoritative over a discovered directory of the same name, so declaring and discovering the same target does not produce two.
 
+That precedence is deliberate. Scattered per-target config is what the manifest was meant to replace, and for a target the app owns the manifest is still the better place. `target.config.js` earns its keep when a target has to travel to more than one app — which a manifest entry cannot express, because the app does not own the package's layout.
+
+A `pods.rb` beside a target is **not** read; declare those dependencies in the target's `pods` instead. Bringing one from @bacons/apple-targets produces a warning rather than a silent drop.
+
 These files are read, not trusted blindly: a `target.config.js` goes through the same strict schema as an inline target, so a typo like `bundleIdentifer` is rejected with the file named, rather than reaching the generators as whatever the file happened to export.
 
 ### Where paths resolve

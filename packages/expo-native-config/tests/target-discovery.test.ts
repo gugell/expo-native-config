@@ -284,3 +284,45 @@ test('a target source outside the workspace is still refused', () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /must stay inside the workspace/);
 });
+
+test('a package ships its target, its source and the pods it needs', () => {
+  const { root, app } = workspace();
+  writeFileSync(
+    path.join(root, 'packages/shared-widget/target.config.js'),
+    "module.exports = { type: 'widget', deploymentTarget: '18.0', pods: [{ pod: 'SDWebImage', version: '~> 5.0' }] };\n",
+  );
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: {
+        targets: [
+          { package: '@mono/shared-widget', name: 'SharedWidget', bundleIdentifier: '.shared' },
+        ],
+      },
+    }),
+  );
+  const plan = planOf(app);
+  const pods = plan.operations.find((op) => op.id === 'target:SharedWidget:pods');
+  assert.ok(pods, 'a shipped target carries its own CocoaPods dependencies');
+  assert.match(JSON.stringify(pods.desired), /SDWebImage/);
+});
+
+test('a pods.rb is reported rather than silently ignored', () => {
+  const { app } = workspace();
+  write(app, 'targets/Legacy/Legacy.swift', WIDGET_SWIFT);
+  write(app, 'targets/Legacy/target.config.js', "module.exports = { type: 'widget' };\n");
+  // @bacons/apple-targets and this package's predecessor evaluated a globbed
+  // pods.rb. This package never reads it, so arriving with one would lose the
+  // extension's pods to a link error with nothing naming the cause.
+  write(app, 'targets/Legacy/pods.rb', "pod 'SDWebImage'\n");
+  const result = run('validate', '--project', app, '--json');
+  const parsed = JSON.parse(result.stdout) as {
+    diagnostics: Array<{ code: string; severity: string; message: string }>;
+  };
+  const warning = parsed.diagnostics.find((d) => d.code === 'target.pods-rb');
+  assert.ok(warning, 'the stray pods.rb is surfaced');
+  assert.equal(warning.severity, 'warning', 'it is a warning, not a hard failure');
+  assert.match(warning.message, /\.pods/);
+});

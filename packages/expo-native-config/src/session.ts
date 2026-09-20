@@ -328,6 +328,18 @@ export function createSession(
       );
     if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory())
       add('target.source', `Target source directory not found: ${dir}`, source);
+    // @bacons/apple-targets and the predecessor of this package evaluated a
+    // globbed pods.rb inside a `target … do` block. This package takes the same
+    // dependencies as a typed field instead, and never reads the file — so a
+    // project arriving with one would lose its extension's pods to a link
+    // error with nothing pointing at the cause.
+    else if (fs.existsSync(path.join(dir, 'pods.rb')))
+      diagnostics.push({
+        severity: 'warning',
+        code: 'target.pods-rb',
+        source,
+        message: `${target.name} has a pods.rb, which this package does not read. Declare those pods in ${source}.pods and delete the file.`,
+      });
     const groups = target.entitlements?.['com.apple.security.application-groups'];
     if (Array.isArray(groups))
       for (const group of groups) {

@@ -222,6 +222,10 @@ The file is validated against the same strict schema as an inline target; an unk
 
 A directory with no config file is not a target. An inline `ios.targets` entry with the same `name` wins over a discovered directory, so a config never grows a duplicate.
 
+**The manifest stays authoritative.** Config in per-target files is what this package moved away from, and the precedence rule keeps that: for a target the app owns, declaring it in `workspace.config.ts` is still the single source of truth. `target.config.js` exists for targets that have to _travel_ — a package shipping one cannot put its declaration in an app manifest it does not own. Use it when the target is shared; use the manifest when it is not.
+
+`pods.rb` is not read. @bacons/apple-targets and this package's predecessor evaluated a globbed `pods.rb` inside a `target … do` block; the typed `pods` field replaces it. A target directory containing `pods.rb` produces a warning naming the field to move it to, because silently dropping an extension's dependencies surfaces later as a link error with nothing pointing at the cause.
+
 To link a target another workspace package ships, name the package:
 
 ```ts
