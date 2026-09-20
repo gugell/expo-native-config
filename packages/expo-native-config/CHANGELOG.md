@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0-alpha.1](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.0...v0.2.0-alpha.1) (2026-09-20)
+
+### Bug Fixes
+
+* **cli:** keep --json parseable, and stop dropping plugins silently ([#11](https://github.com/gugell/expo-native-config/issues/11)) ([b767e20](https://github.com/gugell/expo-native-config/commit/b767e20bf23daeb14c57e8542a40f76de77ce992))
+
 ## [0.2.0-alpha.0](https://github.com/gugell/expo-native-config/compare/v0.1.0...v0.2.0-alpha.0) (2026-09-20)
 
 ### Features
