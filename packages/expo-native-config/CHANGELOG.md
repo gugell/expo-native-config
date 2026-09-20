@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0-alpha.0](https://github.com/gugell/expo-native-config/compare/v0.1.0...v0.2.0-alpha.0) (2026-09-20)
+
+### Features
+
+* **cli:** migrate an existing project, and step-by-step docs ([#9](https://github.com/gugell/expo-native-config/issues/9)) ([4b11566](https://github.com/gugell/expo-native-config/commit/4b1156673adff57839408cf8fd2f2ba8ac2b1576))
+* **release:** publish prerelease channels from the Release workflow ([#10](https://github.com/gugell/expo-native-config/issues/10)) ([4a15757](https://github.com/gugell/expo-native-config/commit/4a157579d7d7ed1c0749365eaa4c58166f67a72b))
+
+### Documentation
+
+* show the before/after and the status, not just the pitch ([#8](https://github.com/gugell/expo-native-config/issues/8)) ([88ccd64](https://github.com/gugell/expo-native-config/commit/88ccd6424b0b23d91fc6a177c0dfc27c1a79246e))
+
 ## 0.1.0 (2026-09-19)
 
 ### ⚠ BREAKING CHANGES
