@@ -27,6 +27,36 @@ export class ConfigError extends Error {
     this.name = 'ConfigError';
   }
 }
+/**
+ * Runs `load` with anything the loaded code writes to stdout diverted to
+ * stderr.
+ *
+ * Config files execute project code, and project code logs: a dynamic
+ * `app.config.ts` that prints its build variant is ordinary. But `--json` is a
+ * machine-readable contract on the same stream, so one `console.log` in a
+ * user's config turns a CI-parseable result into a parse error. The output is
+ * kept rather than swallowed — it belongs on stderr, where it cannot corrupt a
+ * document.
+ */
+export function withQuietStdout<T>(load: () => T): T {
+  const write = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((
+    chunk: string | Uint8Array,
+    encoding?: BufferEncoding | ((error?: Error | null) => void),
+    callback?: (error?: Error | null) => void,
+  ) =>
+    process.stderr.write(
+      chunk,
+      encoding as BufferEncoding,
+      callback,
+    )) as typeof process.stdout.write;
+  try {
+    return load();
+  } finally {
+    process.stdout.write = write;
+  }
+}
+
 export const configNames = [
   'workspace.config.ts',
   'workspace.config.js',
@@ -100,7 +130,7 @@ export function createSession(
         requireCache: false,
         alias: { 'expo-native-config': path.join(__dirname, 'index.js') },
       });
-      raw = loader(resolved);
+      raw = withQuietStdout(() => loader(resolved));
     }
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

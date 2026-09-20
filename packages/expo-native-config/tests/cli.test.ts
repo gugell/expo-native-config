@@ -260,3 +260,19 @@ test('the lifecycle module template scaffolds Expo hooks and no entry-point edit
   // Init never overwrites: a second run refuses rather than clobbering edits.
   assert.equal(run('init', '--template', 'lifecycle-module', '--yes', '--project', root).status, 1);
 });
+
+test('a workspace config that writes to stdout does not corrupt --json', () => {
+  const root = fixture({ schemaVersion: 1 });
+  // The JSON contract belongs to the CLI; project code sharing the stream must
+  // not be able to break it. Applies to every inspection command, not just one.
+  writeFileSync(
+    path.join(root, 'workspace.config.js'),
+    "console.log('loaded the workspace config');\nmodule.exports = { schemaVersion: 1 };\n",
+  );
+  for (const command of ['validate', 'plan', 'doctor']) {
+    const result = run(command, '--project', root, '--json');
+    const parsed = JSON.parse(result.stdout) as { valid: boolean };
+    assert.equal(typeof parsed.valid, 'boolean', `${command} --json stayed parseable`);
+    assert.match(result.stderr, /loaded the workspace config/, `${command} kept the output`);
+  }
+});
