@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0-alpha.2](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.1...v0.2.0-alpha.2) (2026-09-20)
+
+### Features
+
+* **ios:** four ways to include a target, including from a package ([#12](https://github.com/gugell/expo-native-config/issues/12)) ([816f239](https://github.com/gugell/expo-native-config/commit/816f2396a61e9d07bd92bd6edebe0aa828343d1e))
+
 ## [0.2.0-alpha.1](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.0...v0.2.0-alpha.1) (2026-09-20)
 
 ### Bug Fixes
