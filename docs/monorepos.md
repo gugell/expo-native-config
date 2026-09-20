@@ -81,40 +81,90 @@ None of these change what gets generated. The manager decides where files land o
 
 ## Sharing native code between apps
 
-Two path bases apply, and they differ — this is the part that surprises people:
+A package can ship a target. Put a `target.config.js` beside its source, and link it from any app that needs it:
 
-| Input                        | Resolves from                         | Can reach a sibling package? |
-| ---------------------------- | ------------------------------------- | ---------------------------- |
-| Target `source` (extensions) | Expo app root, **confined inside it** | **No**                       |
-| Local Swift package `path`   | Generated `ios/`                      | Yes                          |
-| Android `modules[].path`     | Generated `android/`                  | Yes                          |
-
-An extension's source must live inside the app package. Pointing at a sibling fails validation, before prebuild:
-
-```
-target.source: Target source must stay inside the project: /repo/packages/shared-native/Share
+```js
+// packages/shared-widget/target.config.js
+module.exports = {
+  type: 'widget',
+  deploymentTarget: '18.0',
+  frameworks: ['WidgetKit', 'SwiftUI'],
+};
 ```
 
-A native library is a different story, because those paths resolve from the _generated_ native directories and are allowed to climb out:
+```ts
+// apps/mobile/workspace.config.ts
+export default defineWorkspace({
+  schemaVersion: 1,
+  ios: {
+    targets: [
+      { package: '@mono/shared-widget', name: 'SharedWidget', bundleIdentifier: '.widget' },
+    ],
+  },
+});
+```
+
+The package is resolved the way your app resolves any dependency, so a pnpm symlink, a yarn workspace and a bun hoist all land on the real directory without three special cases. It must be a dependency of the app — that is what makes the package manager link it, and a package that does not resolve fails with a message saying so.
+
+The package describes the target; the app linking it overrides what it needs to. `name`, `bundleIdentifier`, `deploymentTarget`, `entitlements`, `frameworks` and `buildSettings` set on the entry win, because the app is the thing that knows its own bundle identifier.
+
+Xcode references the source in place through a synchronized group, so nothing is copied and editing the package updates every app that links it.
+
+### Self-describing targets inside the app
+
+The same file works without a package. A directory under `targetsRoot` (default `targets/`) that contains a `target.config.js` is a target, with no entry in `workspace.config.ts` at all:
+
+```
+apps/mobile/
+├── workspace.config.ts       ← can be just { schemaVersion: 1 }
+└── targets/
+    └── LocalWidget/
+        ├── target.config.js  ← makes this directory a target
+        ├── Info.plist
+        └── LocalWidget.swift
+```
+
+`name` defaults to the directory name. `target.config.json`, `.cjs` and `.mjs` work too, and `expo-target.config.js` is accepted so a project coming from [@bacons/apple-targets](https://github.com/EvanBacon/expo-apple-targets) does not have to rename files first.
+
+A directory without a config file is not a target — adding the file is what opts a directory in. An inline `ios.targets` entry stays authoritative over a discovered directory of the same name, so declaring and discovering the same target does not produce two.
+
+That precedence is deliberate. Scattered per-target config is what the manifest was meant to replace, and for a target the app owns the manifest is still the better place. `target.config.js` earns its keep when a target has to travel to more than one app — which a manifest entry cannot express, because the app does not own the package's layout.
+
+A `pods.rb` beside a target is **not** read; declare those dependencies in the target's `pods` instead. Bringing one from @bacons/apple-targets produces a warning rather than a silent drop.
+
+These files are read, not trusted blindly: a `target.config.js` goes through the same strict schema as an inline target, so a typo like `bundleIdentifer` is rejected with the file named, rather than reaching the generators as whatever the file happened to export.
+
+### Where paths resolve
+
+| Input                      | Resolves from                | Can reach a sibling package?   |
+| -------------------------- | ---------------------------- | ------------------------------ |
+| `{ package: '…' }` target  | Node resolution from the app | Yes — this is the intended way |
+| Target `source`            | Expo app root                | Yes, within the workspace      |
+| Local Swift package `path` | Generated `ios/`             | Yes                            |
+| Android `modules[].path`   | Generated `android/`         | Yes                            |
+
+The boundary is the **workspace root** — the nearest ancestor with a `pnpm-workspace.yaml` or a `package.json` with `workspaces`, falling back to the app root when there is no workspace. A source outside that is refused, including through a symlink:
+
+```
+target.source: Target source must stay inside the workspace (/repo): /somewhere/else
+```
+
+So a target can live anywhere in your monorepo, and nowhere outside it.
+
+For a plain `source` path, count the `../` segments from the app root. For Swift packages and Gradle modules, count from the _generated_ directory: `ios/` is one level below the app root, so a sibling package is `../../../` from `ios/` and `../../` from `android/`.
 
 ```ts
 export default defineWorkspace({
   schemaVersion: 1,
   ios: {
-    // from apps/mobile/ios/ up to the repo root
     packages: [{ path: '../../../packages/native-lib', products: ['NativeLib'] }],
   },
   android: {
-    // from apps/mobile/android/
     modules: [{ name: 'native-lib', path: '../../packages/native-lib' }],
     dependencies: [{ project: 'native-lib' }],
   },
 });
 ```
-
-So: **share libraries, copy extensions.** To use one share extension in two apps, keep its Swift source in a shared package and copy or symlink it into each app's `targets/` as a build step — or accept two copies. Declaring it from outside the app package is not supported.
-
-Count the `../` segments from the generated directory, not from the config file. `ios/` is one level below the app root, so a sibling package is `../../../` from `ios/` and `../../` from `android/`.
 
 ## CI
 
@@ -140,4 +190,4 @@ pnpm exec expo-native-config migrate --dry-run --project apps/mobile
 
 It reads that app's Expo config and that app's native directories — not sibling packages. A plugin registered by a relative path _is_ followed out of the app package, so a shared plugin at `../../packages/plugins/withShared` is read and classified like any other local one. Its finding is reported once per app that registers it, and rewriting it as declarations is a per-app edit.
 
-See [getting started](getting-started.md) for the first install and [configuration reference](configuration.md) for the full path table.
+See [iOS targets](targets.md) for all four ways to include one, [getting started](getting-started.md) for the first install, and the [configuration reference](configuration.md) for the full path table.

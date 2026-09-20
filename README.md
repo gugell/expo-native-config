@@ -178,7 +178,7 @@ The [configuration reference](docs/configuration.md) documents every field; the 
 | App                                             | Demonstrates                                                    |
 | ----------------------------------------------- | --------------------------------------------------------------- |
 | [share-extension](apps/share-extension)         | UIKit share sheet with text and URL activation rules            |
-| [widget](apps/widget)                           | A real SwiftUI / WidgetKit timeline widget                      |
+| [widget](apps/widget)                           | A SwiftUI / WidgetKit widget shipped by a workspace package     |
 | [native-dependencies](apps/native-dependencies) | Source-controlled Swift package and CocoaPod                    |
 | [multi-scheme](apps/multi-scheme)               | Debug and Release Xcode schemes                                 |
 | [android-gradle](apps/android-gradle)           | Typed Maven dependency and Gradle properties                    |
@@ -204,6 +204,7 @@ Implementation is complete and locally verified; publication is not. The full ch
 
 - [Getting started](docs/getting-started.md) — a seven-step path from install to a verified native change
 - [Migrating an existing app](docs/migrate.md) — turn config plugins into declarations with `migrate --dry-run`
+- [iOS targets](docs/targets.md) — four ways to include one: inline, discovered, by path, by package
 - [Monorepos](docs/monorepos.md) — pnpm, yarn, bun and npm workspaces
 - [Configuration reference](docs/configuration.md)
 - [Templates: what they generate and why](docs/templates.md) and [complete configuration recipes](docs/recipes.md)

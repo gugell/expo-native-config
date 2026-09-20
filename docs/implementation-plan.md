@@ -18,6 +18,7 @@ A box is checked only when the work exists in the repository and the stated evid
 ## 2. Declared surface — done
 
 - [x] iOS targets: share, widget, App Clip, notification service, notification content, intent, action and Safari extensions, with entitlements, frameworks, Info.plist, build settings and deployment targets.
+- [x] Targets that describe themselves: a `target.config.js` beside the source makes a directory a target, and a workspace package that ships one can be linked with `{ package: "…" }`. Source confinement is the workspace root rather than the app root, so a monorepo can share a target; anything outside the workspace is still refused.
 - [x] iOS dependencies: remote and local Swift packages with version requirements, CocoaPods, pod build settings by target prefix, removable pod build phases, autolinking exclusions.
 - [x] Xcode: host-target build settings, run-script phases, resources, schemes, `.xcode.env`, extension embed-cycle fix.
 - [x] Podfile: properties, globals, minimum deployment target, plus `post_install` and replacement rules as flagged escape hatches.

@@ -86,6 +86,9 @@ echo "    and passed the resolved version to both passes"
 # published 9.9.9-alpha.0 while the root tagged 9.9.9, the registry and the tag
 # would disagree about what was released.
 run "prerelease" 9.9.9-alpha.0 --preRelease=alpha
+# Exactly two: the one publishable package and the root pass. packages/* also
+# holds private sample packages, which release.sh skips — without that skip a
+# sample gets a version bump and a changelog for something nobody installs.
 if [ "$(calls | grep -c -- "--preRelease=alpha")" -ne 2 ]; then
   echo "release.sh did not forward --preRelease to both passes:" >&2
   calls >&2

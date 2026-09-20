@@ -114,6 +114,13 @@ for package in packages/*; do
   # A directory with no manifest is not a package — a leftover build directory
   # must not be treated as one and published.
   [ -f "$package/package.json" ] || continue
+  # Private packages are samples and fixtures. They are not published, and
+  # running release-it against one still bumps its version and writes a
+  # changelog for something nobody installs.
+  if node -e "process.exit(require('./$package/package.json').private ? 0 : 1)"; then
+    echo "Skipping private package '$(basename "$package")'"
+    continue
+  fi
   echo "Publishing '$(basename "$package")' to npm"
   (cd "$package" && pnpm exec release-it ${positional[@]+"${positional[@]}"} ${flags[@]+"${flags[@]}"} ${offline[@]+"${offline[@]}"})
 done

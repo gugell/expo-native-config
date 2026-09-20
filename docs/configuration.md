@@ -78,7 +78,8 @@ From the Expo app root, discovery checks `workspace.config.ts`, `.js`, `.cjs`, `
 | CLI `--project`                       | Current working directory                      | `--project apps/mobile`       |
 | CLI `--config`, plugin `configPath`   | Expo app root                                  | `config/native.json`          |
 | `ios.targetsRoot`                     | Expo app root                                  | `native/targets`              |
-| Target `source`                       | Expo app root, confined inside it              | `native/targets/Share`        |
+| Target `source`                       | Expo app root, confined to the workspace       | `native/targets/Share`        |
+| `{ package: "…" }` target             | Node resolution from the Expo app root         | `@mono/shared-widget`         |
 | Omitted target `source`               | `targetsRoot/<name>`, default `targets/<name>` | `targets/Share`               |
 | Local Swift package / CocoaPod `path` | Generated `ios/`                               | `../native/WorkspaceMath`     |
 | Signing `propertiesFile`              | Expo app root                                  | `codesign/release.properties` |
@@ -200,6 +201,48 @@ Each target has a unique `name`, target `type` supplied by the helper, optional 
 The host must define `expo.ios.bundleIdentifier` when targets are declared. `appClip({ name: 'Preview', source: './targets/Preview', bundleIdentifier: '.clip' })` declares an App Clip; you supply its native app sources and app-specific setup. There is currently no App Clip init preset.
 
 Entitlements are plist-shaped values. App Groups are needed only when sharing a container or preferences with the host app. Register the group with Apple and set matching `com.apple.security.application-groups` entries on both the host Expo config and extension declaration. Do not add a fictitious group just to make a sample look complete.
+
+## Self-describing targets
+
+A target can describe itself instead of being declared inline. A directory containing `target.config.js` under `ios.targetsRoot` (default `targets/`) is a target:
+
+```js
+// targets/MyWidget/target.config.js
+module.exports = {
+  type: 'widget',
+  bundleIdentifier: '.widget',
+  deploymentTarget: '18.0',
+  frameworks: ['WidgetKit', 'SwiftUI'],
+};
+```
+
+It takes the same fields as an inline target except `source` (the file's own directory) and `name` (defaults to the directory name). `target.config.json`, `.cjs` and `.mjs` are read too, and `expo-target.config.js` is accepted for projects coming from @bacons/apple-targets.
+
+The file is validated against the same strict schema as an inline target; an unknown key is an error naming the file it came from.
+
+A directory with no config file is not a target. An inline `ios.targets` entry with the same `name` wins over a discovered directory, so a config never grows a duplicate.
+
+**The manifest stays authoritative.** Config in per-target files is what this package moved away from, and the precedence rule keeps that: for a target the app owns, declaring it in `workspace.config.ts` is still the single source of truth. `target.config.js` exists for targets that have to _travel_ — a package shipping one cannot put its declaration in an app manifest it does not own. Use it when the target is shared; use the manifest when it is not.
+
+`pods.rb` is not read. @bacons/apple-targets and this package's predecessor evaluated a globbed `pods.rb` inside a `target … do` block; the typed `pods` field replaces it. A target directory containing `pods.rb` produces a warning naming the field to move it to, because silently dropping an extension's dependencies surfaces later as a link error with nothing pointing at the cause.
+
+To link a target another workspace package ships, name the package:
+
+```ts
+ios: {
+  targets: [{ package: '@mono/shared-widget', name: 'SharedWidget', bundleIdentifier: '.widget' }],
+}
+```
+
+Or point at a plain directory that carries one:
+
+```ts
+ios: {
+  targets: [{ path: '../../shared/native/MyWidget', bundleIdentifier: '.widget' }],
+}
+```
+
+The package must be a dependency of the app. Its `target.config.js` supplies the declaration; `name`, `bundleIdentifier`, `deploymentTarget`, `entitlements`, `frameworks` and `buildSettings` on the entry override it. See [iOS targets](targets.md) for all four forms and [monorepos](monorepos.md) for workspace layout.
 
 ## Swift packages and CocoaPods
 
