@@ -2,7 +2,7 @@
 
 An init template is a small starter preset for an **existing Expo app**. It writes `workspace.config.ts` and, for the two extension presets, a Swift source file. It does not create an Expo app, install dependencies, register the plugin, or generate native projects.
 
-The current four presets cover an empty starting point, two source-bearing iOS capabilities, and a small Android manifest example. They are not mutually exclusive product modes or the complete list of supported features. There is no `template` field in the resulting config. Swift packages, CocoaPods, schemes, signing, and App Clips are configured directly; they do not each need a separate initializer.
+The current five presets cover an empty starting point, two source-bearing iOS capabilities, a small Android manifest example, and a local Expo module for startup work. They are not mutually exclusive product modes or the complete list of supported features. There is no `template` field in the resulting config. Swift packages, CocoaPods, schemes, signing, and App Clips are configured directly; they do not each need a separate initializer.
 
 | Preset              | Choose it when                                                              | Files written                                               | Still yours to implement                                                |
 | ------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -23,7 +23,7 @@ Or, in an app that does not already have a workspace config:
 pnpm exec expo-native-config init --template share-extension --yes
 ```
 
-The other choices are `--template widget` and `--template android`. `--yes` accepts file creation without an interactive prompt. Init refuses existing supported config filenames and existing destination source files. It is not a merge command: do not run all four commands in the same app.
+The other choices are `--template widget`, `--template android` and `--template lifecycle-module`. `--yes` accepts file creation without an interactive prompt. Init refuses existing supported config filenames and existing destination source files. It is not a merge command: do not run several of them in the same app.
 
 ## Exact configuration shapes
 
@@ -102,7 +102,7 @@ To add a widget as well, bring its source into `targets/WorkspaceWidget/` and ad
 4. Register the plugin alongside existing plugins using [getting started](getting-started.md), then run `validate` and `plan`.
 5. Prebuild and review native output. Compile and exercise the feature on its platform; successful init/validation is not a working feature test.
 
-The seven [sample apps](../apps) are separate runnable examples with their own Expo setup. They demonstrate more than the four init presets: local dependencies and schemes are useful examples even though they require no special starter source generator. See [recipes](recipes.md) for additional combinations.
+The seven [sample apps](../apps) are separate runnable examples with their own Expo setup. They demonstrate more than the five init presets: local dependencies and schemes are useful examples even though they require no special starter source generator. See [recipes](recipes.md) for additional combinations.
 
 ## Lifecycle module
 

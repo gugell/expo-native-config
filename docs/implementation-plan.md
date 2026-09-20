@@ -26,7 +26,8 @@ A box is checked only when the work exists in the repository and the stated evid
 
 ## 3. CLI and plugin — done
 
-- [x] `init`, `plan`, `validate`, `doctor`, `explain` and `completion` implemented against the shared session.
+- [x] `init`, `migrate`, `plan`, `validate`, `doctor`, `explain` and `completion` implemented against the shared session.
+- [x] `migrate` reads an existing project — Expo config plugins, Podfile, gradle.properties, app/build.gradle, AndroidManifest — and proposes a manifest, with `--dry-run` previewing exactly what a real run writes. It validates its own output against the schema before returning it, and never claims to translate plugin JavaScript.
 - [x] Tested: help, version, invalid flags, `--json` payloads, exit codes (0 valid, 1 invalid input, 2 unexpected failure), and `init` refusing to overwrite an existing config.
 - [x] Generated declarations and CJS entrypoints built; helpers separated from Expo plugin resolution.
 - [x] Plugin wrapped in `createRunOncePlugin`; `@expo/config-plugins` resolved through the app's own `expo` package so a second pnpm copy cannot split the mod registry.
@@ -47,7 +48,7 @@ A box is checked only when the work exists in the repository and the stated evid
 
 ## 6. Documentation and skills — done
 
-- [x] README, getting started, configuration reference, templates, recipes, architecture, development rules, troubleshooting, compatibility, releasing, launch guide.
+- [x] README, getting started (seven numbered steps with a check per step), migration guide, monorepo guide, configuration reference, templates, recipes, architecture, development rules, troubleshooting, compatibility, releasing, launch guide.
 - [x] Self-contained agent skills under `packages/expo-native-config/skills/`, usable outside this checkout.
 - [x] Independent final review; findings fixed, evidence documented, external publication prerequisites stated.
 
