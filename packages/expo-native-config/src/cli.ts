@@ -11,13 +11,15 @@ interface Options {
   id?: string;
   template?: string;
   yes?: boolean;
+  dryRun?: boolean;
 }
-const commands = 'init plan validate doctor explain completion';
+const commands = 'init migrate plan validate doctor explain completion';
 /** Oldest SDK this package supports, and the newest it has been verified against. */
 const MINIMUM_EXPO_SDK = 50;
 const LATEST_VERIFIED_EXPO_SDK = 57;
 function base(command: Command): Command {
-  if (command.name() !== 'init')
+  // init and migrate create a config rather than reading one.
+  if (!['init', 'migrate'].includes(command.name()))
     command.option('--config <file>', 'Explicit workspace config path');
   return command
     .option('--project <directory>', 'Expo app root', process.cwd())
@@ -185,6 +187,47 @@ base(
     const result = initialize(path.resolve(options.project), options.template);
     if (options.json) console.log(JSON.stringify({ valid: true, ...result }, null, 2));
     else console.log(`Created ${result.files.join(', ')}\n\n${result.next.join('\n')}`);
+  });
+base(
+  program
+    .command('migrate')
+    .description('Propose a workspace config from an existing project and its plugins'),
+)
+  .option('--dry-run', 'Print the proposed config without writing it')
+  .action(async (options: Options) => {
+    const { migrate } = await import('./migrate');
+    const result = migrate(path.resolve(options.project), { dryRun: options.dryRun });
+    if (options.json) {
+      console.log(JSON.stringify({ valid: true, ...result }, null, 2));
+      return;
+    }
+    const counts = { extracted: 0, 'owned-elsewhere': 0, manual: 0, 'already-declared': 0 };
+    for (const finding of result.findings) counts[finding.status] += 1;
+    console.log(
+      `${result.written.length ? '✓ Wrote' : '✓ Proposed'} workspace.config.ts — ${options.project}`,
+    );
+    // Findings are grouped so the two that need a person are not buried in the
+    // list of things deliberately left alone.
+    for (const status of ['extracted', 'manual', 'owned-elsewhere', 'already-declared'] as const) {
+      const group = result.findings.filter((finding) => finding.status === status);
+      if (!group.length || (status === 'owned-elsewhere' && !options.verbose)) continue;
+      console.log(`\n${status} (${group.length}):`);
+      for (const finding of group)
+        console.log(
+          `  ${finding.source}${finding.field ? ` → ${finding.field}` : ''}\n    ${finding.message}`,
+        );
+    }
+    if (counts['owned-elsewhere'] && !options.verbose)
+      console.log(`\n${counts['owned-elsewhere']} left to their existing owner (use --verbose).`);
+    if (result.written.length) {
+      console.log(`\nWrote ${result.written.join(', ')}. Run validate, then plan.`);
+    } else {
+      console.log(`\n--- proposed workspace.config.ts ---\n${result.source}`);
+      console.log('Dry run: nothing was written.');
+    }
+    console.log(
+      `${counts.manual} item(s) need a person. Extraction is a starting point, not a proof of intent.`,
+    );
   });
 program
   .command('completion [shell]')
