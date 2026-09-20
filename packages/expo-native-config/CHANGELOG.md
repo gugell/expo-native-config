@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.2.0](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.2...v0.2.0) (2026-09-20)
+
 ## [0.2.0-alpha.2](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.1...v0.2.0-alpha.2) (2026-09-20)
 
 ### Features

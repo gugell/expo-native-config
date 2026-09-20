@@ -33,7 +33,7 @@
     "release-it": "20.2.1",
     "typescript-eslint": "^8.70.0"
   },
-  "version": "0.2.0-alpha.2",
+  "version": "0.2.0",
   "release-it": {
     "npm": {
       "publish": false

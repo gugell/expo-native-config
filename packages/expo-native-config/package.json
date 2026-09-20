@@ -1,6 +1,6 @@
 {
   "name": "expo-native-config",
-  "version": "0.2.0-alpha.2",
+  "version": "0.2.0",
   "description": "Typed native projects for Expo: validate, plan, and generate extensions, native dependencies, schemes, and Android configuration.",
   "license": "MIT",
   "author": "gugell",
