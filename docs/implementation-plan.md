@@ -68,10 +68,8 @@ Recorded 2026-09-16; full detail in [compatibility](compatibility.md) and the [v
 - [ ] iOS host-app compilation for samples other than share-extension.
 - [ ] Device signing and store acceptance.
 
-## 8. Publication — not done
+## 8. Publication — done, except signing
 
-- [ ] npm registry publication. Ownership and credentials are account-specific and unverified; no install command may be advertised until a real release exists.
-- [ ] Public repository URL confirmed in package metadata.
+- [x] npm registry publication: `expo-native-config@0.2.0` published 2026-09-20, after `0.1.0` and three `0.2.0-alpha` releases.
+- [x] Public repository URL confirmed in package metadata: <https://github.com/gugell/expo-native-config>.
 - [ ] Final native distribution signing.
-
-Local implementation implies no npm publication and no remote resource creation.

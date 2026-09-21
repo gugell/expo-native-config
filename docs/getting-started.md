@@ -17,28 +17,26 @@ Expo Go cannot host custom native targets or newly linked native dependencies. A
 
 ## Step 1: install the package
 
-Not published to npm yet. Pack it from a checkout of this repository:
+```sh
+npx expo install expo-native-config
+```
+
+`expo install` picks a version compatible with your SDK; `npm install expo-native-config` works too.
+
+To test an unreleased change from a checkout of this repository, pack it instead of linking — a workspace link hides missing package files and undeclared dependencies until someone else installs it:
 
 ```sh
-pnpm install
-pnpm build
+pnpm install && pnpm build
 pnpm --filter expo-native-config pack --pack-destination /tmp
+pnpm add /tmp/expo-native-config-0.2.0.tgz   # in your app
 ```
 
-Then install the tarball in your app, with your app's package manager:
-
-```sh
-pnpm add /tmp/expo-native-config-0.1.0.tgz
-```
-
-A tarball install matters even when a workspace link would be convenient: linking hides missing package files and undeclared dependencies until someone else installs it.
-
-**Check:** `pnpm exec expo-native-config --version` prints a version.
+**Check:** `npx expo-native-config --version` prints a version.
 
 ## Step 2: create a config
 
 ```sh
-pnpm exec expo-native-config init --template minimal --yes
+npx expo-native-config init --template minimal --yes
 ```
 
 That writes `workspace.config.ts` and nothing else:
@@ -112,7 +110,7 @@ Declaring a target does not write its Swift source. Outside `init`, that source 
 **Check:**
 
 ```sh
-pnpm exec expo-native-config validate
+npx expo-native-config validate
 ```
 
 Prints `✓ validate`. A schema error here names the exact field, and is much cheaper than finding the same mistake during a native build.
@@ -120,7 +118,7 @@ Prints `✓ validate`. A schema error here names the exact field, and is much ch
 ## Step 5: review the plan
 
 ```sh
-pnpm exec expo-native-config plan
+npx expo-native-config plan
 ```
 
 Every line is one operation with an ID and the config field it came from:
@@ -143,7 +141,7 @@ Useful flags:
 A plan is intent. It does not diff the existing native project, and it does not prove a native build succeeds.
 
 ```sh
-pnpm exec expo-native-config doctor
+npx expo-native-config doctor
 ```
 
 `doctor` adds environment checks and warns about escape hatches — declarations that rewrite generated Ruby, Groovy or entry-point source. Expo's own guidance treats those as a last resort because they break silently across SDK upgrades, so a warning here is worth reading rather than clearing.
@@ -153,7 +151,7 @@ pnpm exec expo-native-config doctor
 ## Step 6: generate the native projects
 
 ```sh
-pnpm exec expo prebuild --platform ios --no-install
+npx expo prebuild --platform ios --no-install
 ```
 
 Use `--platform android` for Android. Add `--clean` when you want to regenerate from scratch; preserve manual native edits first, because a clean prebuild discards them.
@@ -163,7 +161,7 @@ Use `--platform android` for Android. Add `--clean` when you want to regenerate 
 ## Step 7: build and exercise it
 
 ```sh
-pnpm exec expo run:ios      # or: expo run:android
+npx expo run:ios      # or: expo run:android
 ```
 
 Installing a JavaScript package or restarting Metro does not apply native changes to an already installed app — you need a new native build.

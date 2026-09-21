@@ -1,14 +1,315 @@
 # Expo Native Config
 
-Declare native project changes in `workspace.config.ts`, review a plan, and apply them through Expo prebuild.
+[![npm](https://img.shields.io/npm/v/expo-native-config.svg)](https://www.npmjs.com/package/expo-native-config)
+[![license](https://img.shields.io/npm/l/expo-native-config.svg)](LICENSE)
 
-One package provides an Expo config plugin, a CLI, typed helpers and agent skills for iOS extensions, Swift packages, CocoaPods, Xcode schemes and build settings, Android Gradle structure, and Android manifest and resource entries.
+An Expo Config Plugin and CLI that lets you declare native project changes in a typed `workspace.config.ts`, review them as a plan, and apply them through `expo prebuild` — iOS extensions, Swift packages, CocoaPods, Xcode schemes and build settings, Android Gradle structure, manifest entries and resources.
 
-> **Release status:** unpublished project prepared for release. Registry availability and ownership must be verified before advertising an npm install command. Use the local workspace or a packed tarball for now.
+It replaces the hand-written config plugin: instead of a `withPodfile` mod doing string surgery on generated Ruby, you write a field, a schema rejects it if it's wrong, and `plan` shows you every operation before prebuild runs.
 
-## The problem
+## 🚀 How to use
 
-Every Expo app eventually needs a native change that `app.json` cannot express, and the answer is always the same: write a config plugin that does string surgery on a generated file.
+Requires Node.js 22.14+, Expo SDK 50–57, and a development build (Expo Go cannot host custom native targets).
+
+1. **Install** into an existing Expo app:
+
+   ```sh
+   npx expo install expo-native-config
+   ```
+
+2. **Create a config.** Pick a starter — `minimal` writes only the config, the others write real native source you can edit:
+
+   ```sh
+   npx expo-native-config init --template share-extension --yes
+   ```
+
+3. **Register the plugin** in your `app.json`, last in the existing array:
+
+   ```json
+   { "expo": { "plugins": ["expo-router", "expo-native-config/plugin"] } }
+   ```
+
+   This is the step people skip, and skipping it means prebuild silently applies nothing.
+
+4. **Declare something** in `workspace.config.ts`, then check it:
+
+   ```sh
+   npx expo-native-config validate   # schema errors, by field name
+   npx expo-native-config plan       # every operation, with the field it came from
+   npx expo-native-config doctor     # environment + escape-hatch warnings
+   ```
+
+5. **Generate** the native projects:
+
+   ```sh
+   npx expo prebuild --platform ios
+   ```
+
+6. **Build it.** `npx expo run:ios` or `npx expo run:android`. A JS reload does not apply native changes — you need a new native build.
+
+[Getting started](docs/getting-started.md) walks the same seven steps with a "what you should see" check after each one.
+
+## How it works
+
+The root `workspace.config.ts` is the magic file. It lives beside `app.json`, never at a monorepo root, and it owns native _structure_; `app.json` keeps owning app _identity_ — name, slug, bundle identifier — and the plugin registration.
+
+Loading and validation happen once, in a session the CLI and the config plugin share. That's why what `plan` prints is what prebuild applies: both read the same normalized config through the same generators. Generators describe named operations; executors apply them through Expo's own config-plugin mods.
+
+Everything written into a generated file goes inside a **tagged block**. Running prebuild again updates that block instead of appending a second copy, and deleting a declaration emits a removal operation for its tag rather than leaving the change behind.
+
+```mermaid
+flowchart LR
+  A["workspace.config.ts"] --> B["Load + Zod validate"]
+  B --> C["Normalize"]
+  C --> D["Plan operations"]
+  D --> E["CLI<br/>validate · plan · doctor · explain"]
+  D --> F["expo-native-config/plugin"]
+  F --> G["Expo prebuild mods"]
+  G --> H["ios/ · android/"]
+  A -. "app.json owns<br/>identity + plugin registration" .-> F
+```
+
+## What a plan looks like
+
+`plan` is the thing worth seeing before anything else. Real output from the [share-extension sample](apps/share-extension):
+
+```console
+$ npx expo-native-config plan
+
+✓ Native intent plan — apps/share-extension/workspace.config.ts
+  ios.podfileProperties             ios:podfileProperties
+  target:WorkspaceShare:infoPlist   target:WorkspaceShare:Info.plist
+  target:podfileLoader              targetsPodfileLoader
+  target:all                        targets
+  xcode.embedCycle                  fixEmbedCycle
+  ios.buildSettings                 ios:buildSettings
+  ios.runScripts                    ios:runScripts
+7 declared operations (+6 cleanup, use --verbose). Preview only; native state is not compared.
+```
+
+Left column is the operation ID, right column is the config field it came from. `explain --id ios.runScripts` prints that operation's kind, source field and desired state; `--json` gives the same for CI.
+
+A plan is intent. It does not diff the existing native project, and it does not prove a native build succeeds.
+
+## The config file
+
+`workspace.config.ts` (or `.js`, or `.json`) has three top-level fields — `schemaVersion`, `ios` and `android` — and no `expo` wrapper. Every field below is optional.
+
+```ts
+import {
+  Abi,
+  AndroidApplication,
+  AndroidComponent,
+  AndroidDependency,
+  AndroidFeature,
+  AndroidModule,
+  BuildConfigField,
+  MavenRepository,
+  Package,
+  Pod,
+  PodBuildSettings,
+  RunScript,
+  Scheme,
+  SwiftPackageRequirement,
+  Target,
+  XcodeBuildSettings,
+  defineWorkspace,
+} from 'expo-native-config';
+
+export default defineWorkspace({
+  schemaVersion: 1,
+
+  ios: {
+    // App extensions. Four ways to include one — see "iOS targets" below.
+    targets: [
+      Target.share({
+        name: 'WorkspaceShare',
+        source: './targets/WorkspaceShare', // defaults to targets/<name>
+        bundleIdentifier: '.share', // leading dot appends to the host bundle ID
+        deploymentTarget: '18.0',
+        entitlements: { 'com.apple.security.application-groups': ['group.com.example.app'] },
+        frameworks: ['SwiftUI'],
+      }),
+    ],
+    targetsRoot: './targets', // where bare target names are discovered
+    deploymentTarget: '15.1',
+
+    // Swift packages — remote with a version requirement, or local by path.
+    packages: [
+      Package.remote(
+        'https://github.com/apple/swift-log',
+        SwiftPackageRequirement.upToNextMajor('1.0.0'),
+        ['Logging'],
+      ),
+      Package.local('../native/WorkspaceMath', ['WorkspaceMath']),
+    ],
+    // CocoaPods, and build settings applied to pod targets by name prefix.
+    pods: [Pod.local('WorkspaceGreeting', '../native/WorkspaceGreeting')],
+    podBuildSettings: [
+      PodBuildSettings.forTargetsStartingWith('NativeMedia', {
+        CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: 'YES',
+      }),
+    ],
+    autolinkingExclude: ['expo-dev-client'],
+
+    // Host app target.
+    buildSettings: XcodeBuildSettings.of({ ldExportSymbols: false }),
+    runScripts: [RunScript.shell('Sample Script', 'echo hello')],
+    resources: ['./assets/native/Config.plist'],
+    schemes: [Scheme.debug('Development', { archive: 'Release' })],
+    fixExtensionEmbedCycle: true,
+
+    // Podfile.properties.json — the mechanism Expo documents as safe.
+    podfileProperties: { 'expo.jsEngine': 'hermes' },
+    podfileGlobals: { use_frameworks: 'static' },
+    minimumPodDeploymentTarget: '15.1',
+    xcode: { env: { exports: { NODE_BINARY: '/usr/bin/node' } } },
+
+    // Escape hatch — rewrites generated Ruby. Warned about by plan and doctor.
+    podfile: { postInstall: ["Pod::UI.puts 'hello'"], replace: [] },
+  },
+
+  android: {
+    // Gradle structure.
+    minSdkVersion: 24,
+    compileSdkVersion: 35,
+    kotlinVersion: '2.0.21',
+    dependencies: [AndroidDependency.library('androidx.collection:collection-ktx:1.4.5')],
+    mavenRepositories: [MavenRepository.url('https://jitpack.io')],
+    buildscriptDependencies: ['com.google.gms:google-services:4.4.2'],
+    plugins: ['com.google.gms.google-services'],
+    forceDependencies: ['androidx.core:core-ktx:1.13.1'],
+    modules: [AndroidModule.at(':shared', '../shared')],
+    gradleProperties: { 'org.gradle.parallel': true },
+    buildConfigFields: [BuildConfigField.string('WORKSPACE_TAG', 'sample')],
+    abiFilters: [Abi.arm64],
+    lint: { abortOnError: false },
+    signing: { propertiesFile: './release.properties', optional: true },
+
+    // AndroidManifest.
+    features: [AndroidFeature.optional('android.hardware.camera')],
+    applicationAttributes: AndroidApplication.attributes({ largeHeap: true }),
+    metaData: { 'com.example.SAMPLE_KEY': 'demo' },
+    components: [
+      AndroidComponent.remove('receiver', 'androidx.profileinstaller.ProfileInstallReceiver'),
+    ],
+    queries: { intents: [{ action: 'android.intent.action.VIEW', scheme: 'geo' }] },
+    manifestPlaceholders: { redirectScheme: 'com.example.app' },
+    supportsScreens: { largeScreens: true },
+
+    // res/.
+    strings: { sample_value: 'hello from workspace.config.ts' },
+    colors: { sample_accent: '#F09458' },
+    styles: [],
+    resources: [{ path: 'xml/network_security_config.xml', contents: '<?xml version="1.0"?>...' }],
+
+    // Escape hatch — rewrites generated Groovy.
+    gradle: { app: [], project: [] },
+  },
+});
+```
+
+Declarations can be written as plain objects or built with constructors — `Target.share(…)`, `AndroidDependency.project(…)`, `XcodeBuildSettings.of({ ldExportSymbols: false })`. The constructors supply the discriminants, the Xcode and `android:` key names, and the defaults, so the config carries fewer magic strings. Both styles validate identically; JSON configs use the object form.
+
+The [configuration reference](docs/configuration.md) documents every field with its path base and validation boundary; the [recipes](docs/recipes.md) show twelve complete configurations.
+
+## iOS targets
+
+Supported extension types:
+
+| Type                   | Description                    |
+| ---------------------- | ------------------------------ |
+| `share`                | Share Extension                |
+| `widget`               | Widget / Live Activity         |
+| `clip`                 | App Clip                       |
+| `notification-service` | Notification Service Extension |
+| `notification-content` | Notification Content Extension |
+| `intent`               | Siri Intent Extension          |
+| `action`               | Share Action                   |
+| `safari`               | Safari Extension               |
+
+Declaring a target does not write its Swift source. Outside `init`, that source is yours to provide — an extension with no implementation compiles into an extension that does nothing.
+
+There are four ways to include one, and [docs/targets.md](docs/targets.md) covers each in full:
+
+```ts
+ios: {
+  targets: [
+    // 1. Inline — type and settings here, source at targets/<name>.
+    Target.widget({ name: 'WorkspaceWidget', bundleIdentifier: '.widget' }),
+
+    // 2. Discovered — a bare name; targetsRoot/<name>/target.config.js describes it.
+    'WorkspaceWidget',
+
+    // 3. By path — any folder carrying a target.config.js, anywhere in the repo.
+    { path: '../../shared/targets/Widget', name: 'WorkspaceWidget', bundleIdentifier: '.widget' },
+
+    // 4. From a package — a workspace package ships the target; the app names its bundle ID.
+    { package: 'workspace-widget-target', name: 'WorkspaceWidget', bundleIdentifier: '.widget' },
+  ],
+}
+```
+
+A leading dot in `bundleIdentifier` appends to the host app's — `.widget` under `com.example.app` becomes `com.example.app.widget`. Extension source must stay inside the app package; dependency paths resolve from the generated `ios/`, extension source paths from the app root.
+
+## CLI
+
+| Command              | Does                                                              |
+| -------------------- | ----------------------------------------------------------------- |
+| `init`               | Write a starter config. Refuses to overwrite; not a merge command |
+| `migrate`            | Propose a config from an existing app and its plugins             |
+| `validate`           | Schema-check the config, naming the exact field                   |
+| `plan`               | List every operation with the field it came from                  |
+| `doctor`             | Environment checks and escape-hatch warnings                      |
+| `explain --id <op>`  | Kind, source field and desired state for one operation            |
+| `completion [shell]` | Shell completion for `bash`, `zsh` or `fish`                      |
+
+Inspection commands accept `--project <directory>`, `--config <file>`, `--json` and `--verbose`. `doctor --ci` runs the same diagnostics without a terminal. `init` needs `--yes` and `migrate` needs `--dry-run` when there is no interactive terminal.
+
+`--config <file>` selects a custom filename and must be set in **both** the CLI and the Expo plugin, or the two will read different files.
+
+| Exit code | Meaning                                    |
+| --------- | ------------------------------------------ |
+| 0         | Success                                    |
+| 1         | Invalid configuration or command arguments |
+| 2         | Unexpected tool failure                    |
+
+### Already have config plugins?
+
+`migrate --dry-run` reads your Expo config, your local plugins and your generated native directories, and proposes a manifest without writing anything:
+
+```sh
+npx expo-native-config migrate --dry-run
+```
+
+It extracts what it can read unambiguously, leaves alone anything an Expo template or a published plugin already owns, and — for each local plugin — names the workspace field that replaces it. It does not translate plugin JavaScript, and it says so rather than pretending otherwise. See [migrating an existing app](docs/migrate.md).
+
+## Templates
+
+| Template           | Generated files                                             | Purpose                                                                                         |
+| ------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `minimal`          | `workspace.config.ts`                                       | Compose any supported capabilities yourself                                                     |
+| `share-extension`  | Config + `targets/ShareExtension/ShareViewController.swift` | Starting share controller; implement attachment handling and persistence                        |
+| `widget`           | Config + `targets/WorkspaceWidget/WorkspaceWidget.swift`    | Static small WidgetKit widget; implement real data and refresh                                  |
+| `android`          | Config with camera permission and optional camera feature   | Manifest example; implement runtime permissions and UI                                          |
+| `lifecycle-module` | Config + a local Expo module under `modules/startup`        | Run code at launch through Expo lifecycle hooks, without editing AppDelegate or MainApplication |
+
+These five presets are starting points, not the capability list — App Clips, Swift packages, schemes and every Android field are supported without a preset. `init` does not create an Expo app or register its own plugin, and cannot merge into an existing config. See [templates](docs/templates.md).
+
+## Escape hatches
+
+Where nothing typed can express a change, `ios.podfile` and `android.gradle` rewrite generated Ruby and Groovy directly. They are planned with `risk: "escape-hatch"`, listed by `plan --verbose` and warned about by `doctor` — because Expo's own guidance is that rewriting generated code breaks silently across SDK upgrades:
+
+```console
+warning: ios.podfile.postInstall edits generated native source directly (ios.podfile.postInstall).
+         Re-verify it after an Expo SDK upgrade.
+```
+
+A warning here is worth reading rather than clearing.
+
+## Why not a hand-written config plugin
+
+Every Expo app eventually needs a native change `app.json` cannot express, and the answer is always the same: a plugin doing string surgery on a generated file.
 
 ```ts
 // before — src/plugins/withPodBuildSetting.ts, plus a line in app.config.ts
@@ -32,32 +333,7 @@ podBuildSettings: [
 ],
 ```
 
-The difference is not length. The plugin file is untyped, unplanned and unverified: nothing tells you it ran, nothing tells you what it will change before it changes it, and nothing tells you when an SDK upgrade stopped its regular expression from matching. A dozen of these in one app is a normal amount; the [native-workarounds sample](apps/native-workarounds) shows that dozen as declarations, next to the plugin each one replaces.
-
-## Before and after
-
-```mermaid
-flowchart TB
-  %% unconnected subgraphs lay out in reverse declaration order: "before" lands on the left
-  subgraph after["After — declaration"]
-    direction TB
-    A1["workspace.config.ts<br/><i>typed declarations</i>"]
-    A1 --> A2["validate<br/><i>schema rejects it now</i>"]
-    A2 --> A3["plan<br/><i>named ops + source field</i>"]
-    A3 --> A4["doctor<br/><i>env + escape-hatch warnings</i>"]
-    A4 --> A5["expo prebuild"]
-    A5 --> A6["ios/ · android/<br/><i>tagged, updatable blocks</i>"]
-  end
-  subgraph before["Before — hand-written plugin"]
-    direction TB
-    B1["app.config.ts plugins[]"]
-    B1 --> B2["src/plugins/withThing.ts<br/><i>untyped mod</i>"]
-    B2 --> B3{"regex still<br/>matches?"}
-    B3 -- "no" --> B4["silent no-op or throw<br/><i>found at build time</i>"]
-    B3 -- "yes" --> B5["string surgery<br/><i>idempotency by hand</i>"]
-    B5 --> B6["ios/ · android/<br/><i>untracked edits</i>"]
-  end
-```
+The difference is not length. The plugin file is untyped, unplanned and unverified: nothing tells you it ran, nothing tells you what it will change before it changes it, and nothing tells you when an SDK upgrade stopped its regular expression from matching.
 
 |                     | Hand-written config plugin                            | Declaration                                                       |
 | ------------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
@@ -68,112 +344,11 @@ flowchart TB
 | SDK upgrade         | Regex stops matching, silently                        | Typed fields map onto Expo's own mods                             |
 | Risky edits         | Indistinguishable from safe ones                      | `risk: "escape-hatch"`, surfaced by `plan --verbose` and `doctor` |
 
-Where nothing typed can express a change, the escape hatches are still there — planned with `risk: "escape-hatch"`, listed by `plan --verbose` and warned about by `doctor`, because Expo's own guidance is that rewriting generated code breaks silently across SDK upgrades.
-
-## What a plan looks like
-
-`plan` is the thing worth seeing before anything else. Real output from the [native-workarounds sample](apps/native-workarounds), trimmed:
-
-```console
-$ pnpm --filter @expo-native-config/example-native-workarounds plan
-
-✓ Native intent plan — apps/native-workarounds/workspace.config.ts
-warning: ios.podfile.postInstall edits generated native source directly (ios.podfile.postInstall). Re-verify it after an Expo SDK upgrade.
-warning: ios.podfile.replace.0 edits generated native source directly (ios.podfile.replace[0]). Re-verify it after an Expo SDK upgrade.
-  pod:buildSettings  podBuildSettings
-  pod:minimumDeploymentTarget  pods:minimumDeploymentTarget
-  ios.autolinkingExclude  podfile:autolinkingExclude
-  xcode.embedCycle  fixEmbedCycle
-  android.modules  android:modules
-  android.receiver.androidx.profileinstaller.ProfileInstallReceiver  android:receiver:androidx.profileinstaller.ProfileInstallReceiver
-  android.resource.xml/workspace_network_security_config.xml  android:res:xml/workspace_network_security_config.xml
-  android.queries  android:queries
-32 declared operations (+4 cleanup, use --verbose). Preview only; native state is not compared.
-```
-
-Every line has an ID. `explain --id android.modules` prints the operation kind, the config field it came from, and the desired state. `--json` gives the same result for CI.
-
-A plan describes intended operations; it does not compare every byte of the existing native project or prove that a native build succeeds.
-
-## How it fits together
-
-```mermaid
-flowchart LR
-  A["workspace.config.ts"] --> B["Load + Zod validate"]
-  B --> C["Normalize"]
-  C --> D["Plan operations"]
-  D --> E["CLI<br/>validate · plan · doctor · explain"]
-  D --> F["expo-native-config/plugin"]
-  F --> G["Expo prebuild mods"]
-  G --> H["ios/ · android/"]
-  A -. "app.json owns<br/>identity + plugin registration" .-> F
-```
-
-The CLI and the config plugin share one validated session, so what `plan` prints is what prebuild applies. Generators describe operations; executors apply them through Expo config-plugin mods. See [architecture](docs/architecture.md).
-
-## Try it locally
-
-Repository development requires Node.js 24.11.1 or newer and pnpm 10.34.5. The published CLI supports Node.js 22.14 or newer. Native builds additionally need the platform toolchain.
-
-```sh
-pnpm install
-pnpm build
-pnpm --filter @expo-native-config/example-share-extension validate
-pnpm --filter @expo-native-config/example-share-extension plan
-pnpm --filter @expo-native-config/example-share-extension prebuild --platform ios --no-install
-```
-
-For an existing Expo app, pack the package with `pnpm --filter expo-native-config pack --pack-destination /tmp`, install the resulting `.tgz` using that app's package manager, and run `expo-native-config init --template minimal --yes` through the package manager. Register `expo-native-config/plugin` in your Expo config's `plugins` array. See [getting started](docs/getting-started.md).
-
-```ts
-import { defineWorkspace, Target } from 'expo-native-config';
-
-export default defineWorkspace({
-  schemaVersion: 1,
-  ios: {
-    targets: [
-      Target.share({
-        name: 'WorkspaceShare',
-        source: './targets/WorkspaceShare',
-        bundleIdentifier: '.share',
-      }),
-    ],
-  },
-});
-```
-
-Declarations can be written as plain objects or built with constructors — `Target.share(…)`, `AndroidDependency.project(…)`, `XcodeBuildSettings.of({ ldExportSymbols: false })` — which supply the discriminants, the Xcode and `android:` key names, and the defaults, so the config carries fewer magic strings. Both styles validate identically; JSON configs use the object form.
-
-Run `expo-native-config validate`, `plan`, and `doctor` before `expo prebuild`.
-
-### Already have config plugins?
-
-`migrate --dry-run` reads your Expo config, your local plugins and your generated native directories, and proposes a manifest without writing anything:
-
-```sh
-pnpm exec expo-native-config migrate --dry-run
-```
-
-It extracts what it can read unambiguously, leaves alone anything an Expo template or a published plugin already owns, and — for each local plugin — names the workspace field that replaces it. It does not translate plugin JavaScript, and it says so rather than pretending otherwise. See [migrating an existing app](docs/migrate.md).
-
-The example expects `targets/WorkspaceShare/` to contain native sources. To generate a source-bearing starter instead, use `init --template share-extension --yes` in an app without an existing workspace config. See [all five starter presets](docs/templates.md) for exact files and remaining implementation work. Add Android settings, packages, or schemes to the same manifest as needed; templates do not restrict its capabilities.
-
-## What can be declared
-
-| Area              | Declarations                                                                                                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| iOS targets       | Share, widget, App Clip, notification service, notification content, intent, action and Safari extensions — with entitlements, frameworks, Info.plist, build settings and deployment target             |
-| iOS dependencies  | Swift packages (remote and local, with version requirements), CocoaPods, pod build settings by target prefix, removable pod build phases, autolinking exclusions                                        |
-| Xcode             | Host-target build settings, run-script build phases, resources, schemes, `.xcode.env` entries, extension embed-cycle fix                                                                                |
-| Podfile           | Properties, globals, minimum deployment target, and — as escape hatches — `post_install` and replacement rules                                                                                          |
-| Android Gradle    | Maven repositories, flat dirs, classpath and buildscript dependencies, plugins, forced resolutions, local modules, ABI filters, SDK/NDK/Kotlin versions, build-config fields, properties, lint, signing |
-| Android manifest  | Permissions, optional features, application attributes, meta-data, activities, services, receivers, providers, package-visibility queries, supported screens, placeholders                              |
-| Android resources | Strings, colors, styles and arbitrary resource files                                                                                                                                                    |
-| Escape hatches    | Anything the typed surface cannot express, marked `risk: "escape-hatch"` and warned about by `plan` and `doctor`                                                                                        |
-
-The [configuration reference](docs/configuration.md) documents every field; the [recipes](docs/recipes.md) show twelve complete configurations.
+A dozen of these in one app is a normal amount; the [native-workarounds sample](apps/native-workarounds) shows that dozen as declarations, next to the plugin each one replaces.
 
 ## Samples
+
+Every app below is runnable from a checkout — `pnpm install && pnpm build`, then `pnpm --filter @expo-native-config/example-<name> plan`.
 
 | App                                             | Demonstrates                                                    |
 | ----------------------------------------------- | --------------------------------------------------------------- |
@@ -185,20 +360,17 @@ The [configuration reference](docs/configuration.md) documents every field; the 
 | [android-manifest](apps/android-manifest)       | Optional camera feature and runtime permission request          |
 | [native-workarounds](apps/native-workarounds)   | The plugins apps hand-write, as declarations, with before/after |
 
-## Status
+## 🤖 AI agent skills
 
-Implementation is complete and locally verified; publication is not. The full checklist, with the evidence behind each box, is in the [implementation plan](docs/implementation-plan.md).
+The package bundles three self-contained agent skills (Claude Code, Cursor, Codex) in `skills/`: `expo-native-config` for writing configs, `expo-native-changes` for turning a native requirement into a declaration, and `expo-native-config-maintainer` for working on this repo. Copy the whole folder you want into your agent's skill directory after reviewing it. See [agent skills](docs/agent-skills.md).
 
-- [x] Schema, normalization, planning and execution for the declared surface
-- [x] CLI — `init`, `migrate`, `validate`, `plan`, `doctor`, `explain`, `completion` — sharing one session with the plugin
-- [x] Seven runnable samples with real native source, prebuilt and checked
-- [x] Tarball consumer check, CI, release tooling and conventional changelog
-- [x] Documentation, agent skills, and an independent final review with findings fixed
-- [x] Local verification: prebuild for all samples, unsigned iOS Simulator extension builds, an Android debug APK, one full host-app CocoaPods build
-- [ ] npm publication — registry ownership and credentials are account-specific and unverified
-- [ ] Interactive widget and share-sheet behavior, physical Android device runs, device signing and store acceptance
+## Compatibility and limits
 
-`doctor` errors below Expo SDK 50 and warns above 57, so the CLI stays usable the day a new SDK ships; the samples pin SDK 56. See [compatibility and verification limits](docs/compatibility.md) for what each check does and does not establish.
+`doctor` errors below Expo SDK 50 and warns above 57, so the CLI stays usable the day a new SDK ships; the samples pin SDK 56. The CLI needs Node.js 22.14+; developing this repo needs Node.js 24.11.1+ and pnpm 10.34.5.
+
+What local verification established: prebuild across all seven samples, unsigned iOS Simulator extension builds, an Android debug APK, one full host-app CocoaPods build, and a tarball consumer check against a fresh `create-expo-app` project. What it did not: interactive widget and share-sheet behavior, physical Android device runs, device signing, and store acceptance. [Compatibility and verification limits](docs/compatibility.md) says what each check does and does not prove.
+
+Config files execute code and must be trusted. Keep signing credentials in environment references or private properties files — environment signing resolves secrets into generated Gradle properties during prebuild, so protect that output.
 
 ## Documentation
 
@@ -206,13 +378,12 @@ Implementation is complete and locally verified; publication is not. The full ch
 - [Migrating an existing app](docs/migrate.md) — turn config plugins into declarations with `migrate --dry-run`
 - [iOS targets](docs/targets.md) — four ways to include one: inline, discovered, by path, by package
 - [Monorepos](docs/monorepos.md) — pnpm, yarn, bun and npm workspaces
-- [Configuration reference](docs/configuration.md)
-- [Templates: what they generate and why](docs/templates.md) and [complete configuration recipes](docs/recipes.md)
+- [Configuration reference](docs/configuration.md) — every field
+- [Templates](docs/templates.md) and [recipes](docs/recipes.md) — what init generates, and twelve complete configurations
 - [Architecture](docs/architecture.md) and [development rules](docs/development-rules.md)
-- [Implementation plan and status](docs/implementation-plan.md)
-- [Compatibility and verification limits](docs/compatibility.md) and [local verification record](docs/verification.md)
+- [Compatibility](docs/compatibility.md) and [verification record](docs/verification.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Release procedure](docs/releasing.md) and [launch guide](docs/launch-guide.md)
+- [Release procedure](docs/releasing.md)
 - [Agent skills](docs/agent-skills.md)
 
 See [contributing](CONTRIBUTING.md), [security](SECURITY.md), and the [code of conduct](CODE_OF_CONDUCT.md). Licensed under [MIT](LICENSE).
