@@ -193,7 +193,8 @@ export default defineWorkspace({
     components: [
       AndroidComponent.remove('receiver', 'androidx.profileinstaller.ProfileInstallReceiver'),
     ],
-    // `schemes` is shorthand for VIEW intents; `intents` takes any other action.
+    // `schemes` is shorthand for VIEW intents; `intents` takes any other
+    // action, spelled through AndroidIntentAction.
     queries: { schemes: ['geo', 'waze'], packages: ['com.waze'] },
     manifestPlaceholders: { redirectScheme: 'com.example.app' },
     supportsScreens: { largeScreens: true },

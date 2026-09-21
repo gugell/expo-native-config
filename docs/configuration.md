@@ -348,9 +348,11 @@ const queries = {
 ```ts
 const queries = {
   schemes: ['geo'],
-  intents: [{ action: 'android.intent.action.DIAL', scheme: 'tel' }],
+  intents: [{ action: AndroidIntentAction.dial, scheme: 'tel' }],
 };
 ```
+
+`AndroidIntentAction` spells the common actions once; any other action string is still accepted.
 
 Declare a scheme for every URL the app probes. Android 11+ answers `canOpenURL` with `false` for an undeclared scheme whether or not the app is installed, so an app that probes more schemes than it declares reports those apps as missing.
 

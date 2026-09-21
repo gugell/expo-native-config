@@ -2,6 +2,7 @@ import { withAndroidManifest } from '@expo/config-plugins';
 import { withMeta } from '../core';
 import type { Executor, Generator, BaseOp } from '../core';
 import type { WorkspaceConfig } from '../../schema';
+import { AndroidIntentAction } from '../../factories';
 
 type Queries = NonNullable<NonNullable<WorkspaceConfig['android']>['queries']>;
 interface QueriesOp extends BaseOp {
@@ -9,7 +10,6 @@ interface QueriesOp extends BaseOp {
   queries: Queries;
 }
 type XmlNode = Record<string, unknown>;
-const VIEW = 'android.intent.action.VIEW';
 /**
  * `schemes` is shorthand for VIEW intents — the action a `Linking.canOpenURL`
  * probe resolves against, and the one Android 11+ package visibility needs
@@ -20,7 +20,10 @@ export function expandQueries(queries: Queries): Queries {
   const { schemes, ...rest } = queries;
   return {
     ...rest,
-    intents: [...(queries.intents ?? []), ...schemes.map((scheme) => ({ action: VIEW, scheme }))],
+    intents: [
+      ...(queries.intents ?? []),
+      ...schemes.map((scheme) => ({ action: AndroidIntentAction.view, scheme })),
+    ],
   };
 }
 function entries(value: unknown): XmlNode[] {

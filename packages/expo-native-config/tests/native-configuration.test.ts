@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { AndroidConfig } from '@expo/config-plugins';
 import { WorkspaceSchema } from '../src/schema';
+import { AndroidIntentAction, DeploymentTarget } from '../src/factories';
 import { collect } from '../src/engine';
 import { mergeQueries } from '../src/engine/android/queries';
 import { mergeFileBlock } from '../src/engine/core/fileExecutor';
@@ -131,7 +132,7 @@ test('android.queries schemes expand to VIEW intents and merge with explicit int
     android: {
       queries: {
         schemes: ['geo', 'waze', 'moovit'],
-        intents: [{ action: 'android.intent.action.DIAL', scheme: 'tel' }],
+        intents: [{ action: AndroidIntentAction.dial, scheme: 'tel' }],
         packages: ['com.waze'],
       },
     },
@@ -143,13 +144,15 @@ test('android.queries schemes expand to VIEW intents and merge with explicit int
   const intents = merged.intent as Array<{ action: [{ $: Record<string, string> }] }>;
   assert.equal(intents.length, 4);
   const views = intents.filter(
-    (intent) => intent.action[0].$['android:name'] === 'android.intent.action.VIEW',
+    (intent) => intent.action[0].$['android:name'] === AndroidIntentAction.view,
   );
   assert.equal(views.length, 3);
   // The shorthand does not displace an explicitly declared non-VIEW intent.
   assert.ok(
-    intents.some((intent) => intent.action[0].$['android:name'] === 'android.intent.action.DIAL'),
+    intents.some((intent) => intent.action[0].$['android:name'] === AndroidIntentAction.dial),
   );
+  // The shorthand emits exactly the constant consumers author against.
+  assert.equal(AndroidIntentAction.view, 'android.intent.action.VIEW');
   // A schemes-only config still plans; the emptiness check reads the expansion.
   const shorthandOnly = collect(
     WorkspaceSchema.parse({ android: { queries: { schemes: ['geo'] } } }),
@@ -165,7 +168,10 @@ test('android.queries schemes expand to VIEW intents and merge with explicit int
 
 test('deployment targets inherit the app value from expo-build-properties', () => {
   const config = WorkspaceSchema.parse({
-    ios: { minimumPodDeploymentTarget: 'inherit', deploymentTarget: 'inherit' },
+    ios: {
+      minimumPodDeploymentTarget: DeploymentTarget.inherit,
+      deploymentTarget: DeploymentTarget.inherit,
+    },
   });
   const appConfig = {
     plugins: [

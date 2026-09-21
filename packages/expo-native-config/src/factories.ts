@@ -379,6 +379,39 @@ interface ApplicationFlags {
   extra?: Record<string, string>;
 }
 
+/**
+ * Intent actions worth spelling once, for `android.queries.intents`. Any other
+ * action string is still accepted.
+ *
+ * `view` is the action `android.queries.schemes` expands to, and the one a
+ * `Linking.canOpenURL` probe resolves against; the rest are for the intents
+ * that shorthand cannot express.
+ */
+export const AndroidIntentAction = {
+  view: 'android.intent.action.VIEW',
+  send: 'android.intent.action.SEND',
+  sendMultiple: 'android.intent.action.SEND_MULTIPLE',
+  sendTo: 'android.intent.action.SENDTO',
+  dial: 'android.intent.action.DIAL',
+  edit: 'android.intent.action.EDIT',
+  pick: 'android.intent.action.PICK',
+  getContent: 'android.intent.action.GET_CONTENT',
+  imageCapture: 'android.media.action.IMAGE_CAPTURE',
+  main: 'android.intent.action.MAIN',
+} as const;
+
+/**
+ * Values for `ios.deploymentTarget` and `ios.minimumPodDeploymentTarget` that
+ * are not a version. Any dotted version string is still accepted.
+ */
+export const DeploymentTarget = {
+  /**
+   * Take the app's own iOS deployment target from `expo-build-properties`
+   * rather than restating the version, which is how the two drift apart.
+   */
+  inherit: 'inherit',
+} as const;
+
 /** Attributes on the manifest `<application>` element. */
 export const AndroidApplication = {
   /**

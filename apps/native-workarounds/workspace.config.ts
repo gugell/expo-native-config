@@ -6,6 +6,7 @@ import {
   AndroidModule,
   BuildConfigField,
   defineWorkspace,
+  DeploymentTarget,
   MavenRepository,
   PodBuildSettings,
   ReplaceRule,
@@ -25,7 +26,7 @@ export default defineWorkspace({
     // against a newer SDK; this raises the floor without touching the app's own.
     // Tracks expo-build-properties ios.deploymentTarget in app.json instead of
     // restating the version, which is how the two drift apart.
-    minimumPodDeploymentTarget: 'inherit',
+    minimumPodDeploymentTarget: DeploymentTarget.inherit,
     // Typed Ruby globals, the supported form of the `$RNFirebaseAsStaticFramework`
     // line people paste into a Podfile.
     podfileGlobals: { WorkspaceSampleStaticFramework: true },
