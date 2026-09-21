@@ -1,6 +1,12 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
 import type { WorkspaceConfig } from '../schema';
-import { collectWorkspacePlan, fileExecutor, normalizeWorkspaceConfig } from './core';
+import {
+  appDeploymentTarget,
+  collectWorkspacePlan,
+  fileExecutor,
+  normalizeWorkspaceConfig,
+  resolveInheritedDeploymentTargets,
+} from './core';
 import type { WorkspaceAppConfig, WorkspacePlan } from './core';
 import { androidExecutor, androidGenerator } from './android';
 import { androidLintGenerator } from './android/generators/lint';
@@ -56,8 +62,12 @@ export function collect(
   projectRoot: string,
   appConfig: WorkspaceAppConfig,
 ): WorkspacePlan {
-  return collectWorkspacePlan(generators, {
-    manifest: normalizeWorkspaceConfig(workspaceConfig),
+  const { config, warnings } = resolveInheritedDeploymentTargets(
+    workspaceConfig,
+    appDeploymentTarget(appConfig),
+  );
+  const plan = collectWorkspacePlan(generators, {
+    manifest: normalizeWorkspaceConfig(config),
     projectRoot,
     configPath: 'workspace.config.ts',
     config: {
@@ -66,6 +76,8 @@ export function collect(
       extra: JSON.parse(JSON.stringify(appConfig.extra ?? {})),
     },
   });
+  plan.warnings.push(...warnings);
+  return plan;
 }
 export const apply: ConfigPlugin<WorkspacePlan> = (config, plan) => {
   let next = { ...config, ...plan.config } as typeof config;
@@ -73,4 +85,5 @@ export const apply: ConfigPlugin<WorkspacePlan> = (config, plan) => {
   return next;
 };
 export type { WorkspaceAppConfig, WorkspacePlan, Op, PlanOperation } from './core';
-export { toPlanOperation, redactDeep, configPlugins } from './core';
+export { toPlanOperation, redactDeep, configPlugins, appDeploymentTarget } from './core';
+export type { AppDeploymentTarget } from './core';

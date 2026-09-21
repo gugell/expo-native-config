@@ -7,5 +7,6 @@ export * from './diagnostics';
 export * from './report';
 export * from './pipeline';
 export * from './normalize';
+export * from './appBuildProperties';
 export * from './fileExecutor';
 export { configPlugins } from './configPlugins';

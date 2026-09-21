@@ -14,9 +14,10 @@
   },
   "dependencies": {
     "expo": "catalog:",
+    "expo-build-properties": "catalog:",
+    "expo-native-config": "workspace:*",
     "react": "catalog:",
-    "react-native": "catalog:",
-    "expo-native-config": "workspace:*"
+    "react-native": "catalog:"
   },
   "devDependencies": {
     "@types/react": "catalog:",

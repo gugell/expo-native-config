@@ -23,7 +23,9 @@ export default defineWorkspace({
   ios: {
     // A pod that ships a lower deployment target than the app fails to build
     // against a newer SDK; this raises the floor without touching the app's own.
-    minimumPodDeploymentTarget: '16.4',
+    // Tracks expo-build-properties ios.deploymentTarget in app.json instead of
+    // restating the version, which is how the two drift apart.
+    minimumPodDeploymentTarget: 'inherit',
     // Typed Ruby globals, the supported form of the `$RNFirebaseAsStaticFramework`
     // line people paste into a Podfile.
     podfileGlobals: { WorkspaceSampleStaticFramework: true },

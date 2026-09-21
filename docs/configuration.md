@@ -123,7 +123,7 @@ All fields are optional unless marked required. Unknown fields are rejected rath
 
 | iOS field                                  | Shape / purpose                                                                 |
 | ------------------------------------------ | ------------------------------------------------------------------------------- |
-| `deploymentTarget`                         | Dotted version string; default for additional targets, not the host app |
+| `deploymentTarget`                         | Dotted version or `'inherit'`; default for additional targets, not the host app |
 | `minimumPodDeploymentTarget`               | Dotted version or `'inherit'`; floor for CocoaPods build settings               |
 | `targetsRoot`, `targets`                   | Default source directory and array of native targets                            |
 | `packages`, `pods`                         | Swift packages and host CocoaPods dependencies                                  |
@@ -290,6 +290,16 @@ const ios = {
 ```
 
 `ios.minimumPodDeploymentTarget` raises missing or lower `IPHONEOS_DEPLOYMENT_TARGET` values in CocoaPods targets during `post_install`. Equal and higher versions remain unchanged; inherited expressions remain unchanged. The floor does not lower a dependency's minimum OS requirement.
+
+The host app's own deployment target is not a field of this package — `expo-build-properties` owns it through `ios.deploymentTarget`. Writing the same version in both places is how the two drift apart, so `ios.minimumPodDeploymentTarget` and `ios.deploymentTarget` also accept `'inherit'`:
+
+```ts
+ios: {
+  minimumPodDeploymentTarget: 'inherit';
+}
+```
+
+`'inherit'` reads `expo-build-properties` `ios.deploymentTarget` from the Expo config, and fails with that plugin absent rather than guessing at Expo's template default. A version written out below the app's own target is a warning (`guidance.pod-deployment-target`): pods keep the lower version Xcode complains about.
 
 `ios.podfileGlobals` writes typed Ruby globals at the start of the Podfile. Keys omit `$` and use letters, digits, and underscores, beginning with a letter or underscore. Values are booleans, finite numbers, or literal strings; strings are escaped rather than evaluated. `RNFirebaseAsStaticFramework: true` sets the React Native Firebase flag; configure static framework linkage separately in the app's Expo build properties. Globals do not remove pods injected by other plugins.
 

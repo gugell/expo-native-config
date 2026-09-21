@@ -13,7 +13,12 @@ import {
   type TargetSpec,
   type WorkspaceConfig,
 } from './schema';
-import { collect, type WorkspaceAppConfig, type WorkspacePlan } from './engine';
+import {
+  appDeploymentTarget,
+  collect,
+  type WorkspaceAppConfig,
+  type WorkspacePlan,
+} from './engine';
 import { discoverTargets, readPackageTarget, readPathTarget } from './engine/ios-targets/discover';
 export interface Diagnostic {
   severity: 'error' | 'warning';
@@ -320,7 +325,7 @@ export function createSession(
   }
   // Where a change belongs, as opposed to whether it parses. Collected before
   // the semantic checks so a config gets every complaint at once.
-  const diagnostics: Diagnostic[] = collectGuidance(config);
+  const diagnostics: Diagnostic[] = collectGuidance(config, appDeploymentTarget(app).value);
   const add = (code: string, message: string, source?: string) =>
     diagnostics.push({ severity: 'error', code, message, source });
   const targets = config.ios?.targets ?? [];

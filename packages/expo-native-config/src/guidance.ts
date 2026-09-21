@@ -7,6 +7,17 @@ export interface GuidanceDiagnostic {
   source?: string;
 }
 
+/** Dotted versions, shortest form wins nothing: 16.4 and 16.4.0 compare equal. */
+function compareVersions(a: string, b: string): number {
+  const left = a.split('.').map(Number);
+  const right = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const difference = (left[i] ?? 0) - (right[i] ?? 0);
+    if (difference) return difference;
+  }
+  return 0;
+}
+
 /** Text of every escape hatch, with the field it came from. */
 function escapeHatchSources(config: WorkspaceConfig): Array<{ source: string; text: string }> {
   const entries: Array<{ source: string; text: string }> = [];
@@ -64,8 +75,26 @@ const BUILD_SETTING_OWNERS: Array<[string, string]> = [
  * AppDelegate or MainApplication, and a regular expression aimed at one is the
  * same change wearing a disguise.
  */
-export function collectGuidance(config: WorkspaceConfig): GuidanceDiagnostic[] {
+export function collectGuidance(
+  config: WorkspaceConfig,
+  appDeploymentTarget?: string,
+): GuidanceDiagnostic[] {
   const diagnostics: GuidanceDiagnostic[] = [];
+
+  const minimumPod = config.ios?.minimumPodDeploymentTarget;
+  if (
+    appDeploymentTarget &&
+    minimumPod &&
+    minimumPod !== 'inherit' &&
+    compareVersions(minimumPod, appDeploymentTarget) < 0
+  ) {
+    diagnostics.push({
+      severity: 'warning',
+      code: 'guidance.pod-deployment-target',
+      source: 'ios.minimumPodDeploymentTarget',
+      message: `ios.minimumPodDeploymentTarget (${minimumPod}) is below the app's own iOS deployment target (${appDeploymentTarget}, from expo-build-properties), so pods keep a version Xcode warns about. Use "inherit" to track it instead of restating it.`,
+    });
+  }
 
   for (const { source, text } of escapeHatchSources(config)) {
     if (/AppDelegate|MainApplication|MainActivity\.(kt|java)/i.test(text)) {

@@ -6,6 +6,12 @@ const safeName = text.regex(
   'Use a letter followed by letters, numbers, underscores or hyphens',
 );
 const version = text.regex(/^\d+\.\d+(\.\d+)?$/, 'Expected a dotted version');
+/**
+ * A dotted version, or `'inherit'` to take the app's own iOS deployment target
+ * from `expo-build-properties`. Restating that version here is the common way
+ * for the two to drift apart.
+ */
+const inheritableVersion = z.union([version, z.literal('inherit')]);
 /** RFC 3986 scheme, the `geo` in `geo:`. */
 const uriScheme = text.regex(/^[A-Za-z][A-Za-z0-9+.-]*$/);
 const targetRef = z.union([text, z.array(text).min(1)]);
@@ -251,8 +257,8 @@ export const WorkspaceSchema = z.strictObject({
   schemaVersion: z.literal(1).default(1),
   ios: z
     .strictObject({
-      deploymentTarget: version.optional(),
-      minimumPodDeploymentTarget: version.optional(),
+      deploymentTarget: inheritableVersion.optional(),
+      minimumPodDeploymentTarget: inheritableVersion.optional(),
       podfileGlobals: z
         .record(
           z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),

@@ -163,3 +163,45 @@ test('android.queries schemes expand to VIEW intents and merge with explicit int
   );
 });
 
+test('deployment targets inherit the app value from expo-build-properties', () => {
+  const config = WorkspaceSchema.parse({
+    ios: { minimumPodDeploymentTarget: 'inherit', deploymentTarget: 'inherit' },
+  });
+  const appConfig = {
+    plugins: [
+      'expo-router',
+      ['expo-build-properties', { ios: { deploymentTarget: '16.4', useFrameworks: 'static' } }],
+    ],
+  };
+  const plan = collect(config, '/tmp', appConfig);
+  const podfile = plan.ops.filter(
+    (op): op is MergeBlockOp => op.kind === 'mergeBlock' && op.path === 'Podfile',
+  );
+  assert.ok(podfile.some((op) => op.newSrc.includes("Gem::Version.new('16.4')")));
+
+  // Plugins visible and the one that owns the value absent: a real mistake.
+  assert.throws(
+    () => collect(config, '/tmp', { plugins: ['expo-router'] }),
+    /does not set expo-build-properties ios.deploymentTarget/,
+  );
+  // No plugins array at all means the CLI could not read them (getConfig with
+  // skipPlugins deletes it), which is not the same claim. Warn, do not guess,
+  // and leave the value for the prebuild that can see it.
+  const blind = collect(config, '/tmp', {});
+  assert.ok(blind.warnings.some((warning) => warning.includes('resolved during prebuild')));
+  assert.equal(
+    blind.ops.some((op) => op.kind === 'mergeBlock' && op.newSrc.includes('minimum_ios')),
+    false,
+  );
+  // An explicit version still wins and needs no plugin present.
+  const explicit = collect(
+    WorkspaceSchema.parse({ ios: { minimumPodDeploymentTarget: '15.1' } }),
+    '/tmp',
+    {},
+  );
+  assert.ok(
+    explicit.ops.some(
+      (op) => op.kind === 'mergeBlock' && op.newSrc.includes("Gem::Version.new('15.1')"),
+    ),
+  );
+});

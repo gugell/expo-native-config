@@ -11,7 +11,8 @@ function asArray<T>(value: unknown): T[] | undefined {
 /**
  * Flatten nested `workspace.config.ts` (`ios` / `android`) and the legacy flat
  * `workspace.manifest.js` into the canonical generator-facing RawManifest.
- * Nested fields win when both are present.
+ * Nested fields win when both are present. `'inherit'` deployment targets are
+ * already resolved by `resolveInheritedDeploymentTargets` before this point.
  */
 export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
   if (!isRecord(raw)) {
