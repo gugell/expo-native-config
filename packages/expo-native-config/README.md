@@ -1,8 +1,12 @@
 # Expo Native Config
 
-Typed native configuration for Expo SDK 56: iOS extensions, Swift packages, CocoaPods, Xcode schemes, Android Gradle and manifest settings.
+Typed native configuration for Expo SDK 50–57: iOS extensions, Swift packages, CocoaPods, Xcode schemes, Android Gradle and manifest settings. Declare native changes in `workspace.config.ts`, review them with `plan`, and apply them through `expo prebuild`.
 
-This package is prepared for release; registry publication is not assumed. Install a locally packed `.tgz` until a real registry release is available. The CLI requires Node.js 22.14 or newer.
+Install it into an existing Expo app. The CLI requires Node.js 22.14 or newer.
+
+```sh
+npx expo install expo-native-config
+```
 
 Register `expo-native-config/plugin` in the Expo config's `plugins` array. Create `workspace.config.ts` in the app root:
 
@@ -79,10 +83,10 @@ export default defineWorkspace({
 
 Here `.share` appends to the host bundle ID, and omitted `source` means `targets/ShareExtension`. Declaring a target does not generate its source files outside init. `explain --id <operation-id>` inspects a planned operation. `completion bash` prints Bash completion; use `zsh` or `fish` for those shells. Run `--help` for flags.
 
-Public helpers include `defineWorkspace`, `shareExtension`, `widgetExtension`, `appClip`, `swiftPackage`, `localSwiftPackage`, `scheme`, `androidLibrary`, and `androidFeature`. Extension declarations need real native source. Dependency paths resolve from generated `ios/`; extension source paths resolve from the app root. Plans describe intended operations, not a complete diff of native state. Removed declarations may require clean prebuild after preserving manual native changes.
+Declarations can be plain objects, standalone helpers (`shareExtension`, `widgetExtension`, `appClip`, `swiftPackage`, `localSwiftPackage`, `scheme`, `androidLibrary`, `androidFeature`), or constructor namespaces (`Target.share`, `Package.remote`, `Pod.local`, `Scheme.debug`, `AndroidDependency.library`, `XcodeBuildSettings.of`, …) that supply the discriminants and Xcode/`android:` key names for you. All three validate identically. Extension declarations need real native source. Dependency paths resolve from generated `ios/`; extension source paths resolve from the app root. Plans describe intended operations, not a complete diff of native state. Removed declarations may require clean prebuild after preserving manual native changes.
 
 Native compilation and device behavior need separate testing. Expo Go cannot host custom native targets. Config files execute code and must be trusted. Keep signing credentials in environment references or private properties files. Environment signing resolves secrets into generated Gradle properties during prebuild; protect that output.
 
 Self-contained agent skills are bundled in `skills/expo-native-config`, `skills/expo-native-changes` and `skills/expo-native-config-maintainer`. Copy the desired whole folder into your agent's configured skill directory after reviewing it.
 
-The source repository contains complete sample apps and documentation. Confirm the repository URL in package metadata is publicly available before publication. MIT licensed.
+The [source repository](https://github.com/gugell/expo-native-config) contains seven complete sample apps and full documentation. MIT licensed.

@@ -93,4 +93,4 @@ Inspect the workflow and `scripts/release.sh` for the supported path; do not cre
 
 Use [release-it's npm documentation](https://github.com/release-it/release-it/blob/main/docs/npm.md) and [npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers) when configuring credentials.
 
-After publication, install the published version into a fresh Expo app, run validation and prebuild, verify the registry tarball and tag correspond to the release commit, and attach exact verification evidence to release notes. Update the README's unpublished status only after the registry package exists.
+After publication, install the published version into a fresh Expo app, run validation and prebuild, verify the registry tarball and tag correspond to the release commit, and attach exact verification evidence to release notes.

@@ -159,7 +159,11 @@ base(
     .command('init')
     .description('Create a workspace config without overwriting existing files'),
 )
-  .option('--template <name>', 'minimal, share-extension, widget, android', 'minimal')
+  .option(
+    '--template <name>',
+    'minimal, share-extension, widget, android, lifecycle-module',
+    'minimal',
+  )
   .option('-y, --yes', 'Accept the selected template noninteractively')
   .action(async (options: Options) => {
     if (!options.yes && process.stdin.isTTY) {
