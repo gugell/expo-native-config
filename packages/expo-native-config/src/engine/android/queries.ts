@@ -9,6 +9,20 @@ interface QueriesOp extends BaseOp {
   queries: Queries;
 }
 type XmlNode = Record<string, unknown>;
+const VIEW = 'android.intent.action.VIEW';
+/**
+ * `schemes` is shorthand for VIEW intents — the action a `Linking.canOpenURL`
+ * probe resolves against, and the one Android 11+ package visibility needs
+ * declared. Expanding here keeps every reader of `intents` unaware of it.
+ */
+export function expandQueries(queries: Queries): Queries {
+  if (!queries.schemes?.length) return queries;
+  const { schemes, ...rest } = queries;
+  return {
+    ...rest,
+    intents: [...(queries.intents ?? []), ...schemes.map((scheme) => ({ action: VIEW, scheme }))],
+  };
+}
 function entries(value: unknown): XmlNode[] {
   const array = Array.isArray(value) ? value : value ? [value] : [];
   return array.filter((item): item is XmlNode => Boolean(item) && typeof item === 'object');
@@ -32,7 +46,8 @@ function unique(values: XmlNode[]): XmlNode[] {
   });
 }
 /** Preserve existing provider and intent attributes while consolidating one queries root. */
-export function mergeQueries(existing: unknown, desired: Queries): XmlNode {
+export function mergeQueries(existing: unknown, input: Queries): XmlNode {
+  const desired = expandQueries(input);
   const combined: XmlNode = {};
   const collections = new Map<string, XmlNode[]>();
   for (const fragment of entries(existing)) {
@@ -63,8 +78,11 @@ export function mergeQueries(existing: unknown, desired: Queries): XmlNode {
 export const queriesGenerator: Generator = {
   name: 'androidQueries',
   generate({ manifest }) {
-    const queries = (manifest.android as { queries?: Queries } | undefined)?.queries;
-    if (!queries || (!queries.intents?.length && !queries.packages?.length)) return { ops: [] };
+    const declared = (manifest.android as { queries?: Queries } | undefined)?.queries;
+    if (!declared) return { ops: [] };
+    // Expanded before the emptiness check so a config with only `schemes` plans.
+    const queries = expandQueries(declared);
+    if (!queries.intents?.length && !queries.packages?.length) return { ops: [] };
     return {
       ops: [
         withMeta(

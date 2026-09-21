@@ -125,3 +125,41 @@ test('query serialization yields one root and preserves distinct constrained int
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
+
+test('android.queries schemes expand to VIEW intents and merge with explicit intents', () => {
+  const config = WorkspaceSchema.parse({
+    android: {
+      queries: {
+        schemes: ['geo', 'waze', 'moovit'],
+        intents: [{ action: 'android.intent.action.DIAL', scheme: 'tel' }],
+        packages: ['com.waze'],
+      },
+    },
+  });
+  const plan = collect(config, '/tmp', {});
+  const op = plan.ops.find((item) => item.kind === 'androidQueries');
+  assert.ok(op);
+  const merged = mergeQueries({}, (op as { queries: Parameters<typeof mergeQueries>[1] }).queries);
+  const intents = merged.intent as Array<{ action: [{ $: Record<string, string> }] }>;
+  assert.equal(intents.length, 4);
+  const views = intents.filter(
+    (intent) => intent.action[0].$['android:name'] === 'android.intent.action.VIEW',
+  );
+  assert.equal(views.length, 3);
+  // The shorthand does not displace an explicitly declared non-VIEW intent.
+  assert.ok(
+    intents.some((intent) => intent.action[0].$['android:name'] === 'android.intent.action.DIAL'),
+  );
+  // A schemes-only config still plans; the emptiness check reads the expansion.
+  const shorthandOnly = collect(
+    WorkspaceSchema.parse({ android: { queries: { schemes: ['geo'] } } }),
+    '/tmp',
+    {},
+  );
+  assert.ok(shorthandOnly.ops.some((item) => item.kind === 'androidQueries'));
+  assert.equal(
+    WorkspaceSchema.safeParse({ android: { queries: { schemes: ['not a scheme'] } } }).success,
+    false,
+  );
+});
+

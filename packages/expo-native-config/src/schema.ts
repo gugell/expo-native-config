@@ -6,6 +6,8 @@ const safeName = text.regex(
   'Use a letter followed by letters, numbers, underscores or hyphens',
 );
 const version = text.regex(/^\d+\.\d+(\.\d+)?$/, 'Expected a dotted version');
+/** RFC 3986 scheme, the `geo` in `geo:`. */
+const uriScheme = text.regex(/^[A-Za-z][A-Za-z0-9+.-]*$/);
 const targetRef = z.union([text, z.array(text).min(1)]);
 const values = z.record(z.string(), z.unknown());
 const settings = z.record(z.string(), z.string());
@@ -138,9 +140,13 @@ export const AndroidFeatureSchema = z.strictObject({
   glEsVersion: text.optional(),
 });
 export const AndroidQueriesSchema = z.strictObject({
-  intents: z
-    .array(z.strictObject({ action: text, scheme: text.regex(/^[A-Za-z][A-Za-z0-9+.-]*$/) }))
-    .optional(),
+  /**
+   * Shorthand for `intents`: each scheme becomes one
+   * `android.intent.action.VIEW` intent, which is the action a `canOpenURL`
+   * probe resolves against. Merged with `intents` rather than replacing it.
+   */
+  schemes: z.array(uriScheme).optional(),
+  intents: z.array(z.strictObject({ action: text, scheme: uriScheme })).optional(),
   packages: z.array(text.regex(/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/)).optional(),
 });
 const env = z.strictObject({ env: text.regex(/^[A-Za-z_][A-Za-z0-9_]*$/) });

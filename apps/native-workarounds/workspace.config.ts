@@ -111,7 +111,7 @@ export default defineWorkspace({
     // Package visibility: without this, an intent to another app resolves to
     // nothing on Android 11+ and the failure looks like a missing app.
     queries: {
-      intents: [{ action: 'android.intent.action.VIEW', scheme: 'geo' }],
+      schemes: ['geo'],
       packages: ['com.google.android.apps.maps'],
     },
     // Values native code reads before the JS engine starts, and a colour the
