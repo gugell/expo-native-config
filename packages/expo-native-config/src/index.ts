@@ -20,5 +20,7 @@ export {
   AndroidPermission,
   AndroidHardware,
   AndroidApplication,
+  AndroidIntentAction,
+  DeploymentTarget,
   XcodeBuildSettings,
 } from './factories';

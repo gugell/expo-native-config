@@ -15,6 +15,9 @@ catalogs:
     expo:
       specifier: ~56.0.21
       version: 56.0.21
+    expo-build-properties:
+      specifier: ~56.0.0
+      version: 56.0.27
     react:
       specifier: 19.2.3
       version: 19.2.3
@@ -147,6 +150,9 @@ importers:
       expo:
         specifier: 'catalog:'
         version: 56.0.21(@babel/core@7.29.7)(@expo/dom-webview@56.0.6)(react-native@0.85.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      expo-build-properties:
+        specifier: 'catalog:'
+        version: 56.0.27(expo@56.0.21)
       expo-native-config:
         specifier: workspace:*
         version: link:../../packages/expo-native-config
@@ -2321,6 +2327,11 @@ packages:
       expo: '*'
       react: '*'
       react-native: '*'
+
+  expo-build-properties@56.0.27:
+    resolution: {integrity: sha512-m9rRYr1hqIrR/ggDKCkHHJ4rTcN3P4+Sve0cYmsWNgB0bRp3lMu4pSSMqr09BSoJBLOxB8ECcfW2r4VU3igR+g==}
+    peerDependencies:
+      expo: '*'
 
   expo-constants@56.0.25:
     resolution: {integrity: sha512-KlYOe6F/7lxyedsSrZJHhOjff7goDeJ+tp+e1rK0/ohmt+AxziB3vfyvwcqamC5lRhxJYAgz2CCLAU3Rbb7xUg==}
@@ -6493,6 +6504,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  expo-build-properties@56.0.27(expo@56.0.21):
+    dependencies:
+      '@expo/schema-utils': 56.0.2
+      expo: 56.0.21(@babel/core@7.29.7)(@expo/dom-webview@56.0.6)(react-native@0.85.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      resolve-from: 5.0.0
+      semver: 7.8.5
 
   expo-constants@56.0.25(expo@56.0.21)(react-native@0.85.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3)):
     dependencies:

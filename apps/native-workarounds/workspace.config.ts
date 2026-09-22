@@ -6,6 +6,7 @@ import {
   AndroidModule,
   BuildConfigField,
   defineWorkspace,
+  DeploymentTarget,
   MavenRepository,
   PodBuildSettings,
   ReplaceRule,
@@ -23,7 +24,9 @@ export default defineWorkspace({
   ios: {
     // A pod that ships a lower deployment target than the app fails to build
     // against a newer SDK; this raises the floor without touching the app's own.
-    minimumPodDeploymentTarget: '16.4',
+    // Tracks expo-build-properties ios.deploymentTarget in app.json instead of
+    // restating the version, which is how the two drift apart.
+    minimumPodDeploymentTarget: DeploymentTarget.inherit,
     // Typed Ruby globals, the supported form of the `$RNFirebaseAsStaticFramework`
     // line people paste into a Podfile.
     podfileGlobals: { WorkspaceSampleStaticFramework: true },
@@ -111,7 +114,7 @@ export default defineWorkspace({
     // Package visibility: without this, an intent to another app resolves to
     // nothing on Android 11+ and the failure looks like a missing app.
     queries: {
-      intents: [{ action: 'android.intent.action.VIEW', scheme: 'geo' }],
+      schemes: ['geo'],
       packages: ['com.google.android.apps.maps'],
     },
     // Values native code reads before the JS engine starts, and a colour the

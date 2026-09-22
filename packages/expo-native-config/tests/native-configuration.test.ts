@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { AndroidConfig } from '@expo/config-plugins';
 import { WorkspaceSchema } from '../src/schema';
+import { AndroidIntentAction, DeploymentTarget } from '../src/factories';
 import { collect } from '../src/engine';
 import { mergeQueries } from '../src/engine/android/queries';
 import { mergeFileBlock } from '../src/engine/core/fileExecutor';
@@ -124,4 +125,89 @@ test('query serialization yields one root and preserves distinct constrained int
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
+});
+
+test('android.queries schemes expand to VIEW intents and merge with explicit intents', () => {
+  const config = WorkspaceSchema.parse({
+    android: {
+      queries: {
+        schemes: ['geo', 'waze', 'moovit'],
+        intents: [{ action: AndroidIntentAction.dial, scheme: 'tel' }],
+        packages: ['com.waze'],
+      },
+    },
+  });
+  const plan = collect(config, '/tmp', {});
+  const op = plan.ops.find((item) => item.kind === 'androidQueries');
+  assert.ok(op);
+  const merged = mergeQueries({}, (op as { queries: Parameters<typeof mergeQueries>[1] }).queries);
+  const intents = merged.intent as Array<{ action: [{ $: Record<string, string> }] }>;
+  assert.equal(intents.length, 4);
+  const views = intents.filter(
+    (intent) => intent.action[0].$['android:name'] === AndroidIntentAction.view,
+  );
+  assert.equal(views.length, 3);
+  // The shorthand does not displace an explicitly declared non-VIEW intent.
+  assert.ok(
+    intents.some((intent) => intent.action[0].$['android:name'] === AndroidIntentAction.dial),
+  );
+  // The shorthand emits exactly the constant consumers author against.
+  assert.equal(AndroidIntentAction.view, 'android.intent.action.VIEW');
+  // A schemes-only config still plans; the emptiness check reads the expansion.
+  const shorthandOnly = collect(
+    WorkspaceSchema.parse({ android: { queries: { schemes: ['geo'] } } }),
+    '/tmp',
+    {},
+  );
+  assert.ok(shorthandOnly.ops.some((item) => item.kind === 'androidQueries'));
+  assert.equal(
+    WorkspaceSchema.safeParse({ android: { queries: { schemes: ['not a scheme'] } } }).success,
+    false,
+  );
+});
+
+test('deployment targets inherit the app value from expo-build-properties', () => {
+  const config = WorkspaceSchema.parse({
+    ios: {
+      minimumPodDeploymentTarget: DeploymentTarget.inherit,
+      deploymentTarget: DeploymentTarget.inherit,
+    },
+  });
+  const appConfig = {
+    plugins: [
+      'expo-router',
+      ['expo-build-properties', { ios: { deploymentTarget: '16.4', useFrameworks: 'static' } }],
+    ],
+  };
+  const plan = collect(config, '/tmp', appConfig);
+  const podfile = plan.ops.filter(
+    (op): op is MergeBlockOp => op.kind === 'mergeBlock' && op.path === 'Podfile',
+  );
+  assert.ok(podfile.some((op) => op.newSrc.includes("Gem::Version.new('16.4')")));
+
+  // Plugins visible and the one that owns the value absent: a real mistake.
+  assert.throws(
+    () => collect(config, '/tmp', { plugins: ['expo-router'] }),
+    /does not set expo-build-properties ios.deploymentTarget/,
+  );
+  // No plugins array at all means the CLI could not read them (getConfig with
+  // skipPlugins deletes it), which is not the same claim. Warn, do not guess,
+  // and leave the value for the prebuild that can see it.
+  const blind = collect(config, '/tmp', {});
+  assert.ok(blind.warnings.some((warning) => warning.includes('resolved during prebuild')));
+  assert.equal(
+    blind.ops.some((op) => op.kind === 'mergeBlock' && op.newSrc.includes('minimum_ios')),
+    false,
+  );
+  // An explicit version still wins and needs no plugin present.
+  const explicit = collect(
+    WorkspaceSchema.parse({ ios: { minimumPodDeploymentTarget: '15.1' } }),
+    '/tmp',
+    {},
+  );
+  assert.ok(
+    explicit.ops.some(
+      (op) => op.kind === 'mergeBlock' && op.newSrc.includes("Gem::Version.new('15.1')"),
+    ),
+  );
 });

@@ -12,7 +12,17 @@
     "android": {
       "package": "dev.exponativeconfig.workarounds"
     },
-    "plugins": ["expo-native-config/plugin"],
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      "expo-native-config/plugin"
+    ],
     "sdkVersion": "56.0.0"
   }
 }

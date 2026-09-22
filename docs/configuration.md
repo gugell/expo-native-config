@@ -121,51 +121,51 @@ Example `config/native.json`:
 
 All fields are optional unless marked required. Unknown fields are rejected rather than silently ignored. `schemaVersion` accepts only `1` and defaults to it. An otherwise empty config declares no explicit platform capabilities; the engine may still include its default maintenance operations in a plan.
 
-| iOS field                                  | Shape / purpose                                                         |
-| ------------------------------------------ | ----------------------------------------------------------------------- |
-| `deploymentTarget`                         | Dotted version string; default for additional targets, not the host app |
-| `minimumPodDeploymentTarget`               | Dotted version string; floor for CocoaPods build settings               |
-| `targetsRoot`, `targets`                   | Default source directory and array of native targets                    |
-| `packages`, `pods`                         | Swift packages and host CocoaPods dependencies                          |
-| `podfileGlobals`                           | Ruby identifier keys (without `$`), boolean/number/string values        |
-| `podBuildSettings`, `removePodBuildPhases` | Scoped CocoaPods target rules                                           |
-| `schemes`                                  | Named Debug/Release schemes                                             |
-| `replaceExpoScheme`                        | Boolean; opt into replacing the default Expo scheme                     |
-| `fixExtensionEmbedCycle`                   | Boolean; control extension embed-cycle correction                       |
-| `xcode.env.exports`                        | String map exported into generated Xcode environment configuration      |
-| `xcode.env.lines`                          | Array of shell lines for the Xcode environment; executable shell code   |
-| `buildSettings`                            | Build settings on the **host app** target                               |
-| `runScripts`                               | Shell-script build phases on the host app target                        |
-| `resources`                                | App-root files copied beside the project and bundled with the app       |
-| `podfileProperties`                        | `Podfile.properties.json` keys; the Expo-sanctioned Podfile channel     |
-| `autolinkingExclude`                       | Expo modules excluded from `use_expo_modules!`                          |
-| `podfile`                                  | Escape hatch: raw `postInstall`, `lines`, regex `replace`               |
+| iOS field                                  | Shape / purpose                                                                 |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| `deploymentTarget`                         | Dotted version or `'inherit'`; default for additional targets, not the host app |
+| `minimumPodDeploymentTarget`               | Dotted version or `'inherit'`; floor for CocoaPods build settings               |
+| `targetsRoot`, `targets`                   | Default source directory and array of native targets                            |
+| `packages`, `pods`                         | Swift packages and host CocoaPods dependencies                                  |
+| `podfileGlobals`                           | Ruby identifier keys (without `$`), boolean/number/string values                |
+| `podBuildSettings`, `removePodBuildPhases` | Scoped CocoaPods target rules                                                   |
+| `schemes`                                  | Named Debug/Release schemes                                                     |
+| `replaceExpoScheme`                        | Boolean; opt into replacing the default Expo scheme                             |
+| `fixExtensionEmbedCycle`                   | Boolean; control extension embed-cycle correction                               |
+| `xcode.env.exports`                        | String map exported into generated Xcode environment configuration              |
+| `xcode.env.lines`                          | Array of shell lines for the Xcode environment; executable shell code           |
+| `buildSettings`                            | Build settings on the **host app** target                                       |
+| `runScripts`                               | Shell-script build phases on the host app target                                |
+| `resources`                                | App-root files copied beside the project and bundled with the app               |
+| `podfileProperties`                        | `Podfile.properties.json` keys; the Expo-sanctioned Podfile channel             |
+| `autolinkingExclude`                       | Expo modules excluded from `use_expo_modules!`                                  |
+| `podfile`                                  | Escape hatch: raw `postInstall`, `lines`, regex `replace`                       |
 
-| Android field                                      | Shape / purpose                                                            |
-| -------------------------------------------------- | -------------------------------------------------------------------------- |
-| `minSdkVersion`                                    | Integer, at least 24                                                       |
-| `compileSdkVersion`, `targetSdkVersion`            | Positive integers; supplied values must respect min ≤ target ≤ compile     |
-| `buildToolsVersion`, `ndkVersion`, `kotlinVersion` | Dotted version strings                                                     |
-| `gradleProperties`                                 | String/number/boolean map                                                  |
-| `features`                                         | Feature names or `{ name, required?, glEsVersion? }`                       |
-| `queries`                                          | `{ intents?: [{ action, scheme }], packages?: string[] }`                  |
-| `dependencies`                                     | `{ module, configuration? }[]`, Maven `group:artifact:version` coordinates |
-| `applicationAttributes`                            | String map of Android manifest application attributes                      |
-| `metaData`                                         | `<meta-data>` entries on `<application>` — where most SDK keys live        |
-| `components`                                       | `<activity>`/`<service>`/`<receiver>`/`<provider>` entries or removals     |
-| `supportsScreens`                                  | `<supports-screens>` flags, e.g. `{ largeScreens: false }`                 |
-| `manifestPlaceholders`, `buildConfigFields`        | `defaultConfig` entries                                                    |
-| `abiFilters`                                       | `ndk.abiFilters` plus React Native's `reactNativeArchitectures`            |
-| `mavenRepositories`, `flatDirs`                    | Extra repositories for every project                                       |
-| `buildscriptDependencies`, `plugins`               | Root `classpath` coordinates and applied app plugins                       |
-| `forceDependencies`                                | `resolutionStrategy.force` coordinates                                     |
-| `modules`                                          | Local Gradle modules included from `settings.gradle`                       |
-| `autolinkingExclude`                               | Expo modules excluded from Android autolinking                             |
-| `strings`, `colors`, `styles`                      | Typed resource values through Expo's introspectable mods                   |
-| `resources`                                        | Raw files under `app/src/main/res` (for resources with no typed mod)       |
-| `gradle`                                           | Escape hatch: regex `replace` rules per Gradle file                        |
-| `lint`                                             | Optional `checkReleaseBuilds` and `abortOnError` booleans                  |
-| `signing`                                          | One of the two signing shapes described below                              |
+| Android field                                      | Shape / purpose                                                               |
+| -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `minSdkVersion`                                    | Integer, at least 24                                                          |
+| `compileSdkVersion`, `targetSdkVersion`            | Positive integers; supplied values must respect min ≤ target ≤ compile        |
+| `buildToolsVersion`, `ndkVersion`, `kotlinVersion` | Dotted version strings                                                        |
+| `gradleProperties`                                 | String/number/boolean map                                                     |
+| `features`                                         | Feature names or `{ name, required?, glEsVersion? }`                          |
+| `queries`                                          | `{ schemes?: string[], intents?: [{ action, scheme }], packages?: string[] }` |
+| `dependencies`                                     | `{ module, configuration? }[]`, Maven `group:artifact:version` coordinates    |
+| `applicationAttributes`                            | String map of Android manifest application attributes                         |
+| `metaData`                                         | `<meta-data>` entries on `<application>` — where most SDK keys live           |
+| `components`                                       | `<activity>`/`<service>`/`<receiver>`/`<provider>` entries or removals        |
+| `supportsScreens`                                  | `<supports-screens>` flags, e.g. `{ largeScreens: false }`                    |
+| `manifestPlaceholders`, `buildConfigFields`        | `defaultConfig` entries                                                       |
+| `abiFilters`                                       | `ndk.abiFilters` plus React Native's `reactNativeArchitectures`               |
+| `mavenRepositories`, `flatDirs`                    | Extra repositories for every project                                          |
+| `buildscriptDependencies`, `plugins`               | Root `classpath` coordinates and applied app plugins                          |
+| `forceDependencies`                                | `resolutionStrategy.force` coordinates                                        |
+| `modules`                                          | Local Gradle modules included from `settings.gradle`                          |
+| `autolinkingExclude`                               | Expo modules excluded from Android autolinking                                |
+| `strings`, `colors`, `styles`                      | Typed resource values through Expo's introspectable mods                      |
+| `resources`                                        | Raw files under `app/src/main/res` (for resources with no typed mod)          |
+| `gradle`                                           | Escape hatch: regex `replace` rules per Gradle file                           |
+| `lint`                                             | Optional `checkReleaseBuilds` and `abortOnError` booleans                     |
+| `signing`                                          | One of the two signing shapes described below                                 |
 
 See [recipes](recipes.md) for complete configurations and [templates](templates.md) for starter file contents.
 
@@ -289,7 +289,17 @@ const ios = {
 };
 ```
 
-`ios.minimumPodDeploymentTarget` raises missing or lower `IPHONEOS_DEPLOYMENT_TARGET` values in CocoaPods targets during `post_install`. Equal and higher versions remain unchanged; inherited expressions remain unchanged. Set the host app deployment target separately, for example through Expo build properties. The floor does not lower a dependency's minimum OS requirement.
+`ios.minimumPodDeploymentTarget` raises missing or lower `IPHONEOS_DEPLOYMENT_TARGET` values in CocoaPods targets during `post_install`. Equal and higher versions remain unchanged; inherited expressions remain unchanged. The floor does not lower a dependency's minimum OS requirement.
+
+The host app's own deployment target is not a field of this package — `expo-build-properties` owns it through `ios.deploymentTarget`. Writing the same version in both places is how the two drift apart, so `ios.minimumPodDeploymentTarget` and `ios.deploymentTarget` also accept `'inherit'`:
+
+```ts
+ios: {
+  minimumPodDeploymentTarget: 'inherit';
+}
+```
+
+`'inherit'` reads `expo-build-properties` `ios.deploymentTarget` from the Expo config, and fails with that plugin absent rather than guessing at Expo's template default. A version written out below the app's own target is a warning (`guidance.pod-deployment-target`): pods keep the lower version Xcode complains about.
 
 `ios.podfileGlobals` writes typed Ruby globals at the start of the Podfile. Keys omit `$` and use letters, digits, and underscores, beginning with a letter or underscore. Values are booleans, finite numbers, or literal strings; strings are escaped rather than evaluated. `RNFirebaseAsStaticFramework: true` sets the React Native Firebase flag; configure static framework linkage separately in the app's Expo build properties. Globals do not remove pods injected by other plugins.
 
@@ -327,14 +337,24 @@ Android settings also cover SDK versions, build tools, NDK, Kotlin, and signing.
 
 ```ts
 const queries = {
-  intents: [
-    { action: 'android.intent.action.VIEW', scheme: 'geo' },
-    { action: 'android.intent.action.VIEW', scheme: 'https' },
-  ],
+  schemes: ['geo', 'https'],
   packages: ['com.google.android.apps.maps', 'com.waze'],
 };
 // Set android.queries = queries inside defineWorkspace(...).
 ```
+
+`schemes` is shorthand for `intents` with `android.intent.action.VIEW` — the action a `Linking.canOpenURL` probe resolves against, and so the one nearly every visibility declaration needs. The long form stays for any other action, and the two merge:
+
+```ts
+const queries = {
+  schemes: ['geo'],
+  intents: [{ action: AndroidIntentAction.dial, scheme: 'tel' }],
+};
+```
+
+`AndroidIntentAction` spells the common actions once; any other action string is still accepted.
+
+Declare a scheme for every URL the app probes. Android 11+ answers `canOpenURL` with `false` for an undeclared scheme whether or not the app is installed, so an app that probes more schemes than it declares reports those apps as missing.
 
 Each intent produces a separate `<intent>` query containing one action and scheme. Existing queries are merged into one `<queries>` root; duplicate entries are removed and provider queries are preserved. Package visibility enables discovery; it does not install applications or grant permissions. Removing a declaration requires clean prebuild to remove stale generated entries.
 

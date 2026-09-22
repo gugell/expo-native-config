@@ -101,3 +101,28 @@ test('a config that uses the supported fields produces no guidance at all', () =
     [],
   );
 });
+
+test('a pod floor below the app deployment target is flagged, inherit is not', () => {
+  const withMinimum = (minimumPodDeploymentTarget: string): WorkspaceConfig => ({
+    schemaVersion: 1 as const,
+    ios: { minimumPodDeploymentTarget },
+  });
+  const code = 'guidance.pod-deployment-target';
+  assert.ok(
+    collectGuidance(withMinimum('15.1'), '16.4')
+      .map((d) => d.code)
+      .includes(code),
+  );
+  // Equal, higher, and 'inherit' are all deliberate and silent.
+  for (const value of ['16.4', '16.4.0', '17.0', 'inherit']) {
+    assert.equal(
+      collectGuidance(withMinimum(value), '16.4')
+        .map((d) => d.code)
+        .includes(code),
+      false,
+      value,
+    );
+  }
+  // Nothing to compare against when the app config does not declare one.
+  assert.equal(codes(withMinimum('15.1')).includes(code), false);
+});
