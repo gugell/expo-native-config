@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/gugell/expo-native-config/compare/v0.2.0...v0.3.0) (2026-10-26)
+
+### Features
+
+* queries schemes shorthand and inherited iOS deployment targets ([#14](https://github.com/gugell/expo-native-config/issues/14)) ([d2c5677](https://github.com/gugell/expo-native-config/commit/d2c5677c7cb1077aa01832258013d36977a1279c))
+
+### Bug Fixes
+
+* support SDK 58 notification extensions (target types, framework linkage) ([#15](https://github.com/gugell/expo-native-config/issues/15)) ([725f152](https://github.com/gugell/expo-native-config/commit/725f1525becb7cc8f2cbaea0becff3a67dd1dea3))
+
+### Documentation
+
+* front-load usage, fix stale "not published" install instructions ([#13](https://github.com/gugell/expo-native-config/issues/13)) ([4e26dcf](https://github.com/gugell/expo-native-config/commit/4e26dcfd393263c76e3b69a3ca92ceca37df18cd))
+
 ## [0.2.0](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.2...v0.2.0) (2026-09-20)
 
 ## [0.2.0-alpha.2](https://github.com/gugell/expo-native-config/compare/v0.2.0-alpha.1...v0.2.0-alpha.2) (2026-09-20)
