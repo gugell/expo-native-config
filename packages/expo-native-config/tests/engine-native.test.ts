@@ -4,6 +4,7 @@ import { XcodeProject, PBXNativeTarget, XCRemoteSwiftPackageReference } from '@b
 import { applyTargetsPbx, type TargetPlan } from '../src/engine/ios-targets/generateTarget';
 import { spmGenerator } from '../src/engine/ios-spm/generators/spm';
 import type { PbxOp } from '../src/engine/ios-xcode/pbxOp';
+import { buildTargetPodsBlock } from '../src/engine/ios-targets/generators/targets';
 
 function project() {
   return new XcodeProject('/tmp/App.xcodeproj/project.pbxproj', {
@@ -129,4 +130,21 @@ test('local Swift package pod linkage resolves relative to ios/Pods', () => {
   });
   const op = result.ops[0] as import('../src/engine/core/types').MergeBlockOp;
   assert.ok(op.newSrc.includes("ref.relative_path = '../../packages/Shared'"));
+});
+
+test('extension pod blocks repeat Expo framework linkage, which top-level targets do not inherit', () => {
+  const block = buildTargetPodsBlock('Notifications', [
+    { pod: 'OneSignalXCFramework', version: '5.8.0' },
+  ]);
+  // Without these, `ios.useFrameworks: static` leaves the extension's pods unlinked.
+  assert.equal(
+    block,
+    [
+      "target 'Notifications' do",
+      "  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']",
+      "  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']",
+      "  pod 'OneSignalXCFramework', '5.8.0'",
+      'end',
+    ].join('\n'),
+  );
 });

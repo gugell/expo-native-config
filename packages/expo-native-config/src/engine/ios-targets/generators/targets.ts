@@ -45,8 +45,17 @@ function targetPodLine(pod: TargetPod): string {
   return `  ${parts.join(', ')}`;
 }
 
-function buildTargetPodsBlock(name: string, pods: TargetPod[]): string {
-  return `target ${rubyLiteral(name)} do\n${pods.map(targetPodLine).join('\n')}\nend`;
+// A top-level extension target does not inherit the app target's linkage, so it
+// repeats Expo's template lines: static frameworks from expo-build-properties
+// would otherwise fail to link the extension's pods.
+const EXPO_FRAMEWORK_LINKAGE = [
+  "  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']",
+  "  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']",
+];
+
+export function buildTargetPodsBlock(name: string, pods: TargetPod[]): string {
+  const lines = [...EXPO_FRAMEWORK_LINKAGE, ...pods.map(targetPodLine)];
+  return `target ${rubyLiteral(name)} do\n${lines.join('\n')}\nend`;
 }
 
 function sanitizeProductName(name: string): string {
