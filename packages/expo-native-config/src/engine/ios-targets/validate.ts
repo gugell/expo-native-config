@@ -1,8 +1,10 @@
 import { ERR } from '../core';
 
+import { TARGET_REGISTRY } from './registry';
 import type { TargetSpec, TargetType } from './types';
 
-const TARGET_TYPES = new Set<TargetType>(['share', 'widget', 'clip']);
+// Derived from the registry so every type the generator supports is accepted.
+const TARGET_TYPES = new Set(Object.keys(TARGET_REGISTRY) as TargetType[]);
 const INVALID_PATH_SEGMENT = /[\\/:*?"<>|]/;
 
 function isAbsolute(value: string): boolean {

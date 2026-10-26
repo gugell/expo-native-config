@@ -16,7 +16,7 @@ interface Options {
 const commands = 'init migrate plan validate doctor explain completion';
 /** Oldest SDK this package supports, and the newest it has been verified against. */
 const MINIMUM_EXPO_SDK = 50;
-const LATEST_VERIFIED_EXPO_SDK = 57;
+const LATEST_VERIFIED_EXPO_SDK = 58;
 function base(command: Command): Command {
   // init and migrate create a config rather than reading one.
   if (!['init', 'migrate'].includes(command.name()))

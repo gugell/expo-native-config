@@ -313,6 +313,33 @@ test('a package ships its target, its source and the pods it needs', () => {
   assert.match(JSON.stringify(pods.desired), /SDWebImage/);
 });
 
+test('a notification-service target validates and plans its pods', () => {
+  const { app } = workspace();
+  write(app, 'targets/Notifications/NotificationService.swift', 'import UserNotifications\n');
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: {
+        targets: [
+          {
+            name: 'Notifications',
+            type: 'notification-service',
+            bundleIdentifier: '.notifications',
+            pods: [{ pod: 'OneSignalXCFramework', version: '5.8.0' }],
+          },
+        ],
+      },
+    }),
+  );
+  const plan = planOf(app);
+  assert.equal(plan.valid, true, 'notification-service is a registry type, not a rejected one');
+  const pods = plan.operations.find((op) => op.id === 'target:Notifications:pods');
+  assert.ok(pods);
+  assert.match(JSON.stringify(pods.desired), /OneSignalXCFramework/);
+});
+
 test('a pods.rb is reported rather than silently ignored', () => {
   const { app } = workspace();
   write(app, 'targets/Legacy/Legacy.swift', WIDGET_SWIFT);
