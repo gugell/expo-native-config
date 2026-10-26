@@ -181,14 +181,14 @@ test('doctor blocks an older Expo SDK but only warns about a newer one', () => {
 
   // Newer than the latest verified SDK: a warning, not an error. Blocking here
   // would make the CLI unusable on the day a new SDK ships.
-  withExpoVersion(root, '58.0.0');
+  withExpoVersion(root, '59.0.0');
   const newer = JSON.parse(run('doctor', '--project', root, '--json').stdout) as {
     valid: boolean;
     diagnostics: Array<{ severity: string; code: string; message: string }>;
   };
   const newerDiagnostic = newer.diagnostics.find((d) => d.code === 'expo.version');
   assert.equal(newerDiagnostic?.severity, 'warning');
-  assert.match(newerDiagnostic?.message ?? '', /newer than SDK 57/);
+  assert.match(newerDiagnostic?.message ?? '', /newer than SDK 58/);
   assert.match(newerDiagnostic?.message ?? '', /Inspect the generated native projects/);
   assert.equal(
     newer.diagnostics.some((d) => d.severity === 'error' && d.code === 'expo.version'),
