@@ -104,17 +104,17 @@ One caveat for a published package: Xcode will reference source inside `node_mod
 
 Same fields as an inline target, minus two it supplies itself:
 
-| Field              | Notes                                                                                                                 |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `type`             | **Required.** `share`, `widget`, `clip`, `notification-service`, `notification-content`, `intent`, `action`, `safari` |
-| `name`             | Defaults to the directory name                                                                                        |
-| `bundleIdentifier` | A leading `.` appends to the host app's identifier                                                                    |
-| `deploymentTarget` | e.g. `'18.0'`                                                                                                         |
-| `entitlements`     | App Groups must also appear in `expo.ios.entitlements`                                                                |
-| `frameworks`       | Added to the type's defaults, not replacing them                                                                      |
-| `buildSettings`    | Xcode build settings for this target                                                                                  |
-| `pods`             | The target's CocoaPods dependencies                                                                                   |
-| `source`           | **Rejected** — the file's own directory is the source, so setting it would do nothing                                 |
+| Field              | Notes                                                                                                                                        |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`             | **Required.** `share`, `widget`, `clip`, `notification-service`, `notification-content`, `intent`, `action`, `safari`, `background-download` |
+| `name`             | Defaults to the directory name                                                                                                               |
+| `bundleIdentifier` | A leading `.` appends to the host app's identifier                                                                                           |
+| `deploymentTarget` | e.g. `'18.0'`                                                                                                                                |
+| `entitlements`     | App Groups must also appear in `expo.ios.entitlements`                                                                                       |
+| `frameworks`       | Added to the type's defaults, not replacing them                                                                                             |
+| `buildSettings`    | Xcode build settings for this target                                                                                                         |
+| `pods`             | The target's CocoaPods dependencies                                                                                                          |
+| `source`           | **Rejected** — the file's own directory is the source, so setting it would do nothing                                                        |
 
 Accepted filenames: `target.config.js`, `.cjs`, `.mjs`, `.json`, `.ts`, and `expo-target.config.js`/`.cjs`/`.mjs`/`.json`.
 
@@ -131,6 +131,66 @@ module.exports = {
 ```
 
 These files are **not** trusted blindly. Each goes through the same strict schema as an inline target, so a typo like `bundleIdentifer` is an error naming the file it came from, rather than something the generators receive as whatever the file exported.
+
+## Background Assets downloader (`background-download`)
+
+`background-download` is the Xcode 26 "Background Download Extension": the extension the system launches to fetch [Background Assets](https://developer.apple.com/documentation/backgroundassets) asset packs, including Apple-hosted ones. Unlike every other type here it is an **ExtensionKit** extension, not an app extension, and the generated project reflects that:
+
+| What              | Generated value                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| Product type      | `com.apple.product-type.extensionkit-extension`                                                             |
+| Product           | `<name>.appex`, file type `wrapper.extensionkit-extension`                                                  |
+| Embedded by       | The host app's "Embed ExtensionKit Extensions" phase, into `<App>.app/Extensions/` (not `PlugIns/`)         |
+| Info.plist        | `EXAppExtensionAttributes` → `EXExtensionPointIdentifier = com.apple.background-asset-downloader-extension` |
+| Frameworks        | `BackgroundAssets`, `StoreKit`                                                                              |
+| Entitlements      | The host app's App Groups, unless the target declares its own                                               |
+| Deployment target | `26.0` by default                                                                                           |
+
+The `26.0` default is the type's, used only when nothing else sets one: the target's own `deploymentTarget` wins, then `ios.deploymentTarget`. If `ios.deploymentTarget` is lower — say `18.0` for your widgets — set `deploymentTarget: '26.0'` on this target, because `StoreDownloaderExtension` and `ManagedDownloaderExtension` are iOS 26 APIs and the Swift below will not compile against anything older.
+
+The source is yours to provide, as with every target. The smallest one, from Apple's "Apple-Hosted, Managed" template:
+
+```swift
+import BackgroundAssets
+import ExtensionFoundation
+import StoreKit
+
+@main
+struct DownloaderExtension: StoreDownloaderExtension {
+    func shouldDownload(_ assetPack: AssetPack) -> Bool { true }
+}
+```
+
+```ts
+ios: {
+  targets: [Target.backgroundDownload({ name: 'AssetDownloader', bundleIdentifier: '.assets' })],
+}
+```
+
+**The host app needs Background Assets configuration of its own**, which this type does not write: the asset-pack keys in the app's Info.plist (for Apple-hosted packs, `BAHasManagedAssetPacks`, `BAUsesAppleHosting` and `BAAppGroupID`) belong in `expo.ios.infoPlist`, and the App Group they name in `expo.ios.entitlements`, so the extension inherits it. Apple's Background Assets documentation is the reference for those keys.
+
+### Shipping one from a package subpath
+
+A package can carry the downloader in a subdirectory and the app can link that directory directly:
+
+```ts
+ios: {
+  targets: [
+    { package: '@acme/assets/downloader', name: 'AssetDownloader', bundleIdentifier: '.assets' },
+  ],
+}
+```
+
+```
+@acme/assets/
+├── package.json             ← "exports" must include "./downloader/package.json"
+└── downloader/
+    ├── package.json         ← { "private": true } is enough
+    ├── target.config.js     ← module.exports = { type: 'background-download' };
+    └── DownloaderExtension.swift
+```
+
+Resolution asks the app's module resolver for `<specifier>/package.json` and uses the directory it lands in, so a subpath needs a `package.json` of its own. If the parent package declares `"exports"`, that file must be exported too (`"./downloader/package.json": "./downloader/package.json"`), or Node refuses the subpath before the directory is ever read. Without `"exports"` the nested `package.json` alone is enough. `name` defaults to the last segment of the specifier (`downloader`), so set it on the entry.
 
 ## Precedence and overrides
 

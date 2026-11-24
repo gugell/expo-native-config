@@ -23,6 +23,12 @@ The sample app configs explicitly set `sdkVersion: "56.0.0"`. Their package mani
 
 On macOS, `pnpm native:check` builds the generated share and widget extension targets for iOS Simulator with signing disabled. Run `pnpm examples:check --prebuild` first. Logs and products are retained in a printed temporary directory. The command does not require host CocoaPods installation because these two extension targets use system frameworks only; it does not compile the React Native host app or exercise extension UI. CI runs this command after prebuild on macOS.
 
+## Recorded local verification — 2026-11-25: `background-download`
+
+A throwaway pnpm workspace app (not committed) linked a `background-download` target from a package subpath (`{ package: '<pkg>/downloader' }`) carrying Apple's "Apple-Hosted, Managed" `StoreDownloaderExtension` source. It completed an `expo-template-bare-minimum@56.0.35` clean prebuild, CocoaPods installation and an unsigned Debug build of the whole host app for a generic iOS Simulator, using Node.js 24.22.2, Expo 56.0.21, React Native 0.85.3 and Xcode 26.6 / iPhoneSimulator SDK 26.5. The built app contained `Extensions/AssetDownloader.appex` and no `PlugIns/` directory; the appex Info.plist carried `EXAppExtensionAttributes.EXExtensionPointIdentifier = com.apple.background-asset-downloader-extension` and `MinimumOSVersion = 26.0`.
+
+This does not establish that the system launches the extension or downloads an asset pack: that needs a signed device build, the host app's Background Assets Info.plist keys and asset packs on App Store Connect. No sample app carries this type, because it needs the iOS 26 SDK.
+
 ## Recorded local verification — 2026-09-16
 
 The six sample apps passed TypeScript checking. All six completed explicit `expo-template-bare-minimum@56.0.35` prebuilds and generated-artifact checks. `pnpm native:check` then compiled `WorkspaceShare` and `WorkspaceWidget` as unsigned iOS Simulator extension targets using Xcode 26.6.0 / iPhoneSimulator SDK 26.5, with iOS 18.0 deployment targets. The standalone `WorkspaceMath` Swift package also compiled for the local macOS host.
