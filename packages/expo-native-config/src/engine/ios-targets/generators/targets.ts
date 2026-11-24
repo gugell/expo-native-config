@@ -14,6 +14,7 @@ import { pbxOp } from '../../ios-xcode';
 import { resolveTargetBundleId } from '../bundleId';
 import { addEASAppExtension } from '../easCredentials';
 import { buildEntitlements, resolveEntitlements } from '../entitlements';
+import { CONFIG_NAMES } from '../discover';
 import { applyTargetsPbx } from '../generateTarget';
 import type { TargetPlan } from '../generateTarget';
 import { buildInfoPlist } from '../infoPlist';
@@ -123,8 +124,15 @@ function resolveTargets(
       ? ((entitlementsJson ?? {})[APP_GROUPS_KEY] as unknown[]).length > 0
       : false;
 
-    const configFile = findFile(sourceAbs, (name) => /^expo-target\.config\.(js|json)$/.test(name));
-    const membershipExceptions = ['Info.plist', ...(configFile ? [configFile] : [])].sort();
+    // The synchronized group bundles every file it finds as a resource. The
+    // target's own declaration, and the package.json that makes a package (or
+    // a package subpath) resolvable, are not the extension's resources.
+    const declarationFiles = fs.existsSync(sourceAbs)
+      ? fs
+          .readdirSync(sourceAbs)
+          .filter((name) => CONFIG_NAMES.includes(name) || name === 'package.json')
+      : [];
+    const membershipExceptions = ['Info.plist', ...declarationFiles].sort();
 
     const plan: TargetPlan = {
       type: spec.type,

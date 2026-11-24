@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import plist from '@expo/plist';
 import {
   XcodeProject,
@@ -161,15 +164,20 @@ test('extension pod blocks repeat Expo framework linkage, which top-level target
 });
 
 /** Plans targets through the generator, as prebuild does, and applies the pbx op to `native`. */
-function generateTargets(native: XcodeProject, targets: unknown[], config: object = {}) {
+function generateTargets(
+  native: XcodeProject,
+  targets: unknown[],
+  config: object = {},
+  projectRoot = '/tmp/app',
+) {
   const result = targetsGenerator.generate({
     manifest: { manifestVersion: 1, targets } as never,
     config: { ios: { bundleIdentifier: 'com.example.app' }, ...config } as never,
-    projectRoot: '/tmp/app',
-    configPath: '/tmp/app/workspace.config.ts',
+    projectRoot,
+    configPath: path.join(projectRoot, 'workspace.config.ts'),
   });
   const pbx = result.ops.find((op) => op.kind === 'pbx') as PbxOp;
-  pbx.apply({ project: native, projectRoot: '/tmp/app', platformProjectRoot: '/tmp/app/ios' });
+  pbx.apply({ project: native, projectRoot, platformProjectRoot: path.join(projectRoot, 'ios') });
   return result.ops;
 }
 
@@ -281,4 +289,27 @@ test('a background-download target inherits the host app groups', () => {
     { ...plist.parse(entitlements.contents) },
     { 'com.apple.security.application-groups': ['group.com.example.app'] },
   );
+});
+
+test('a target directory keeps its declaration and package.json out of the bundle', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'enc-membership-'));
+  const dir = path.join(root, 'targets/AssetDownloader');
+  mkdirSync(dir, { recursive: true });
+  for (const file of ['target.config.js', 'package.json', 'Downloader.swift', 'index.js']) {
+    writeFileSync(path.join(dir, file), '');
+  }
+  const native = project();
+  generateTargets(native, [{ name: 'AssetDownloader', type: 'background-download' }], {}, root);
+  const extension = native.rootObject.props.targets.find(
+    (item) => item.props.name === 'AssetDownloader',
+  ) as PBXNativeTarget;
+  const exceptions = extension.props.fileSystemSynchronizedGroups![0].props.exceptions![0] as {
+    props: { membershipExceptions: string[] };
+  };
+  // Source and the package's own files stay members; the declaration does not.
+  assert.deepEqual(exceptions.props.membershipExceptions, [
+    'Info.plist',
+    'package.json',
+    'target.config.js',
+  ]);
 });
