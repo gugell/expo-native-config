@@ -79,6 +79,10 @@ export function getTargetInfoPlist(type: TargetType): Record<string, unknown> {
           NSExtensionPrincipalClass: '$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler',
         },
       };
+    case 'background-download':
+      // ExtensionKit keys, not NSExtension. No principal class: the Swift
+      // template's `@main` struct is the entry point.
+      return { EXAppExtensionAttributes: { EXExtensionPointIdentifier: pointIdentifier } };
     default:
       return {};
   }

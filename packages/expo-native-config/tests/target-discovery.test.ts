@@ -340,6 +340,70 @@ test('a notification-service target validates and plans its pods', () => {
   assert.match(JSON.stringify(pods.desired), /OneSignalXCFramework/);
 });
 
+const DOWNLOADER_SWIFT = `import BackgroundAssets
+import ExtensionFoundation
+import StoreKit
+
+@main
+struct DownloaderExtension: StoreDownloaderExtension {
+    func shouldDownload(_ assetPack: AssetPack) -> Bool { true }
+}
+`;
+
+test('a background-download target is linked from a package subpath', () => {
+  const { app } = workspace();
+  // The parent package has "exports", so the subpath's package.json must be
+  // exported: resolution asks for `<specifier>/package.json`.
+  write(
+    app,
+    'node_modules/@acme/assets/package.json',
+    JSON.stringify({
+      name: '@acme/assets',
+      version: '1.0.0',
+      exports: { '.': './index.js', './downloader/package.json': './downloader/package.json' },
+    }),
+  );
+  write(app, 'node_modules/@acme/assets/index.js', 'module.exports = {};');
+  write(app, 'node_modules/@acme/assets/downloader/package.json', '{ "private": true }');
+  write(app, 'node_modules/@acme/assets/downloader/Downloader.swift', DOWNLOADER_SWIFT);
+  write(
+    app,
+    'node_modules/@acme/assets/downloader/target.config.js',
+    "module.exports = { type: 'background-download' };\n",
+  );
+  write(
+    app,
+    'workspace.config.json',
+    JSON.stringify({
+      schemaVersion: 1,
+      ios: {
+        targets: [
+          {
+            package: '@acme/assets/downloader',
+            name: 'AssetDownloader',
+            bundleIdentifier: '.assets',
+          },
+        ],
+      },
+    }),
+  );
+  const plan = planOf(app);
+  assert.equal(plan.valid, true);
+  assert.ok(plan.operations.some((op) => op.id === 'target:AssetDownloader:infoPlist'));
+  const all = plan.operations.find((op) => op.id === 'target:all');
+  assert.deepEqual(all?.desired, [
+    {
+      source: 'ios.targets[0]',
+      name: 'AssetDownloader',
+      type: 'background-download',
+      bundleIdentifier: 'com.example.mobile.assets',
+      // The type's own default, since neither the package nor the app sets one.
+      deploymentTarget: '26.0',
+    },
+  ]);
+  assert.equal(run('validate', '--project', app).status ?? 0, 0);
+});
+
 test('a pods.rb is reported rather than silently ignored', () => {
   const { app } = workspace();
   write(app, 'targets/Legacy/Legacy.swift', WIDGET_SWIFT);

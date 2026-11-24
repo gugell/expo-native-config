@@ -7,7 +7,8 @@ export type TargetType =
   | 'notification-content'
   | 'intent'
   | 'action'
-  | 'safari';
+  | 'safari'
+  | 'background-download';
 
 export interface TargetSpec {
   /** Folder name under `targetsRoot` AND the Xcode target / productName seed. */
@@ -15,7 +16,7 @@ export interface TargetSpec {
   type: TargetType;
   /** Leading "." appends to the main app bundle id (".ShareExtension" => "<app>.ShareExtension"). */
   bundleIdentifier?: string;
-  /** iOS deployment target. Defaults to the registry default (18.0). */
+  /** iOS deployment target. Defaults to the type's registry default, else 18.0. */
   deploymentTarget?: string;
   /** Plist-shaped entitlements; written to `generated.entitlements`. */
   entitlements?: Record<string, unknown>;

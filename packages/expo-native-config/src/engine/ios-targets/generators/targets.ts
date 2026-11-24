@@ -18,7 +18,12 @@ import { applyTargetsPbx } from '../generateTarget';
 import type { TargetPlan } from '../generateTarget';
 import { buildInfoPlist } from '../infoPlist';
 import { TARGETS_LOADER_MARKER, buildTargetsPodfileLoader } from '../podsLoader';
-import { getFrameworksForType, needsEmbeddedSwift, productTypeForType } from '../registry';
+import {
+  defaultDeploymentTargetForType,
+  getFrameworksForType,
+  needsEmbeddedSwift,
+  productTypeForType,
+} from '../registry';
 import type { TargetPod, TargetSpec } from '../types';
 import { cleanTargetsRoot, normalizeTargets } from '../validate';
 
@@ -67,6 +72,13 @@ function sanitizeProductName(name: string): string {
 
 function isExtensionProductType(productType: string): boolean {
   return productType.includes('app-extension') || productType.includes('extensionkit-extension');
+}
+
+/** The product's file type, which Xcode uses to decide how the bundle is built and embedded. */
+function explicitFileTypeFor(productType: string): string {
+  if (productType.includes('extensionkit-extension')) return 'wrapper.extensionkit-extension';
+  if (productType.includes('app-extension')) return 'wrapper.app-extension';
+  return 'wrapper.application';
 }
 
 function findFile(dir: string, predicate: (name: string) => boolean): string | undefined {
@@ -119,10 +131,13 @@ function resolveTargets(
       name: spec.name,
       productName: sanitizeProductName(spec.name),
       productType,
-      explicitFileType: isExtension ? 'wrapper.app-extension' : 'wrapper.application',
+      explicitFileType: explicitFileTypeFor(productType),
       isExtension,
       bundleId: resolveTargetBundleId(config, spec),
-      deploymentTarget: spec.deploymentTarget ?? DEFAULT_DEPLOYMENT_TARGET,
+      deploymentTarget:
+        spec.deploymentTarget ??
+        defaultDeploymentTargetForType(spec.type) ??
+        DEFAULT_DEPLOYMENT_TARGET,
       cwd,
       currentProjectVersion: config.ios?.buildNumber || 1,
       needsEmbeddedSwift: needsEmbeddedSwift(spec.type),
