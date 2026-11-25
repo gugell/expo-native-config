@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.1](https://github.com/gugell/expo-native-config/compare/v0.4.0...v0.4.1) (2026-11-25)
+
+### Bug Fixes
+
+* **ios:** write generated target files under ios/ for linked packages and folders ([9f83129](https://github.com/gugell/expo-native-config/commit/9f83129e6bdd98b1cedcc3027ada78dbfb4ea6f3))
+
 ## [0.4.0](https://github.com/gugell/expo-native-config/compare/v0.3.0...v0.4.0) (2026-11-25)
 
 ### Features
