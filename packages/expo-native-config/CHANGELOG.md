@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0](https://github.com/gugell/expo-native-config/compare/v0.3.0...v0.4.0) (2026-11-25)
+
+### Features
+
+* **ios:** add a background-download target type ([#16](https://github.com/gugell/expo-native-config/issues/16)) ([7703976](https://github.com/gugell/expo-native-config/commit/77039764b10fc343e8b0489015a4494e14ffc78f))
+
 ## [0.3.0](https://github.com/gugell/expo-native-config/compare/v0.2.0...v0.3.0) (2026-10-26)
 
 ### Features
