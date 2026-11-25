@@ -14,7 +14,7 @@ import jiti from 'jiti';
  * convention, generateTarget already excludes that filename from the build, and
  * a project moving across should not have to rename files first.
  */
-const CONFIG_NAMES = [
+export const CONFIG_NAMES = [
   'target.config.js',
   'target.config.cjs',
   'target.config.mjs',

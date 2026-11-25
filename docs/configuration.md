@@ -46,22 +46,22 @@ XcodeBuildSettings.of({ ldExportSymbols: false }); // { LD_EXPORT_SYMBOLS: 'NO' 
 
 A name like `Target` is both the type and the namespace of constructors, so `Target` annotates a value and `Target.share(…)` builds one. Constructors return plain objects and validate identically — **both styles are supported, and they mix freely**. Use a literal when it is already obvious; use a constructor when it saves you a magic string.
 
-| Namespace                 | Constructors                                                                                             |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `Target`                  | `share`, `widget`, `appClip`, `notificationService`, `notificationContent`, `intent`, `action`, `safari` |
-| `Pod`                     | `local`, `version`, `git`                                                                                |
-| `Package`                 | `remote`, `local`                                                                                        |
-| `SwiftPackageRequirement` | `exact`, `upToNextMajor`, `upToNextMinor`, `range`, `branch`, `revision`                                 |
-| `Scheme`                  | `debug`, `release`                                                                                       |
-| `RunScript`               | `shell`, `onInstall`                                                                                     |
-| `PodBuildSettings`        | `forTarget`, `forTargetsStartingWith`, `forTargetsMatching`                                              |
-| `AndroidDependency`       | `library`, `libraryExcluding`, `project`, `bom`                                                          |
-| `AndroidComponent`        | `activity`, `service`, `receiver`, `provider`, `remove`                                                  |
-| `AndroidFeature`          | `required`, `optional`, `openGlEs`                                                                       |
-| `AndroidModule`           | `at`                                                                                                     |
-| `MavenRepository`         | `url`, `scoped`, `private`                                                                               |
-| `BuildConfigField`        | `string`, `boolean`, `int`, `raw`                                                                        |
-| `ReplaceRule`             | `regex`, `literal`                                                                                       |
+| Namespace                 | Constructors                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `Target`                  | `share`, `widget`, `appClip`, `notificationService`, `notificationContent`, `intent`, `action`, `safari`, `backgroundDownload` |
+| `Pod`                     | `local`, `version`, `git`                                                                                                      |
+| `Package`                 | `remote`, `local`                                                                                                              |
+| `SwiftPackageRequirement` | `exact`, `upToNextMajor`, `upToNextMinor`, `range`, `branch`, `revision`                                                       |
+| `Scheme`                  | `debug`, `release`                                                                                                             |
+| `RunScript`               | `shell`, `onInstall`                                                                                                           |
+| `PodBuildSettings`        | `forTarget`, `forTargetsStartingWith`, `forTargetsMatching`                                                                    |
+| `AndroidDependency`       | `library`, `libraryExcluding`, `project`, `bom`                                                                                |
+| `AndroidComponent`        | `activity`, `service`, `receiver`, `provider`, `remove`                                                                        |
+| `AndroidFeature`          | `required`, `optional`, `openGlEs`                                                                                             |
+| `AndroidModule`           | `at`                                                                                                                           |
+| `MavenRepository`         | `url`, `scoped`, `private`                                                                                                     |
+| `BuildConfigField`        | `string`, `boolean`, `int`, `raw`                                                                                              |
+| `ReplaceRule`             | `regex`, `literal`                                                                                                             |
 
 Named constants cover the strings that are otherwise copied from a search result: `Abi` (`arm64`, `armv7`, `x86`, `x64`, `all`), `AndroidPermission`, `AndroidHardware`, `AndroidApplication.attributes({ largeHeap: true })` (which writes the `android:` keys), and `XcodeBuildSettings.of({ … })` (which writes Xcode's names and turns booleans into `YES`/`NO` — the usual reason a hand-written build setting does nothing).
 
@@ -186,17 +186,17 @@ export default defineWorkspace({
 
 Each target has a unique `name`, target `type` supplied by the helper, optional `source`, `bundleIdentifier`, `deploymentTarget`, `frameworks`, `entitlements`, `buildSettings`, and `pods`. A leading dot in the bundle identifier appends to the host app identifier. Source paths resolve from the app root; the default is `targets/<name>`. Keep Info.plist and native sources in that directory when custom behavior is needed. `ios.deploymentTarget` supplies a default for extension targets only; it does not configure the host app deployment target.
 
-| Target field       | Meaning                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------- |
-| `name` (required)  | Unique target name, starting with a letter; then letters, digits, `_` or `-`                            |
-| `type` (required)  | `share`, `widget`, `clip`, `notification-service`, `notification-content`, `intent`, `action`, `safari` |
-| `bundleIdentifier` | Explicit ID or suffix such as `.share`; resolved IDs must be unique                                     |
-| `source`           | Existing source directory inside the app root                                                           |
-| `deploymentTarget` | Target override, then `ios.deploymentTarget`, then generator default `18.0`                             |
-| `frameworks`       | Additional system framework names                                                                       |
-| `entitlements`     | Plist-shaped entitlement values                                                                         |
-| `buildSettings`    | String map of Xcode build settings                                                                      |
-| `pods`             | Dependencies for this target, using the Pod shape below                                                 |
+| Target field       | Meaning                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `name` (required)  | Unique target name, starting with a letter; then letters, digits, `_` or `-`                                                   |
+| `type` (required)  | `share`, `widget`, `clip`, `notification-service`, `notification-content`, `intent`, `action`, `safari`, `background-download` |
+| `bundleIdentifier` | Explicit ID or suffix such as `.share`; resolved IDs must be unique                                                            |
+| `source`           | Existing source directory inside the app root                                                                                  |
+| `deploymentTarget` | Target override, then `ios.deploymentTarget`, then the type's default (`background-download`: `26.0`), then `18.0`             |
+| `frameworks`       | Additional system framework names                                                                                              |
+| `entitlements`     | Plist-shaped entitlement values                                                                                                |
+| `buildSettings`    | String map of Xcode build settings                                                                                             |
+| `pods`             | Dependencies for this target, using the Pod shape below                                                                        |
 
 The host must define `expo.ios.bundleIdentifier` when targets are declared. `appClip({ name: 'Preview', source: './targets/Preview', bundleIdentifier: '.clip' })` declares an App Clip; you supply its native app sources and app-specific setup. There is currently no App Clip init preset.
 

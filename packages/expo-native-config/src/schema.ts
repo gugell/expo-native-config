@@ -39,6 +39,7 @@ export const TargetSchema = z.strictObject({
     'intent',
     'action',
     'safari',
+    'background-download',
   ]),
   bundleIdentifier: text.optional(),
   deploymentTarget: version.optional(),

@@ -6,9 +6,12 @@ export interface TargetRegistryEntry {
   frameworks?: string[];
   needsEmbeddedSwift?: boolean;
   appGroupsByDefault?: boolean;
+  /** Deployment target used when neither the target nor `ios.deploymentTarget` sets one. */
+  deploymentTarget?: string;
 }
 
 const DEFAULT_PRODUCT_TYPE = 'com.apple.product-type.app-extension';
+const EXTENSIONKIT_PRODUCT_TYPE = 'com.apple.product-type.extensionkit-extension';
 
 /** v1 subset of @bacons/apple-targets' TARGET_REGISTRY. */
 export const TARGET_REGISTRY: Record<TargetType, TargetRegistryEntry> = {
@@ -54,6 +57,17 @@ export const TARGET_REGISTRY: Record<TargetType, TargetRegistryEntry> = {
     extensionPointIdentifier: 'com.apple.Safari.web-extension',
     needsEmbeddedSwift: true,
   },
+  // Xcode 26 "Background Download Extension" template: an ExtensionKit
+  // extension, embedded under Extensions/ rather than PlugIns/. StoreKit
+  // provides StoreDownloaderExtension for Apple-hosted asset packs; it and
+  // ManagedDownloaderExtension are iOS 26+, hence the default.
+  'background-download': {
+    extensionPointIdentifier: 'com.apple.background-asset-downloader-extension',
+    productType: EXTENSIONKIT_PRODUCT_TYPE,
+    frameworks: ['BackgroundAssets', 'StoreKit'],
+    appGroupsByDefault: true,
+    deploymentTarget: '26.0',
+  },
 };
 
 export function productTypeForType(type: TargetType): string {
@@ -70,6 +84,10 @@ export function appGroupsByDefault(type: TargetType): boolean {
 
 export function getFrameworksForType(type: TargetType, extra: string[] = []): string[] {
   return [...(TARGET_REGISTRY[type].frameworks ?? []), ...extra];
+}
+
+export function defaultDeploymentTargetForType(type: TargetType): string | undefined {
+  return TARGET_REGISTRY[type].deploymentTarget;
 }
 
 export function extensionPointIdentifier(type: TargetType): string | undefined {

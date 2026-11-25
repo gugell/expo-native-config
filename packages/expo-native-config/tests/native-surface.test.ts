@@ -287,6 +287,7 @@ test('factories build the same values a literal config would, and stay schema-va
       targets: [
         Target.notificationService({ name: 'Notify', bundleIdentifier: '.notify' }),
         Target.share({ name: 'Share' }),
+        Target.backgroundDownload({ name: 'AssetDownloader', bundleIdentifier: '.assets' }),
       ],
       pods: [Pod.git('UAEPass', 'https://example.com/uae.git', { tag: '1.2.3' })],
       packages: [
@@ -338,6 +339,7 @@ test('factories build the same values a literal config would, and stay schema-va
 
   // A factory value is just a literal: both authoring styles are interchangeable.
   assert.deepEqual(Target.share({ name: 'Share' }), { name: 'Share', type: 'share' });
+  assert.equal(Target.backgroundDownload({ name: 'Assets' }).type, 'background-download');
   assert.deepEqual(AndroidDependency.library('a:b:1.0'), {
     module: 'a:b:1.0',
     configuration: 'implementation',

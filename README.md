@@ -219,16 +219,17 @@ The [configuration reference](docs/configuration.md) documents every field with 
 
 Supported extension types:
 
-| Type                   | Description                    |
-| ---------------------- | ------------------------------ |
-| `share`                | Share Extension                |
-| `widget`               | Widget / Live Activity         |
-| `clip`                 | App Clip                       |
-| `notification-service` | Notification Service Extension |
-| `notification-content` | Notification Content Extension |
-| `intent`               | Siri Intent Extension          |
-| `action`               | Share Action                   |
-| `safari`               | Safari Extension               |
+| Type                   | Description                                         |
+| ---------------------- | --------------------------------------------------- |
+| `share`                | Share Extension                                     |
+| `widget`               | Widget / Live Activity                              |
+| `clip`                 | App Clip                                            |
+| `notification-service` | Notification Service Extension                      |
+| `notification-content` | Notification Content Extension                      |
+| `intent`               | Siri Intent Extension                               |
+| `action`               | Share Action                                        |
+| `safari`               | Safari Extension                                    |
+| `background-download`  | Background Assets downloader (ExtensionKit, iOS 26) |
 
 Declaring a target does not write its Swift source. Outside `init`, that source is yours to provide — an extension with no implementation compiles into an extension that does nothing.
 

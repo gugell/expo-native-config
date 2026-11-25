@@ -48,6 +48,8 @@ export const Target = {
   intent: target('intent'),
   action: target('action'),
   safari: target('safari'),
+  /** Background Assets downloader (ExtensionKit). Defaults to iOS 26.0. */
+  backgroundDownload: target('background-download'),
 } as const;
 
 type PodSpec = NonNullable<TargetSpec['pods']>[number];
