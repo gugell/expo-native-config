@@ -30,8 +30,10 @@ export interface TargetPlan {
   currentProjectVersion: string | number;
   needsEmbeddedSwift: boolean;
   frameworks: string[];
-  /** Filename of the entitlements file (relative to cwd), if any. */
-  entitlementsFileName?: string;
+  /** Info.plist path relative to ios/ (INFOPLIST_FILE). */
+  infoPlistPath: string;
+  /** Entitlements path relative to ios/ (CODE_SIGN_ENTITLEMENTS), if the target has entitlements. */
+  entitlementsPath?: string;
   hasAppGroups: boolean;
   /** Files excluded from automatic target membership in the fs-synchronized group. */
   membershipExceptions: string[];
@@ -133,13 +135,9 @@ export function applyTargetsPbx(
       setBuildSetting(existing, 'PRODUCT_BUNDLE_IDENTIFIER', plan.bundleId);
       setBuildSetting(existing, 'IPHONEOS_DEPLOYMENT_TARGET', plan.deploymentTarget);
       setBuildSetting(existing, 'CURRENT_PROJECT_VERSION', plan.currentProjectVersion);
-      setBuildSetting(existing, 'INFOPLIST_FILE', `${plan.cwd}/Info.plist`);
-      if (plan.entitlementsFileName)
-        setBuildSetting(
-          existing,
-          'CODE_SIGN_ENTITLEMENTS',
-          `${plan.cwd}/${plan.entitlementsFileName}`,
-        );
+      setBuildSetting(existing, 'INFOPLIST_FILE', plan.infoPlistPath);
+      if (plan.entitlementsPath)
+        setBuildSetting(existing, 'CODE_SIGN_ENTITLEMENTS', plan.entitlementsPath);
       if (plan.hasAppGroups) setBuildSetting(existing, 'REGISTER_APP_GROUPS', 'YES');
       for (const [key, value] of Object.entries(plan.buildSettings ?? {}))
         setBuildSetting(existing, key, value);
@@ -169,6 +167,7 @@ export function applyTargetsPbx(
       buildConfigurationList: createConfigurationListForType(project, plan.type, {
         name: plan.name,
         cwd: plan.cwd,
+        infoPlistPath: plan.infoPlistPath,
         bundleId: plan.bundleId,
         deploymentTarget: plan.deploymentTarget,
         currentProjectVersion: plan.currentProjectVersion,
@@ -182,8 +181,8 @@ export function applyTargetsPbx(
     const copyPhase = mainAppTarget.getCopyBuildPhaseForTarget(target);
     (copyPhase.props.files as any).push(buildFile);
 
-    if (plan.entitlementsFileName) {
-      setBuildSetting(target, 'CODE_SIGN_ENTITLEMENTS', `${plan.cwd}/${plan.entitlementsFileName}`);
+    if (plan.entitlementsPath) {
+      setBuildSetting(target, 'CODE_SIGN_ENTITLEMENTS', plan.entitlementsPath);
       if (plan.hasAppGroups) {
         setBuildSetting(target, 'REGISTER_APP_GROUPS', 'YES');
       }
