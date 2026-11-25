@@ -7,6 +7,8 @@ export interface ConfigListProps {
   displayName?: string;
   /** Path to the target dir relative to ios/ (e.g. "../targets/ShareExtension"). */
   cwd: string;
+  /** INFOPLIST_FILE, relative to ios/. Defaults to `${cwd}/Info.plist`. */
+  infoPlistPath?: string;
   bundleId: string;
   deploymentTarget: string;
   currentProjectVersion: string | number;
@@ -29,7 +31,7 @@ function commonSettings(props: ConfigListProps): BuildSettings {
     GCC_C_LANGUAGE_STANDARD: 'gnu11',
     GENERATE_INFOPLIST_FILE: 'YES',
     CURRENT_PROJECT_VERSION: props.currentProjectVersion,
-    INFOPLIST_FILE: `${props.cwd}/Info.plist`,
+    INFOPLIST_FILE: props.infoPlistPath ?? `${props.cwd}/Info.plist`,
     INFOPLIST_KEY_CFBundleDisplayName: props.displayName ?? props.name,
     INFOPLIST_KEY_NSHumanReadableCopyright: '',
     IPHONEOS_DEPLOYMENT_TARGET: props.deploymentTarget,

@@ -98,6 +98,8 @@ A package that ships a target should include the native source and the config in
 }
 ```
 
+**Nothing is written into a linked package or folder.** A target the app owns (under its targets root or elsewhere in the app) gets its generated `Info.plist` and entitlements next to its source, as before. A target linked from a package, or from a folder outside the app, gets them in `ios/<TargetName>/` instead: in a real install that source is `node_modules`, and a folder shared by two apps would otherwise receive each app's entitlements in turn. A package that ships its own `Info.plist` keeps using it.
+
 One caveat for a published package: Xcode will reference source inside `node_modules`, which is regenerated on install and usually not in version control. That works, and it is how autolinked native modules already behave — but a clean install must happen before a build, and the path changes if you switch package managers or hoisting.
 
 ## The config file

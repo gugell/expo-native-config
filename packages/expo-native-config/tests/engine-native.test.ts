@@ -64,6 +64,7 @@ const target: TargetPlan = {
   bundleId: 'com.example.app.share',
   deploymentTarget: '18.0',
   cwd: '../custom/share-source',
+  infoPlistPath: '../custom/share-source/Info.plist',
   currentProjectVersion: 1,
   needsEmbeddedSwift: true,
   frameworks: ['UIKit'],
@@ -288,6 +289,104 @@ test('a background-download target inherits the host app groups', () => {
   assert.deepEqual(
     { ...plist.parse(entitlements.contents) },
     { 'com.apple.security.application-groups': ['group.com.example.app'] },
+  );
+});
+
+function writeOps(ops: unknown[]) {
+  return (ops as WriteFileOp[])
+    .filter((op) => op.kind === 'writeFile')
+    .map((op) => `${op.base}:${op.path}`)
+    .sort();
+}
+
+const groups = {
+  ios: {
+    bundleIdentifier: 'com.example.app',
+    entitlements: { 'com.apple.security.application-groups': ['group.com.example.app'] },
+  },
+};
+
+test('a package-linked target gets its generated files under ios/, never in node_modules', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'enc-foreign-'));
+  const source = 'node_modules/@acme/assets/downloader';
+  mkdirSync(path.join(root, source), { recursive: true });
+  writeFileSync(path.join(root, source, 'Downloader.swift'), '');
+  const native = project();
+  const ops = generateTargets(
+    native,
+    [{ name: 'AssetDownloader', type: 'background-download', source }],
+    groups,
+    root,
+  );
+  assert.deepEqual(writeOps(ops), [
+    'ios:AssetDownloader/Info.plist',
+    'ios:AssetDownloader/generated.entitlements',
+  ]);
+  const downloader = native.rootObject.props.targets.find(
+    (item) => item.props.name === 'AssetDownloader',
+  ) as PBXNativeTarget;
+  assert.equal(downloader.getDefaultBuildSetting('INFOPLIST_FILE'), 'AssetDownloader/Info.plist');
+  assert.equal(
+    downloader.getDefaultBuildSetting('CODE_SIGN_ENTITLEMENTS'),
+    'AssetDownloader/generated.entitlements',
+  );
+});
+
+test('a package that ships its own Info.plist keeps it, and nothing is written into the package', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'enc-foreign-plist-'));
+  const source = 'node_modules/@acme/assets/downloader';
+  mkdirSync(path.join(root, source), { recursive: true });
+  writeFileSync(path.join(root, source, 'Info.plist'), '<plist/>');
+  // An .entitlements file the package ships is not the app's to overwrite either.
+  writeFileSync(path.join(root, source, 'Shipped.entitlements'), '<plist/>');
+  const native = project();
+  const ops = generateTargets(
+    native,
+    [{ name: 'AssetDownloader', type: 'background-download', source }],
+    groups,
+    root,
+  );
+  assert.deepEqual(writeOps(ops), ['ios:AssetDownloader/generated.entitlements']);
+  const downloader = native.rootObject.props.targets.find(
+    (item) => item.props.name === 'AssetDownloader',
+  ) as PBXNativeTarget;
+  assert.equal(downloader.getDefaultBuildSetting('INFOPLIST_FILE'), `../${source}/Info.plist`);
+});
+
+test('a folder outside the app gets its generated files under ios/, so two apps do not share them', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'enc-shared-'));
+  const app = path.join(root, 'apps/mobile');
+  mkdirSync(path.join(root, 'shared/native/PathWidget'), { recursive: true });
+  mkdirSync(app, { recursive: true });
+  const native = project();
+  const ops = generateTargets(
+    native,
+    [{ name: 'PathWidget', type: 'widget', source: '../../shared/native/PathWidget' }],
+    groups,
+    app,
+  );
+  assert.deepEqual(writeOps(ops), [
+    'ios:PathWidget/Info.plist',
+    'ios:PathWidget/generated.entitlements',
+  ]);
+});
+
+test('a target the app owns keeps its generated files next to its source', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'enc-owned-'));
+  mkdirSync(path.join(root, 'targets/Share'), { recursive: true });
+  const native = project();
+  const ops = generateTargets(native, [{ name: 'Share', type: 'share' }], groups, root);
+  assert.deepEqual(writeOps(ops), [
+    'project:targets/Share/Info.plist',
+    'project:targets/Share/generated.entitlements',
+  ]);
+  const share = native.rootObject.props.targets.find(
+    (item) => item.props.name === 'Share',
+  ) as PBXNativeTarget;
+  assert.equal(share.getDefaultBuildSetting('INFOPLIST_FILE'), '../targets/Share/Info.plist');
+  assert.equal(
+    share.getDefaultBuildSetting('CODE_SIGN_ENTITLEMENTS'),
+    '../targets/Share/generated.entitlements',
   );
 });
 

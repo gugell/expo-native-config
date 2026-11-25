@@ -94,6 +94,11 @@ interface ResolvedTarget {
   sourceRel: string;
   plan: TargetPlan;
   entitlementsJson?: Record<string, unknown>;
+  /** Where the generated Info.plist and entitlements are written: base + dir. */
+  generated: { base: 'ios' | 'project'; dir: string; fromIos: string };
+  entitlementsFileName?: string;
+  /** False when a foreign target ships its own Info.plist, which is used as it is. */
+  writesInfoPlist: boolean;
 }
 
 function resolveTargets(
@@ -117,8 +122,28 @@ function resolveTargets(
     const isExtension = isExtensionProductType(productType);
 
     const entitlementsJson = resolveEntitlements(config, spec);
+    // A target the app owns (under its targets root, or another folder of the app)
+    // keeps its generated Info.plist and entitlements next to its source. One linked
+    // from a package or a folder outside the app must not be written to: in a real
+    // install it is node_modules, and a folder shared by two apps would get each
+    // app's entitlements in turn. Those files go to ios/<product name>/ instead.
+    const productName = sanitizeProductName(spec.name);
+    const fromApp = path.relative(projectRoot, sourceAbs);
+    const foreign =
+      fromApp.startsWith('..') ||
+      path.isAbsolute(fromApp) ||
+      fromApp.split(path.sep).includes('node_modules');
+    const generated = foreign
+      ? { base: 'ios' as const, dir: productName, fromIos: productName }
+      : { base: 'project' as const, dir: sourceRel, fromIos: cwd };
+    const shipsInfoPlist = fs.existsSync(path.join(sourceAbs, 'Info.plist'));
+    const infoPlistPath =
+      foreign && shipsInfoPlist ? `${cwd}/Info.plist` : `${generated.fromIos}/Info.plist`;
     const entitlementsFileName = entitlementsJson
-      ? (findFile(sourceAbs, (name) => name.endsWith('.entitlements')) ?? 'generated.entitlements')
+      ? foreign
+        ? 'generated.entitlements'
+        : (findFile(sourceAbs, (name) => name.endsWith('.entitlements')) ??
+          'generated.entitlements')
       : undefined;
     const hasAppGroups = Array.isArray((entitlementsJson ?? {})[APP_GROUPS_KEY])
       ? ((entitlementsJson ?? {})[APP_GROUPS_KEY] as unknown[]).length > 0
@@ -137,7 +162,7 @@ function resolveTargets(
     const plan: TargetPlan = {
       type: spec.type,
       name: spec.name,
-      productName: sanitizeProductName(spec.name),
+      productName,
       productType,
       explicitFileType: explicitFileTypeFor(productType),
       isExtension,
@@ -150,13 +175,24 @@ function resolveTargets(
       currentProjectVersion: config.ios?.buildNumber || 1,
       needsEmbeddedSwift: needsEmbeddedSwift(spec.type),
       frameworks: getFrameworksForType(spec.type, spec.frameworks ?? []),
-      entitlementsFileName,
+      infoPlistPath,
+      entitlementsPath: entitlementsFileName
+        ? `${generated.fromIos}/${entitlementsFileName}`
+        : undefined,
       hasAppGroups,
       membershipExceptions,
       buildSettings: spec.buildSettings,
     };
 
-    return { spec, sourceRel, plan, entitlementsJson };
+    return {
+      spec,
+      sourceRel,
+      plan,
+      entitlementsJson,
+      generated,
+      entitlementsFileName,
+      writesInfoPlist: !(foreign && shipsInfoPlist),
+    };
   });
 
   return { targetsRootClean, resolved };
@@ -185,53 +221,58 @@ export const targetsGenerator: Generator = {
 
     const ops: Op[] = [];
 
-    resolved.forEach(({ spec, sourceRel, plan, entitlementsJson }, index) => {
-      const source = `ios.targets[${index}]`;
-      ops.push(
-        withMeta(
-          {
-            kind: 'writeFile',
-            base: 'project',
-            path: `${sourceRel}/Info.plist`,
-            contents: buildInfoPlist(spec.type),
-            overwrite: 'ifAbsent',
-            label: `target:${spec.name}:Info.plist`,
-          } satisfies WriteFileOp,
-          {
-            id: `target:${spec.name}:infoPlist`,
-            platform: 'ios',
-            semanticKind: 'ios.target.infoPlist.write',
-            source,
-            status: 'add',
-            files: [`${sourceRel}/Info.plist`],
-            desired: { type: spec.type },
-          },
-        ),
-      );
-      if (entitlementsJson && plan.entitlementsFileName) {
-        ops.push(
-          withMeta(
-            {
-              kind: 'writeFile',
-              base: 'project',
-              path: `${sourceRel}/${plan.entitlementsFileName}`,
-              contents: buildEntitlements(entitlementsJson),
-              overwrite: 'always',
-              label: `target:${spec.name}:entitlements`,
-            } satisfies WriteFileOp,
-            {
-              id: `target:${spec.name}:entitlements`,
-              platform: 'ios',
-              semanticKind: 'ios.entitlement.set',
-              source,
-              status: 'add',
-              files: [`${sourceRel}/${plan.entitlementsFileName}`],
-              desired: entitlementsJson,
-            },
-          ),
-        );
-      }
-    });
+    resolved.forEach(
+      ({ spec, entitlementsJson, generated, entitlementsFileName, writesInfoPlist }, index) => {
+        const source = `ios.targets[${index}]`;
+        if (writesInfoPlist)
+          ops.push(
+            withMeta(
+              {
+                kind: 'writeFile',
+                base: generated.base,
+                path: `${generated.dir}/Info.plist`,
+                contents: buildInfoPlist(spec.type),
+                overwrite: 'ifAbsent',
+                label: `target:${spec.name}:Info.plist`,
+              } satisfies WriteFileOp,
+              {
+                id: `target:${spec.name}:infoPlist`,
+                platform: 'ios',
+                semanticKind: 'ios.target.infoPlist.write',
+                source,
+                status: 'add',
+                files: [`${generated.base === 'ios' ? 'ios/' : ''}${generated.dir}/Info.plist`],
+                desired: { type: spec.type },
+              },
+            ),
+          );
+        if (entitlementsJson && entitlementsFileName) {
+          ops.push(
+            withMeta(
+              {
+                kind: 'writeFile',
+                base: generated.base,
+                path: `${generated.dir}/${entitlementsFileName}`,
+                contents: buildEntitlements(entitlementsJson),
+                overwrite: 'always',
+                label: `target:${spec.name}:entitlements`,
+              } satisfies WriteFileOp,
+              {
+                id: `target:${spec.name}:entitlements`,
+                platform: 'ios',
+                semanticKind: 'ios.entitlement.set',
+                source,
+                status: 'add',
+                files: [
+                  `${generated.base === 'ios' ? 'ios/' : ''}${generated.dir}/${entitlementsFileName}`,
+                ],
+                desired: entitlementsJson,
+              },
+            ),
+          );
+        }
+      },
+    );
 
     // Stable top-level anchor keeps extension pods outside the main app target.
     ops.push(
